@@ -95,8 +95,8 @@ const hostConfig: ReactReconciler.HostConfig<
     return true; // Always update for MVP
   },
 
-  commitUpdate(instance, updatePayload, type, prevProps, nextProps, internalHandle) {
-    // Re-apply Yoga styles on update
+  commitUpdate(instance, type, prevProps, nextProps, internalHandle) {
+    // Re-apply Yoga styles on update (React 19 signature: instance, type, oldProps, newProps, fiber)
     applyStyles(instance.yogaNode, nextProps as Styles, prevProps as Styles);
 
     // Re-apply custom properties

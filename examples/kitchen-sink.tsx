@@ -21,6 +21,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   render, Box, Text, Newline, Spacer,
   useApp, useWindowSize, useInput, useFocus, useFocusManager,
+  DevTools,
 } from '../dist/index.js'
 
 // ─── Section list ─────────────────────────────────────────────────────────────
@@ -553,7 +554,6 @@ function TabBar({ current }: { current: number }) {
 
 function KitchenSink() {
   const { exit } = useApp()
-  const { columns, rows } = useWindowSize()
   const [sectionIdx, setSectionIdx] = useState(0)
   const [frame, setFrame] = useState(0)
 
@@ -578,7 +578,7 @@ function KitchenSink() {
   const isGraphActive = currentSection === 'Graph'
 
   return (
-    <Box flexDirection="column" width={columns} height={rows}>
+    <Box flexDirection="column" flexGrow={1}>
       {/* Tab bar at top */}
       <TabBar current={sectionIdx} />
 
@@ -597,5 +597,9 @@ function KitchenSink() {
   )
 }
 
-const { app } = render(<KitchenSink />)
+const { app } = render(
+  <DevTools>
+    <KitchenSink />
+  </DevTools>
+)
 ;(globalThis as any).__ratatatApp = app

@@ -127,6 +127,16 @@ export const useInput = (handler: InputHandler) => {
 };
 
 /**
+ * Raw access to the RatatatContext — app instance + input parser.
+ * Useful for advanced integrations (e.g. DevTools, custom hooks).
+ */
+export const useRatatatContext = () => {
+  const context = useContext(RatatatContext);
+  if (!context) throw new Error('useRatatatContext must be used within a Ratatat App environment');
+  return context;
+};
+
+/**
  * Access app controls. Returns { exit } for Ink compatibility.
  * exit() triggers a clean shutdown (restores terminal, stops input, exits process).
  */

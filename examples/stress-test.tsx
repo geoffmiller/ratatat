@@ -121,12 +121,18 @@ function StressTest() {
     let running = true
     let handle: ReturnType<typeof setTimeout>
 
+    let loopFrame = 0
     function loop() {
       if (!running) return
+      loopFrame++
       setFrame(f => {
         tick()
         return f + 1
       })
+      // Prevent MaxPerformanceEntryBufferExceededWarning
+      if (loopFrame % 10000 === 0) {
+        try { performance.clearMeasures(); performance.clearMarks() } catch {}
+      }
       handle = setTimeout(loop, 0)
     }
 

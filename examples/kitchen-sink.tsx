@@ -470,8 +470,12 @@ function LiveSection() {
   const { columns, rows } = useWindowSize()
   const [frame, setFrame] = useState(0)
 
-  const onTick = React.useCallback((f: number) => setFrame(f), [])
-  useAnimationLoop(true, onTick)
+  // 100ms interval is plenty for a clock/sparkline — no need for setTimeout(0)
+  // which would generate millions of React scheduler perf entries per minute
+  useEffect(() => {
+    const t = setInterval(() => setFrame(f => f + 1), 100)
+    return () => clearInterval(t)
+  }, [])
   const now = new Date()
   const time = now.toTimeString().split(' ')[0]
   const date = now.toDateString()
@@ -580,6 +584,11 @@ function useAnimationLoop(active: boolean, onTick: (frame: number) => void) {
       if (!running) return
       frameRef.current++
       onTick(frameRef.current)
+      // Clear React scheduler perf entries every 10k frames to prevent
+      // the MaxPerformanceEntryBufferExceededWarning from Node's perf_hooks
+      if (frameRef.current % 10000 === 0) {
+        try { performance.clearMeasures(); performance.clearMarks() } catch {}
+      }
       handle = setTimeout(loop, 0)
     }
     loop()

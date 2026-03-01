@@ -396,7 +396,8 @@ function paintGraph(
 }
 
 // How many rows the React heading occupies before the bars start
-const GRAPH_HEADER_ROWS = 5  // padding(1) + heading(1) + marginBottom(1) + title(1) + margin(1)
+// TabBar(3) + paddingTop(1) + SectionHeading(1) + subtitle(1) + values(1) + marginTop(1) = 8
+const GRAPH_HEADER_ROWS = 8
 
 function GraphSection({ frame, active }: { frame: number; active: boolean }) {
   const { columns, rows } = useWindowSize()
@@ -518,26 +519,32 @@ function LiveSection({ frame }: { frame: number }) {
   )
 }
 
-// ─── Nav bar ─────────────────────────────────────────────────────────────────
+// ─── Tab bar (top) ───────────────────────────────────────────────────────────
 
-function NavBar({ current, total, name }: { current: number; total: number; name: string }) {
-  const dots = SECTIONS.map((s, i) => (
-    <Text key={s} color={i === current ? 'cyan' : 'gray'}>
-      {i === current ? '●' : '○'}
-    </Text>
-  ))
+function TabBar({ current }: { current: number }) {
   return (
-    <Box borderStyle="round" borderColor="gray" paddingX={2} justifyContent="space-between">
-      <Text dim>◀ ▶ navigate  </Text>
-      <Text dim>Tab focus  </Text>
-      <Text dim>Q quit</Text>
+    <Box borderStyle="single" borderColor="gray" flexShrink={0}>
+      <Text> </Text>
+      {SECTIONS.map((s, i) => {
+        const active = i === current
+        return (
+          <Box key={s} marginRight={1}>
+            {active ? (
+              <Box backgroundColor="cyan" paddingX={1}>
+                <Text color="black" bold>{s}</Text>
+              </Box>
+            ) : (
+              <Box paddingX={1}>
+                <Text color="gray">{s}</Text>
+              </Box>
+            )}
+          </Box>
+        )
+      })}
       <Spacer />
-      <Box flexDirection="row" gap={1}>
-        {dots}
-      </Box>
-      <Spacer />
-      <Text color="cyan" bold>{name}</Text>
-      <Text dim>  {current + 1}/{total}</Text>
+      <Text dim>◀ ▶  </Text>
+      <Text dim>Tab  </Text>
+      <Text dim>Q quit </Text>
     </Box>
   )
 }
@@ -546,6 +553,7 @@ function NavBar({ current, total, name }: { current: number; total: number; name
 
 function KitchenSink() {
   const { exit } = useApp()
+  const { columns, rows } = useWindowSize()
   const [sectionIdx, setSectionIdx] = useState(0)
   const [frame, setFrame] = useState(0)
 
@@ -570,9 +578,12 @@ function KitchenSink() {
   const isGraphActive = currentSection === 'Graph'
 
   return (
-    <Box flexDirection="column" padding={1}>
-      {/* Section content */}
-      <Box flexDirection="column" flexGrow={1}>
+    <Box flexDirection="column" width={columns} height={rows}>
+      {/* Tab bar at top */}
+      <TabBar current={sectionIdx} />
+
+      {/* Section content fills remaining space */}
+      <Box flexDirection="column" flexGrow={1} paddingX={2} paddingTop={1} overflow="hidden">
         {currentSection === 'Borders'     && <BordersSection />}
         {currentSection === 'Colors'      && <ColorsSection />}
         {currentSection === 'Text'        && <TextSection />}
@@ -582,9 +593,6 @@ function KitchenSink() {
         {currentSection === 'Graph'       && <GraphSection frame={frame} active={isGraphActive} />}
         {currentSection === 'Live'        && <LiveSection frame={frame} />}
       </Box>
-
-      {/* Navigation bar */}
-      <NavBar current={sectionIdx} total={SECTIONS.length} name={currentSection} />
     </Box>
   )
 }

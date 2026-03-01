@@ -23,6 +23,9 @@ type NoTimeout = any;
 
 type TransitionStatus = any;
 
+export let onAfterCommit: (() => void) | null = null;
+export function setOnAfterCommit(fn: (() => void) | null) { onAfterCommit = fn; }
+
 const hostConfig: ReactReconciler.HostConfig<
   Type, Props, Container, Instance, TextInstance, SuspenseInstance, 
   HydratableInstance, PublicInstance, HostContext, UpdatePayload, 
@@ -124,7 +127,9 @@ const hostConfig: ReactReconciler.HostConfig<
     return null;
   },
 
-  resetAfterCommit(containerInfo: any) { },
+  resetAfterCommit(containerInfo: any) {
+    if (typeof onAfterCommit === 'function') onAfterCommit();
+  },
   shouldSetTextContent(type: any, props: any) { return false; },
   clearContainer(container: any) { },
   finalizeInitialChildren(instance: any, type: any, props: any, rootContainer: any, hostContext: any) { return false; },

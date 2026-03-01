@@ -3,7 +3,7 @@ import React from 'react';
 import { RatatatApp } from './app.js';
 import { InputParser } from './input.js';
 import { LayoutNode } from './layout.js';
-import { RatatatReconciler } from './reconciler.js';
+import { RatatatReconciler, setOnAfterCommit } from './reconciler.js';
 import { renderTreeToBuffer } from './renderer.js';
 import { RatatatContext } from './hooks.js';
 
@@ -64,15 +64,20 @@ export function render(element: React.ReactElement) {
 
   RatatatReconciler.updateContainer(wrappedElement as any, container, null, () => {});
 
-  // On every tick of the Game Loop, layout the Yoga tree and paint it
+  // On every render event: layout the Yoga tree and paint it to the buffer
   app.on('render', (buffer, w, h) => {
-    // Only calculate layout if tree is dirty, but for simplicity always calc
     rootNode.calculateLayout(w, h);
     renderTreeToBuffer(rootNode, buffer, w, h);
   });
-  
+
+  // Wire reconciler commits → requestRender (every React state update triggers a repaint)
+  setOnAfterCommit(() => app.requestRender());
+
   input.start();
   app.start();
+
+  // Paint the initial frame (after start() sets isRunning = true)
+  app.requestRender();
   
   return {
     app,

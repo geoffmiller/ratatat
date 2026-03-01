@@ -90,6 +90,16 @@ export function render(element: React.ReactElement) {
   input.start();
   app.start();
 
+  // Handle terminal resize: update root node dimensions and re-layout
+  const onSigwinch = () => {
+    const { width, height } = app.getSize();
+    rootNode.yogaNode.setWidth(width);
+    rootNode.yogaNode.setHeight(height);
+    app.emit('resize');
+    app.requestRender();
+  };
+  process.on('SIGWINCH', onSigwinch);
+
   // Paint the initial frame (after start() sets isRunning = true)
   app.requestRender();
   

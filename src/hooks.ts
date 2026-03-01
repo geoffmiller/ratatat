@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { RatatatApp } from './app.js';
 import { InputParser } from './input.js';
 
@@ -119,5 +119,49 @@ export const useApp = () => {
     exit: () => context.app.quit(),
     // ratatat-native: direct app access
     quit: () => context.app.quit(),
+  };
+};
+
+/**
+ * Returns current terminal dimensions and re-renders on resize (SIGWINCH).
+ * Ink-compatible: const { columns, rows } = useWindowSize()
+ */
+export const useWindowSize = () => {
+  const context = useContext(RatatatContext);
+
+  if (!context) {
+    throw new Error('useWindowSize must be used within a Ratatat App environment');
+  }
+
+  const [size, setSize] = useState(() => context.app.getSize());
+
+  useEffect(() => {
+    const onResize = () => setSize(context.app.getSize());
+    context.app.on('resize', onResize);
+    return () => { context.app.off('resize', onResize); };
+  }, [context]);
+
+  return { columns: size.width, rows: size.height };
+};
+
+/**
+ * Write to stdout without disturbing the TUI.
+ * Ink-compatible: const { write, stdout } = useStdout()
+ */
+export const useStdout = () => {
+  return {
+    stdout: process.stdout,
+    write: (text: string) => process.stdout.write(text),
+  };
+};
+
+/**
+ * Write to stderr without disturbing the TUI.
+ * Ink-compatible: const { write, stderr } = useStderr()
+ */
+export const useStderr = () => {
+  return {
+    stderr: process.stderr,
+    write: (text: string) => process.stderr.write(text),
   };
 };

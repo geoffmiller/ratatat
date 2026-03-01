@@ -61,12 +61,25 @@ test('resolveColor: ansi256(N) string syntax', t => {
   t.is(resolveColor('ansi256(200)'), 200)
 })
 
+test('resolveColor: #RRGGBB hex → nearest ansi256', t => {
+  // #FF0000 pure red → r=5,g=0,b=0 → 16+180+0+0 = 196
+  t.is(resolveColor('#FF0000'), 196)
+  // #0000FF pure blue → r=0,g=0,b=5 → 16+0+0+5 = 21
+  t.is(resolveColor('#0000FF'), 21)
+  // #FF8800 orange → r=5,g=3,b=0 → 16+180+18+0 = 214
+  t.is(resolveColor('#FF8800'), 214)
+})
+
+test('resolveColor: rgb(R,G,B) → nearest ansi256', t => {
+  t.is(resolveColor('rgb(255,0,0)'), 196)
+  t.is(resolveColor('rgb(0, 255, 0)'), 46)
+  t.is(resolveColor('rgb(0,0,255)'), 21)
+})
+
 test('resolveColor: unknown string → 255 (terminal default)', t => {
   t.is(resolveColor('hotpink'), 255)
   t.is(resolveColor(''), 255)
 })
-
-// ─── Reconciler: Ink-compat props → buffer values ────────────────────────────
 
 import React, { createElement } from 'react'
 import { LayoutNode } from '../dist/layout.js'

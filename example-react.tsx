@@ -19,14 +19,14 @@ if (typeof global !== 'undefined' && !global.document) {
 const App = () => {
     const [counter, setCounter] = useState(0);
 
-    const app = useApp();
+    const { exit } = useApp();
 
     useInput((char, key) => {
         if (key.upArrow) setCounter(c => c + 1);
         if (key.downArrow) setCounter(c => c - 1);
         
         if (char === 'q') {
-             app.quit();
+             exit();
         }
     });
 

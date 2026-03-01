@@ -104,7 +104,8 @@ export const useInput = (handler: InputHandler) => {
 };
 
 /**
- * Access the underlying Ratatat App instance to trigger manual exits
+ * Access app controls. Returns { exit } for Ink compatibility.
+ * exit() triggers a clean shutdown (restores terminal, stops input, exits process).
  */
 export const useApp = () => {
   const context = useContext(RatatatContext);
@@ -113,5 +114,10 @@ export const useApp = () => {
     throw new Error('useApp must be used within a Ratatat App environment');
   }
 
-  return context.app;
+  return {
+    // Ink-compatible: const { exit } = useApp()
+    exit: () => context.app.quit(),
+    // ratatat-native: direct app access
+    quit: () => context.app.quit(),
+  };
 };

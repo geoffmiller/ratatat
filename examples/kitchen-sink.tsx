@@ -341,10 +341,11 @@ function paintGraph(
   const startCol = Math.max(0, Math.floor((cols - TOTAL_WIDTH) / 2))
 
   // Compute bar heights (0..barRows) driven by animated sine waves
+  // Same time scale as the React display: t = frame * 0.004
   const heights: number[] = []
   for (let b = 0; b < BAR_COUNT; b++) {
     const phase = (b / BAR_COUNT) * Math.PI * 2
-    const t = frame * 0.08
+    const t = frame * 0.004
     const v = (Math.sin(t + phase) * 0.5 + 0.5) *
               (Math.sin(t * 0.37 + phase * 1.3) * 0.3 + 0.7)
     heights.push(Math.max(1, Math.round(v * barRows)))
@@ -429,26 +430,31 @@ function GraphSection({ active }: { active: boolean }) {
   const BAR_GAP   = 1
   const TOTAL_WIDTH = BAR_COUNT * (BAR_WIDTH + BAR_GAP)
 
-  // Compute heights for the value display
+  // Animation time advances at a fixed rate regardless of FPS.
+  // frame increments at ~setTimeout(0) speed, so we scale it down
+  // so the wave completes a cycle in ~4 seconds visually.
+  const t = frame * 0.004  // ~4s per full cycle at 500fps, ~0.4s at 50fps
+
+  // Compute heights for the value display and buffer painter
   const heights: number[] = []
   for (let b = 0; b < BAR_COUNT; b++) {
     const phase = (b / BAR_COUNT) * Math.PI * 2
-    const t = frame * 0.08
     const v = (Math.sin(t + phase) * 0.5 + 0.5) *
               (Math.sin(t * 0.37 + phase * 1.3) * 0.3 + 0.7)
     heights.push(Math.max(1, Math.round(v * barRows)))
   }
 
   const barColors = ['red','green','yellow','blue','magenta','cyan','white']
+  const pcts = heights.map(h => Math.round((h / barRows) * 100))
 
   return (
     <Box flexDirection="column">
       <SectionHeading title="Animated Bar Chart" />
       <Text dim>Sine-wave driven bars, painted directly to buffer (bypasses React reconciler)</Text>
       <Box marginTop={1}>
-        <Text dim>Values: </Text>
-        {heights.map((h, i) => (
-          <Text key={i} color={barColors[i % barColors.length]}>{String(h).padStart(2)} </Text>
+        <Text dim>  </Text>
+        {pcts.map((p, i) => (
+          <Text key={i} color={barColors[i % barColors.length]}>{String(p).padStart(3)}%</Text>
         ))}
       </Box>
       {/* The bars themselves are painted into the buffer by paintGraph() above */}

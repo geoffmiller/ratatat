@@ -1,11 +1,12 @@
-// @ts-nocheck
+// @ts-nocheck — reconciler createContainer arity varies between React versions
 import React from 'react';
 import { RatatatApp } from './app.js';
 import { InputParser } from './input.js';
 import { LayoutNode } from './layout.js';
 import { RatatatReconciler, setOnAfterCommit } from './reconciler.js';
 import { renderTreeToBuffer } from './renderer.js';
-import { RatatatContext } from './hooks.js';
+import { RatatatContext, useInput } from './hooks.js';
+import { FocusProvider, useFocusManager } from './focus.js';
 
 import { Styles } from './styles.js';
 
@@ -30,6 +31,40 @@ export const Box: React.FC<BoxProps> = (props) => {
 export const Text: React.FC<TextProps> = (props) => {
   // Wrap simple strings inside a text layout node
   return React.createElement('text', props, props.children);
+};
+
+/**
+ * Renders a newline character — equivalent to a line break in the layout.
+ * Ink-compatible: <Newline count={2} />
+ */
+export interface NewlineProps {
+  count?: number;
+}
+export const Newline: React.FC<NewlineProps> = ({ count = 1 }) => {
+  return React.createElement(Text, {}, '\n'.repeat(count));
+};
+
+/**
+ * Flexible spacer that fills available space in the parent flex container.
+ * Ink-compatible: <Spacer />
+ */
+export const Spacer: React.FC = () => {
+  return React.createElement(Box, { flexGrow: 1 });
+};
+
+/**
+ * Internal component that handles Tab/Shift+Tab for focus cycling.
+ * Must live inside FocusProvider to access FocusContext.
+ */
+const TabHandler: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { focusNext, focusPrevious } = useFocusManager();
+
+  useInput((_input, key) => {
+    if (key.tab && !key.shift) focusNext();
+    if (key.tab && key.shift) focusPrevious();
+  });
+
+  return React.createElement(React.Fragment, null, children);
 };
 
 // Global mount utility
@@ -59,7 +94,11 @@ export function render(element: React.ReactElement) {
   const wrappedElement = React.createElement(
     RatatatContext.Provider,
     { value: { app, input } },
-    element
+    React.createElement(
+      FocusProvider,
+      null,
+      React.createElement(TabHandler, null, element)
+    )
   );
 
   RatatatReconciler.updateContainer(wrappedElement as any, container, null, () => {});

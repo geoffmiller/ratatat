@@ -6,5 +6,6 @@ export * from './renderer.js';
 export * from './react.js';
 export * from './reconciler.js';
 export * from './hooks.js';
+export * from './focus.js';
 import { Renderer, TerminalSetup } from '../index.js';
 export { Renderer, TerminalSetup };

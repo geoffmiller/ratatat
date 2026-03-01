@@ -37,7 +37,14 @@ export class InputParser extends EventEmitter {
     if (data === '\u001b[C') { this.emit('keydown', 'right'); return; }
     if (data === '\u001b[D') { this.emit('keydown', 'left'); return; }
 
-    // 3. Parse Enter/Return
+    // 3. Parse Tab / Shift+Tab
+    if (data === '\t') { this.emit('keydown', 'tab'); return; }
+    if (data === '\u001b[Z') { this.emit('keydown', 'shift-tab'); return; }
+
+    // 4. Parse Escape
+    if (data === '\u001b') { this.emit('keydown', 'escape'); return; }
+
+    // 5. Parse Enter/Return
     if (data === '\r' || data === '\n') { this.emit('keydown', 'enter'); return; }
 
     // 4. Mouse Tracking (SGR 1006 protocol format: \x1b[<button;x;yM or m)

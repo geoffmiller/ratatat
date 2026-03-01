@@ -17,6 +17,11 @@ export interface Key {
   return: boolean;
   backspace: boolean;
   delete: boolean;
+  tab: boolean;
+  shift: boolean;
+  escape: boolean;
+  ctrl: boolean;
+  meta: boolean;
 }
 
 export type InputHandler = (input: string, key: Key) => void;
@@ -50,6 +55,9 @@ export const useInput = (handler: InputHandler) => {
       const isRight = keyName === 'right';
       const isEnter = keyName === 'enter';
       const isBackspace = keyName === 'backspace';
+      const isTab = keyName === 'tab';
+      const isShiftTab = keyName === 'shift-tab';
+      const isEscape = keyName === 'escape';
 
       handlerRef.current('', {
         upArrow: isUp,
@@ -59,6 +67,11 @@ export const useInput = (handler: InputHandler) => {
         return: isEnter,
         backspace: isBackspace,
         delete: false,
+        tab: isTab || isShiftTab,
+        shift: isShiftTab,
+        escape: isEscape,
+        ctrl: false,
+        meta: false,
       });
     };
 
@@ -78,6 +91,11 @@ export const useInput = (handler: InputHandler) => {
           return: false,
           backspace: true,
           delete: false,
+          tab: false,
+          shift: false,
+          escape: false,
+          ctrl: false,
+          meta: false,
         });
         return;
       }
@@ -90,6 +108,11 @@ export const useInput = (handler: InputHandler) => {
         return: false,
         backspace: false,
         delete: false,
+        tab: false,
+        shift: false,
+        escape: false,
+        ctrl: false,
+        meta: false,
       });
     };
 
@@ -163,5 +186,22 @@ export const useStderr = () => {
   return {
     stderr: process.stderr,
     write: (text: string) => process.stderr.write(text),
+  };
+};
+
+/**
+ * Access raw stdin stream and raw mode controls.
+ * Ink-compatible: const { stdin, setRawMode, isRawModeSupported } = useStdin()
+ */
+export const useStdin = () => {
+  const isRawModeSupported = !!process.stdin.setRawMode;
+  return {
+    stdin: process.stdin,
+    isRawModeSupported,
+    setRawMode: (value: boolean) => {
+      if (isRawModeSupported) {
+        process.stdin.setRawMode(value);
+      }
+    },
   };
 };

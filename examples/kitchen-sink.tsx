@@ -487,11 +487,11 @@ function LiveSection() {
 
   // Benchmark data — matches bench.js output
   const benchRows = [
-    { label: 'initial mount (simple)',   ratatat: '67,630', ink: '8,215',  speedup: '8.2×'  },
-    { label: 'initial mount (complex)',  ratatat: '41,253', ink: '1,421',  speedup: '29×'   },
-    { label: 'rerender (simple)',        ratatat: '95,175', ink: '8,095',  speedup: '11.8×' },
-    { label: 'rerender (complex)',       ratatat: '49,852', ink: '1,384',  speedup: '36×'   },
-    { label: 'p99 latency (complex)',    ratatat: '23 µs',  ink: '1,586 µs', speedup: '68×' },
+    { label: 'initial mount (simple)',   ratatat: '67,630', ink: '8,215',   speedup: '8.2×', note: 'cold start, 2-node tree'         },
+    { label: 'initial mount (complex)',  ratatat: '41,253', ink: '1,421',   speedup: '29×',  note: 'cold start, borders+panels'       },
+    { label: 'rerender (simple)',        ratatat: '95,175', ink: '8,095',   speedup: '11.8×',note: 'warm, 1 state change/frame'       },
+    { label: 'rerender (complex)',       ratatat: '49,852', ink: '1,384',   speedup: '36×',  note: 'warm, nested boxes+colors'        },
+    { label: 'p99 latency (complex)',    ratatat: '23 µs',  ink: '1,586 µs',speedup: '68×',  note: 'worst-case frame time'            },
   ]
 
   return (
@@ -539,16 +539,18 @@ function LiveSection() {
           <Text dim bold>{'Suite'.padEnd(28)}</Text>
           <Text dim bold>{'ratatat'.padEnd(14)}</Text>
           <Text dim bold>{'Ink'.padEnd(14)}</Text>
-          <Text dim bold>Speedup</Text>
+          <Text dim bold>{'Speedup'.padEnd(10)}</Text>
+          <Text dim bold>Notes</Text>
         </Box>
-        <Box flexDirection="row"><Text dim>{'─'.repeat(62)}</Text></Box>
+        <Box flexDirection="row"><Text dim>{'─'.repeat(74)}</Text></Box>
         {/* Rows */}
         {benchRows.map((r, i) => (
           <Box key={i} flexDirection="row">
             <Text color="white">{r.label.padEnd(28)}</Text>
             <Text color="cyan"  bold>{r.ratatat.padEnd(14)}</Text>
             <Text color="gray">{r.ink.padEnd(14)}</Text>
-            <Text color="green" bold>🚀 {r.speedup}</Text>
+            <Text color="green" bold>{'🚀 ' + r.speedup.padEnd(7)}</Text>
+            <Text dim>{r.note}</Text>
           </Box>
         ))}
         <Box flexDirection="row" marginTop={1}>

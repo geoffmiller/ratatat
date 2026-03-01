@@ -12,7 +12,7 @@
  */
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { render, Box, Text, useWindowSize, useApp, resolveColor } from '../dist/index.js'
+import { render, Box, Text, useWindowSize, useApp } from '../dist/index.js'
 
 // ─── FPS counter ─────────────────────────────────────────────────────────────
 
@@ -37,9 +37,9 @@ function useFps() {
 
 // ─── Color cycling helpers ────────────────────────────────────────────────────
 
-// Pre-resolve ANSI color indices once — no per-frame string allocations
-const ANSI_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
-const ANSI_INDICES = ANSI_COLORS.map(c => resolveColor(c)) // [1,2,3,4,5,6,7]
+// ANSI color indices — standard terminal palette positions, hardcoded.
+// red=1, green=2, yellow=3, blue=4, magenta=5, cyan=6, white=7
+const ANSI_INDICES = [1, 2, 3, 4, 5, 6, 7]
 
 const CHARS = '█▓▒░▪▫●○◆◇'
 const CHAR_CODES = Array.from(CHARS).map(c => c.codePointAt(0)!)

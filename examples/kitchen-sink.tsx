@@ -1,35 +1,40 @@
 /**
- * kitchen-sink.tsx — ratatat kitchen sink demo
+ * kitchen-sink.tsx — ratatat interactive kitchen sink
  *
- * One app showing every major ratatat feature:
- *   - All 7 border styles
- *   - Named, hex, and RGB colors
- *   - Text styles: bold, italic, dim, underline
- *   - Flexbox: row/column, justify-content, align-items, gap
- *   - Spacer (push items to edges)
- *   - Live clock + frame counter (reactivity)
- *   - Focus cycling with Tab / Shift+Tab
- *   - useWindowSize live display
- *   - useApp().exit()
+ * Navigate sections with ← → arrow keys. Each section fills the viewport.
+ * Sections: Borders · Colors · Text · Backgrounds · Layout · Focus · Graph · Live
+ *
+ * The Graph section renders an animated bar chart directly to the Uint32Array
+ * buffer (bypassing React reconciliation for individual bars) — same technique
+ * as the stress test.
+ *
+ * Controls:
+ *   ← →     navigate sections
+ *   Tab      cycle focus (Focus section)
+ *   Q        quit
+ *   Ctrl+C   quit
  *
  * Run: node --import @oxc-node/core/register examples/kitchen-sink.tsx
  */
 // @ts-nocheck
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   render, Box, Text, Newline, Spacer,
   useApp, useWindowSize, useInput, useFocus, useFocusManager,
 } from '../dist/index.js'
 
+// ─── Section list ─────────────────────────────────────────────────────────────
+
+const SECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Layout', 'Focus', 'Graph', 'Live'] as const
+type SectionName = typeof SECTIONS[number]
+
 // ─── Section header ───────────────────────────────────────────────────────────
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function SectionHeading({ title }: { title: string }) {
   return (
-    <Box flexDirection="column" marginBottom={1}>
-      <Text bold color="cyan">── {title} </Text>
-      <Box marginLeft={2} flexDirection="column">
-        {children}
-      </Box>
+    <Box marginBottom={1}>
+      <Text bold color="cyan">━━ {title} </Text>
+      <Text dim>{'━'.repeat(Math.max(0, 40 - title.length - 4))}</Text>
     </Box>
   )
 }
@@ -39,15 +44,27 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function BordersSection() {
   const styles = ['single', 'double', 'round', 'bold', 'singleDouble', 'doubleSingle', 'classic'] as const
   return (
-    <Section title="Borders">
-      <Box flexDirection="row" gap={1} flexWrap="wrap">
+    <Box flexDirection="column">
+      <SectionHeading title="Borders" />
+      <Box flexDirection="row" gap={1} flexWrap="wrap" marginBottom={2}>
         {styles.map(s => (
-          <Box key={s} borderStyle={s} paddingX={1}>
-            <Text>{s}</Text>
+          <Box key={s} borderStyle={s} paddingX={2} paddingY={1}>
+            <Text color="white">{s}</Text>
           </Box>
         ))}
       </Box>
-    </Section>
+      <Box flexDirection="row" gap={2}>
+        <Box borderStyle="round" borderColor="cyan" paddingX={2} paddingY={1}>
+          <Text color="cyan">borderColor</Text>
+        </Box>
+        <Box borderStyle="bold" borderColor="yellow" paddingX={2} paddingY={1}>
+          <Text color="yellow">bold + yellow</Text>
+        </Box>
+        <Box borderStyle="double" borderColor="magenta" paddingX={2} paddingY={1}>
+          <Text color="magenta">double + magenta</Text>
+        </Box>
+      </Box>
+    </Box>
   )
 }
 
@@ -55,58 +72,136 @@ function BordersSection() {
 
 function ColorsSection() {
   const named = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'gray']
-  const hexes = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#c77dff', '#ff9f43']
+  const hexes = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#c77dff', '#ff9f43', '#f8961e', '#90e0ef']
   return (
-    <Section title="Colors">
-      <Box flexDirection="row" gap={1} marginBottom={1}>
-        {named.map(c => (
-          <Text key={c} color={c}>{c}</Text>
-        ))}
+    <Box flexDirection="column">
+      <SectionHeading title="Colors" />
+      <Box flexDirection="column" gap={1}>
+        <Box flexDirection="column">
+          <Text dim>Named colors</Text>
+          <Box flexDirection="row" gap={1}>
+            {named.map(c => (
+              <Box key={c} backgroundColor={c} paddingX={1}>
+                <Text color={c === 'white' || c === 'yellow' ? 'black' : 'white'}>{c}</Text>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+        <Box flexDirection="column">
+          <Text dim>Hex colors</Text>
+          <Box flexDirection="row" gap={1}>
+            {hexes.map(h => (
+              <Box key={h} backgroundColor={h} paddingX={1}>
+                <Text color="black">{h}</Text>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+        <Box flexDirection="column">
+          <Text dim>RGB colors</Text>
+          <Box flexDirection="row" gap={1}>
+            {[
+              ['rgb(255,100,100)', 'R'],
+              ['rgb(100,255,100)', 'G'],
+              ['rgb(100,100,255)', 'B'],
+              ['rgb(255,200,0)',   'Y'],
+              ['rgb(200,100,255)', 'P'],
+              ['rgb(0,200,200)',   'C'],
+            ].map(([c, label]) => (
+              <Box key={c} backgroundColor={c} paddingX={2} paddingY={1}>
+                <Text color="black" bold>{label}</Text>
+                <Newline />
+                <Text color="black" dim>{c}</Text>
+              </Box>
+            ))}
+          </Box>
+        </Box>
       </Box>
-      <Box flexDirection="row" gap={1} marginBottom={1}>
-        {hexes.map(h => (
-          <Text key={h} color={h}>{h}</Text>
-        ))}
-      </Box>
-      <Box flexDirection="row" gap={1}>
-        <Text color="rgb(255,100,100)">rgb(255,100,100)</Text>
-        <Text color="rgb(100,255,100)">rgb(100,255,100)</Text>
-        <Text color="rgb(100,100,255)">rgb(100,100,255)</Text>
-      </Box>
-    </Section>
+    </Box>
   )
 }
 
 // ─── Text styles ──────────────────────────────────────────────────────────────
 
-function TextStylesSection() {
+function TextSection() {
   return (
-    <Section title="Text Styles">
-      <Box flexDirection="row" gap={2}>
-        <Text bold>bold</Text>
-        <Text italic>italic</Text>
-        <Text underline>underline</Text>
-        <Text dim>dim</Text>
-        <Text bold italic color="green">bold+italic+color</Text>
-        <Text bold underline color="yellow">bold+underline</Text>
+    <Box flexDirection="column">
+      <SectionHeading title="Text Styles" />
+      <Box flexDirection="column" gap={1}>
+        <Box flexDirection="row" gap={3}>
+          <Text bold>bold</Text>
+          <Text italic>italic</Text>
+          <Text underline>underline</Text>
+          <Text dim>dim</Text>
+          <Text bold italic>bold+italic</Text>
+          <Text bold underline color="yellow">bold+underline+yellow</Text>
+          <Text italic dim color="cyan">italic+dim+cyan</Text>
+        </Box>
+        <Box flexDirection="row" gap={2} marginTop={1}>
+          {['red','green','yellow','blue','magenta','cyan','white'].map(c => (
+            <Text key={c} color={c} bold>{c[0].toUpperCase()}</Text>
+          ))}
+          <Text>  </Text>
+          {['red','green','yellow','blue','magenta','cyan','white'].map(c => (
+            <Text key={c} color={c} italic>{c[0].toUpperCase()}</Text>
+          ))}
+          <Text>  </Text>
+          {['red','green','yellow','blue','magenta','cyan','white'].map(c => (
+            <Text key={c} color={c} dim>{c[0].toUpperCase()}</Text>
+          ))}
+        </Box>
+        <Box flexDirection="column" marginTop={1} gap={1} borderStyle="single" borderColor="gray" paddingX={2} paddingY={1}>
+          <Text bold color="cyan">Combined styles demo</Text>
+          <Text>Normal <Text bold>Bold</Text> Normal <Text italic>Italic</Text> Normal <Text underline>Underline</Text></Text>
+          <Text color="green">Green <Text color="yellow">Yellow</Text> <Text color="red">Red</Text> <Text color="cyan">Cyan</Text></Text>
+          <Text dim>Dimmed text looks like this — useful for hints</Text>
+        </Box>
       </Box>
-    </Section>
+    </Box>
   )
 }
 
-// ─── Background colors ────────────────────────────────────────────────────────
+// ─── Backgrounds ─────────────────────────────────────────────────────────────
 
 function BackgroundsSection() {
   return (
-    <Section title="Backgrounds">
-      <Box flexDirection="row" gap={1}>
-        <Box backgroundColor="red" paddingX={1}><Text color="white">red</Text></Box>
-        <Box backgroundColor="green" paddingX={1}><Text color="black">green</Text></Box>
-        <Box backgroundColor="blue" paddingX={1}><Text color="white">blue</Text></Box>
-        <Box backgroundColor="#c77dff" paddingX={1}><Text color="white">#c77dff</Text></Box>
-        <Box backgroundColor="rgb(255,200,0)" paddingX={1}><Text color="black">rgb(255,200,0)</Text></Box>
+    <Box flexDirection="column">
+      <SectionHeading title="Backgrounds" />
+      <Box flexDirection="row" gap={1} flexWrap="wrap">
+        {[
+          ['red',     'white'],
+          ['green',   'black'],
+          ['yellow',  'black'],
+          ['blue',    'white'],
+          ['magenta', 'white'],
+          ['cyan',    'black'],
+          ['white',   'black'],
+          ['gray',    'white'],
+        ].map(([bg, fg]) => (
+          <Box key={bg} backgroundColor={bg} paddingX={2} paddingY={1}>
+            <Text color={fg} bold>{bg}</Text>
+          </Box>
+        ))}
       </Box>
-    </Section>
+      <Box flexDirection="row" gap={1} marginTop={1} flexWrap="wrap">
+        {['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#c77dff','#ff9f43','#f8961e','#90e0ef'].map(h => (
+          <Box key={h} backgroundColor={h} paddingX={2} paddingY={1}>
+            <Text color="black">{h}</Text>
+          </Box>
+        ))}
+      </Box>
+      <Box flexDirection="row" gap={2} marginTop={1}>
+        <Box backgroundColor="rgb(40,40,80)" paddingX={3} paddingY={1} borderStyle="round" borderColor="blue">
+          <Text color="white" bold>Dark blue bg</Text>
+        </Box>
+        <Box backgroundColor="rgb(80,40,40)" paddingX={3} paddingY={1} borderStyle="round" borderColor="red">
+          <Text color="white" bold>Dark red bg</Text>
+        </Box>
+        <Box backgroundColor="rgb(40,80,40)" paddingX={3} paddingY={1} borderStyle="round" borderColor="green">
+          <Text color="white" bold>Dark green bg</Text>
+        </Box>
+      </Box>
+    </Box>
   )
 }
 
@@ -114,131 +209,385 @@ function BackgroundsSection() {
 
 function LayoutSection() {
   return (
-    <Section title="Layout (Flexbox)">
-      <Box flexDirection="row" gap={2}>
+    <Box flexDirection="column">
+      <SectionHeading title="Layout (Flexbox)" />
+      <Box flexDirection="row" gap={3}>
         {/* justify-content */}
-        <Box flexDirection="column">
-          <Text dim>justify-content</Text>
-          {(['flex-start', 'center', 'flex-end', 'space-between'] as const).map(j => (
-            <Box key={j} borderStyle="single" width={24} justifyContent={j}>
-              <Text color="yellow">A</Text>
-              <Text color="cyan">B</Text>
+        <Box flexDirection="column" gap={1}>
+          <Text dim bold>justifyContent</Text>
+          {(['flex-start', 'center', 'flex-end', 'space-between', 'space-around'] as const).map(j => (
+            <Box key={j} borderStyle="single" borderColor="gray" width={26} justifyContent={j}>
+              <Text color="yellow">▪</Text>
+              <Text color="cyan">▪</Text>
+              <Text color="green">▪</Text>
             </Box>
           ))}
         </Box>
-        {/* Spacer demo */}
-        <Box flexDirection="column">
-          <Text dim>Spacer</Text>
-          <Box borderStyle="single" width={20}>
-            <Text color="green">left</Text>
+        {/* align-items */}
+        <Box flexDirection="column" gap={1}>
+          <Text dim bold>alignItems</Text>
+          {(['flex-start', 'center', 'flex-end'] as const).map(a => (
+            <Box key={a} borderStyle="single" borderColor="gray" width={16} height={3} alignItems={a}>
+              <Text color="magenta">▪▪▪</Text>
+            </Box>
+          ))}
+        </Box>
+        {/* Spacer + nesting */}
+        <Box flexDirection="column" gap={1}>
+          <Text dim bold>Spacer / nesting</Text>
+          <Box borderStyle="single" borderColor="gray" width={24}>
+            <Text color="green">◀ left</Text>
             <Spacer />
-            <Text color="red">right</Text>
+            <Text color="red">right ▶</Text>
           </Box>
-          <Box borderStyle="single" width={20} flexDirection="column">
-            <Text color="green">top</Text>
-            <Spacer />
-            <Text color="red">bottom</Text>
+          <Box borderStyle="round" borderColor="cyan" width={24} padding={1}>
+            <Box borderStyle="single" borderColor="yellow" paddingX={1}>
+              <Text color="yellow">nested</Text>
+            </Box>
+          </Box>
+          <Box flexDirection="row" gap={1}>
+            {[1,2,3].map(n => (
+              <Box key={n} borderStyle="single" borderColor="blue" width={6} height={n+1} alignItems="center" justifyContent="center">
+                <Text color="blue">{n}</Text>
+              </Box>
+            ))}
           </Box>
         </Box>
       </Box>
-    </Section>
+    </Box>
   )
 }
 
 // ─── Focus ────────────────────────────────────────────────────────────────────
 
-function FocusableItem({ label, color }: { label: string; color: string }) {
+function FocusablePanel({ label, color, description }: { label: string; color: string; description: string }) {
   const { isFocused } = useFocus()
   return (
     <Box
+      flexDirection="column"
       borderStyle={isFocused ? 'round' : 'single'}
       borderColor={isFocused ? color : 'gray'}
-      paddingX={1}
+      paddingX={2}
+      paddingY={1}
+      width={18}
     >
-      <Text color={isFocused ? color : 'gray'} bold={isFocused}>
-        {label}{isFocused ? ' ◀' : ''}
+      <Text color={isFocused ? color : 'gray'} bold>
+        {isFocused ? '▶ ' : '  '}{label}
       </Text>
+      <Text dim>{description}</Text>
+      {isFocused && <Text color={color} dim>focused ✓</Text>}
     </Box>
   )
 }
 
 function FocusSection() {
   const { activeId } = useFocusManager()
+  const panels = [
+    { label: 'Alpha',   color: 'green',   description: 'panel one' },
+    { label: 'Beta',    color: 'yellow',  description: 'panel two' },
+    { label: 'Gamma',   color: 'magenta', description: 'panel three' },
+    { label: 'Delta',   color: 'cyan',    description: 'panel four' },
+    { label: 'Epsilon', color: 'blue',    description: 'panel five' },
+  ]
   return (
-    <Section title="Focus (Tab / Shift+Tab to cycle)">
+    <Box flexDirection="column">
+      <SectionHeading title="Focus Management" />
+      <Text dim marginBottom={1}>Tab / Shift+Tab to cycle focus between panels</Text>
       <Box flexDirection="row" gap={1}>
-        <FocusableItem label="Alpha" color="green" />
-        <FocusableItem label="Beta" color="yellow" />
-        <FocusableItem label="Gamma" color="magenta" />
-        <FocusableItem label="Delta" color="cyan" />
+        {panels.map(p => (
+          <FocusablePanel key={p.label} {...p} />
+        ))}
       </Box>
-      <Text dim>Active: {activeId ?? 'none'}</Text>
-    </Section>
+      <Box marginTop={1}>
+        <Text dim>Active ID: </Text>
+        <Text color="cyan">{activeId ?? 'none'}</Text>
+      </Box>
+    </Box>
   )
 }
 
-// ─── Live stats ───────────────────────────────────────────────────────────────
+// ─── Graph ────────────────────────────────────────────────────────────────────
+// Bar chart rendered directly to the Uint32Array buffer — bypasses React
+// reconciliation for individual bar cells, same technique as stress-test.tsx.
+
+// Bar colors by column (ANSI indices)
+const BAR_COLORS = [1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6]
+
+// Block characters for vertical bars (bottom to top)
+const FULL_BLOCK = '█'.codePointAt(0)!
+const SHADE_75   = '▓'.codePointAt(0)!
+const SHADE_50   = '▒'.codePointAt(0)!
+const SHADE_25   = '░'.codePointAt(0)!
+const SPACE      = 0x20
+
+/**
+ * Paint an animated bar chart into the buffer.
+ * Called from the 'render' event listener — paints into the region below
+ * the React-managed heading/axis rows.
+ */
+function paintGraph(
+  buffer: Uint32Array,
+  cols: number,
+  _rows: number,
+  startRow: number,    // first row available for bars
+  barRows: number,     // total bar height in rows
+  frame: number,
+) {
+  const BAR_COUNT = 12
+  const BAR_WIDTH = 3
+  const BAR_GAP   = 1
+  const TOTAL_WIDTH = BAR_COUNT * (BAR_WIDTH + BAR_GAP)
+  const startCol = Math.max(0, Math.floor((cols - TOTAL_WIDTH) / 2))
+
+  // Compute bar heights (0..barRows) driven by animated sine waves
+  const heights: number[] = []
+  for (let b = 0; b < BAR_COUNT; b++) {
+    const phase = (b / BAR_COUNT) * Math.PI * 2
+    const t = frame * 0.08
+    const v = (Math.sin(t + phase) * 0.5 + 0.5) *
+              (Math.sin(t * 0.37 + phase * 1.3) * 0.3 + 0.7)
+    heights.push(Math.max(1, Math.round(v * barRows)))
+  }
+
+  // Clear graph region first
+  for (let row = startRow; row < startRow + barRows; row++) {
+    for (let col = startCol; col < startCol + TOTAL_WIDTH; col++) {
+      const idx = (row * cols + col) * 2
+      buffer[idx] = SPACE
+      buffer[idx + 1] = (0 << 16) | (255 << 8) | 255
+    }
+  }
+
+  // Paint bars bottom-up
+  for (let b = 0; b < BAR_COUNT; b++) {
+    const barH = heights[b]
+    const fg = BAR_COLORS[b % BAR_COLORS.length]
+    const colStart = startCol + b * (BAR_WIDTH + BAR_GAP)
+
+    for (let row = startRow; row < startRow + barRows; row++) {
+      // distance from bottom of chart
+      const fromBottom = (startRow + barRows - 1) - row
+      const char = fromBottom < barH ? FULL_BLOCK : SPACE
+      const attr = (0 << 16) | (255 << 8) | fg
+
+      for (let dc = 0; dc < BAR_WIDTH; dc++) {
+        const col = colStart + dc
+        if (col >= cols) continue
+        const idx = (row * cols + col) * 2
+        buffer[idx] = char
+        buffer[idx + 1] = attr
+      }
+    }
+  }
+
+  // Paint bar labels (A–L) at the bottom row
+  const labelRow = startRow + barRows
+  if (labelRow * cols * 2 + cols * 2 <= buffer.length) {
+    for (let b = 0; b < BAR_COUNT; b++) {
+      const fg = BAR_COLORS[b % BAR_COLORS.length]
+      const colStart = startCol + b * (BAR_WIDTH + BAR_GAP) + 1
+      const idx = (labelRow * cols + colStart) * 2
+      if (idx + 1 < buffer.length) {
+        buffer[idx] = 65 + b  // 'A'..'L'
+        buffer[idx + 1] = (0 << 16) | (255 << 8) | fg
+      }
+    }
+  }
+}
+
+// How many rows the React heading occupies before the bars start
+const GRAPH_HEADER_ROWS = 5  // padding(1) + heading(1) + marginBottom(1) + title(1) + margin(1)
+
+function GraphSection({ frame, active }: { frame: number; active: boolean }) {
+  const { columns, rows } = useWindowSize()
+  // Reserve rows: outer padding(1 top) + header rows + status bar (~3) + label row(1) + padding(1 bottom)
+  const barRows = Math.max(4, rows - GRAPH_HEADER_ROWS - 6)
+
+  useEffect(() => {
+    if (!active) return
+    const app = (globalThis as any).__ratatatApp
+    if (!app) return
+
+    const onRender = (buffer: Uint32Array, w: number, h: number) => {
+      const f = (globalThis as any).__kitchenFrame ?? 0
+      paintGraph(buffer, w, h, GRAPH_HEADER_ROWS, barRows, f)
+    }
+    app.on('render', onRender)
+    return () => app.off('render', onRender)
+  }, [active, barRows])
+
+  const BAR_COUNT = 12
+  const BAR_WIDTH = 3
+  const BAR_GAP   = 1
+  const TOTAL_WIDTH = BAR_COUNT * (BAR_WIDTH + BAR_GAP)
+
+  // Compute heights for the value display
+  const heights: number[] = []
+  for (let b = 0; b < BAR_COUNT; b++) {
+    const phase = (b / BAR_COUNT) * Math.PI * 2
+    const t = frame * 0.08
+    const v = (Math.sin(t + phase) * 0.5 + 0.5) *
+              (Math.sin(t * 0.37 + phase * 1.3) * 0.3 + 0.7)
+    heights.push(Math.max(1, Math.round(v * barRows)))
+  }
+
+  const barColors = ['red','green','yellow','blue','magenta','cyan','white']
+
+  return (
+    <Box flexDirection="column">
+      <SectionHeading title="Animated Bar Chart" />
+      <Text dim>Sine-wave driven bars, painted directly to buffer (bypasses React reconciler)</Text>
+      <Box marginTop={1}>
+        <Text dim>Values: </Text>
+        {heights.map((h, i) => (
+          <Text key={i} color={barColors[i % barColors.length]}>{String(h).padStart(2)} </Text>
+        ))}
+      </Box>
+      {/* The bars themselves are painted into the buffer by paintGraph() above */}
+      {/* Reserve vertical space so React lays out the heading correctly */}
+      <Box height={barRows + 1} />
+    </Box>
+  )
+}
+
+// ─── Live ─────────────────────────────────────────────────────────────────────
 
 function LiveSection({ frame }: { frame: number }) {
   const { columns, rows } = useWindowSize()
   const now = new Date()
   const time = now.toTimeString().split(' ')[0]
+  const date = now.toDateString()
+
+  // Simple sparkline data (last 20 frame mod values)
+  const sparkData = Array.from({ length: 20 }, (_, i) => {
+    const f = frame - 19 + i
+    return Math.abs(Math.sin(f * 0.3) * 7) | 0
+  })
+  const sparkChars = ['▁','▂','▃','▄','▅','▆','▇','█']
 
   return (
-    <Section title="Live">
-      <Box flexDirection="row" gap={4}>
-        <Text>🕐 <Text color="green" bold>{time}</Text></Text>
-        <Text>Frame <Text color="cyan" bold>{frame}</Text></Text>
-        <Text>Terminal <Text color="yellow" bold>{columns}×{rows}</Text></Text>
+    <Box flexDirection="column">
+      <SectionHeading title="Live Stats" />
+      <Box flexDirection="column" gap={1}>
+        <Box flexDirection="row" gap={4} borderStyle="round" borderColor="cyan" paddingX={2} paddingY={1}>
+          <Box flexDirection="column">
+            <Text dim>Time</Text>
+            <Text color="green" bold>{time}</Text>
+          </Box>
+          <Box flexDirection="column">
+            <Text dim>Date</Text>
+            <Text color="cyan">{date}</Text>
+          </Box>
+          <Box flexDirection="column">
+            <Text dim>Frame</Text>
+            <Text color="yellow" bold>{frame}</Text>
+          </Box>
+          <Box flexDirection="column">
+            <Text dim>Terminal</Text>
+            <Text color="magenta" bold>{columns}×{rows}</Text>
+          </Box>
+        </Box>
+
+        <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={2} paddingY={1}>
+          <Text dim>Frame sparkline (sin wave)</Text>
+          <Box flexDirection="row">
+            {sparkData.map((v, i) => (
+              <Text key={i} color={v > 5 ? 'green' : v > 3 ? 'yellow' : 'red'}>
+                {sparkChars[v]}
+              </Text>
+            ))}
+          </Box>
+        </Box>
+
+        <Box flexDirection="row" gap={2}>
+          <Box flexDirection="column" borderStyle="single" borderColor="blue" paddingX={2} paddingY={1}>
+            <Text dim>ratatat</Text>
+            <Text color="blue" bold>React + Rust TUI</Text>
+          </Box>
+          <Box flexDirection="column" borderStyle="single" borderColor="magenta" paddingX={2} paddingY={1}>
+            <Text dim>benchmark</Text>
+            <Text color="magenta" bold>36× faster than Ink</Text>
+          </Box>
+          <Box flexDirection="column" borderStyle="single" borderColor="green" paddingX={2} paddingY={1}>
+            <Text dim>stress test</Text>
+            <Text color="green" bold>303 FPS sustained</Text>
+          </Box>
+        </Box>
       </Box>
-    </Section>
-  )
-}
-
-// ─── Status bar ───────────────────────────────────────────────────────────────
-
-function StatusBar() {
-  return (
-    <Box borderStyle="round" borderColor="gray" paddingX={2}>
-      <Text dim>Tab</Text><Text> cycle focus  </Text>
-      <Text dim>Ctrl+C / Q</Text><Text> quit</Text>
     </Box>
   )
 }
 
-// ─── App ──────────────────────────────────────────────────────────────────────
+// ─── Nav bar ─────────────────────────────────────────────────────────────────
+
+function NavBar({ current, total, name }: { current: number; total: number; name: string }) {
+  const dots = SECTIONS.map((s, i) => (
+    <Text key={s} color={i === current ? 'cyan' : 'gray'}>
+      {i === current ? '●' : '○'}
+    </Text>
+  ))
+  return (
+    <Box borderStyle="round" borderColor="gray" paddingX={2} justifyContent="space-between">
+      <Text dim>◀ ▶ navigate  </Text>
+      <Text dim>Tab focus  </Text>
+      <Text dim>Q quit</Text>
+      <Spacer />
+      <Box flexDirection="row" gap={1}>
+        {dots}
+      </Box>
+      <Spacer />
+      <Text color="cyan" bold>{name}</Text>
+      <Text dim>  {current + 1}/{total}</Text>
+    </Box>
+  )
+}
+
+// ─── App ─────────────────────────────────────────────────────────────────────
 
 function KitchenSink() {
   const { exit } = useApp()
+  const [sectionIdx, setSectionIdx] = useState(0)
   const [frame, setFrame] = useState(0)
 
-  // Tick once per second for the clock
+  // Tick every ~100ms for animations
   useEffect(() => {
-    const t = setInterval(() => setFrame(f => f + 1), 1000)
+    const t = setInterval(() => setFrame(f => f + 1), 100)
     return () => clearInterval(t)
   }, [])
 
+  // Keep global frame ref for buffer painter
+  useEffect(() => {
+    ;(globalThis as any).__kitchenFrame = frame
+  })
+
   useInput((input, key) => {
     if (input === 'q' || input === 'Q') exit()
+    if (key.rightArrow) setSectionIdx(i => Math.min(i + 1, SECTIONS.length - 1))
+    if (key.leftArrow)  setSectionIdx(i => Math.max(i - 1, 0))
   })
+
+  const currentSection = SECTIONS[sectionIdx]
+  const isGraphActive = currentSection === 'Graph'
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Box marginBottom={1}>
-        <Text bold color="magenta">★ ratatat kitchen sink  </Text>
-        <Text dim>— every feature in one place</Text>
+      {/* Section content */}
+      <Box flexDirection="column" flexGrow={1}>
+        {currentSection === 'Borders'     && <BordersSection />}
+        {currentSection === 'Colors'      && <ColorsSection />}
+        {currentSection === 'Text'        && <TextSection />}
+        {currentSection === 'Backgrounds' && <BackgroundsSection />}
+        {currentSection === 'Layout'      && <LayoutSection />}
+        {currentSection === 'Focus'       && <FocusSection />}
+        {currentSection === 'Graph'       && <GraphSection frame={frame} active={isGraphActive} />}
+        {currentSection === 'Live'        && <LiveSection frame={frame} />}
       </Box>
 
-      <BordersSection />
-      <ColorsSection />
-      <TextStylesSection />
-      <BackgroundsSection />
-      <LayoutSection />
-      <FocusSection />
-      <LiveSection frame={frame} />
-      <StatusBar />
+      {/* Navigation bar */}
+      <NavBar current={sectionIdx} total={SECTIONS.length} name={currentSection} />
     </Box>
   )
 }
 
-render(<KitchenSink />)
+const { app } = render(<KitchenSink />)
+;(globalThis as any).__ratatatApp = app

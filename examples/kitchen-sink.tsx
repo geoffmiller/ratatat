@@ -470,48 +470,54 @@ function LiveSection() {
   const { columns, rows } = useWindowSize()
   const [frame, setFrame] = useState(0)
 
-  // 100ms interval is plenty for a clock/sparkline — no need for setTimeout(0)
-  // which would generate millions of React scheduler perf entries per minute
   useEffect(() => {
     const t = setInterval(() => setFrame(f => f + 1), 100)
     return () => clearInterval(t)
   }, [])
+
   const now = new Date()
   const time = now.toTimeString().split(' ')[0]
   const date = now.toDateString()
 
-  // Simple sparkline data (last 20 frame mod values)
-  const sparkData = Array.from({ length: 20 }, (_, i) => {
-    const f = frame - 19 + i
+  const sparkData = Array.from({ length: 40 }, (_, i) => {
+    const f = frame - 39 + i
     return Math.abs(Math.sin(f * 0.3) * 7) | 0
   })
   const sparkChars = ['▁','▂','▃','▄','▅','▆','▇','█']
 
-  return (
-    <Box flexDirection="column">
-      <SectionHeading title="Live Stats" />
-      <Box flexDirection="column" gap={1}>
-        <Box flexDirection="row" gap={4} borderStyle="round" borderColor="cyan" paddingX={2} paddingY={1}>
-          <Box flexDirection="column">
-            <Text dim>Time</Text>
-            <Text color="green" bold>{time}</Text>
-          </Box>
-          <Box flexDirection="column">
-            <Text dim>Date</Text>
-            <Text color="cyan">{date}</Text>
-          </Box>
-          <Box flexDirection="column">
-            <Text dim>Frame</Text>
-            <Text color="yellow" bold>{frame}</Text>
-          </Box>
-          <Box flexDirection="column">
-            <Text dim>Terminal</Text>
-            <Text color="magenta" bold>{columns}×{rows}</Text>
-          </Box>
-        </Box>
+  // Benchmark data — matches bench.js output
+  const benchRows = [
+    { label: 'initial mount (simple)',   ratatat: '67,630', ink: '8,215',  speedup: '8.2×'  },
+    { label: 'initial mount (complex)',  ratatat: '41,253', ink: '1,421',  speedup: '29×'   },
+    { label: 'rerender (simple)',        ratatat: '95,175', ink: '8,095',  speedup: '11.8×' },
+    { label: 'rerender (complex)',       ratatat: '49,852', ink: '1,384',  speedup: '36×'   },
+    { label: 'p99 latency (complex)',    ratatat: '23 µs',  ink: '1,586 µs', speedup: '68×' },
+  ]
 
-        <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={2} paddingY={1}>
-          <Text dim>Frame sparkline (sin wave)</Text>
+  return (
+    <Box flexDirection="column" gap={1}>
+      <SectionHeading title="Live Stats" />
+
+      {/* Clock row */}
+      <Box flexDirection="row" gap={3} borderStyle="round" borderColor="cyan" paddingX={2} paddingY={1}>
+        <Box flexDirection="column" width={12}>
+          <Text dim>Time</Text>
+          <Text color="green" bold>{time}</Text>
+        </Box>
+        <Box flexDirection="column" width={22}>
+          <Text dim>Date</Text>
+          <Text color="cyan">{date}</Text>
+        </Box>
+        <Box flexDirection="column" width={10}>
+          <Text dim>Frame</Text>
+          <Text color="yellow" bold>{frame}</Text>
+        </Box>
+        <Box flexDirection="column" width={14}>
+          <Text dim>Terminal</Text>
+          <Text color="magenta" bold>{columns}×{rows}</Text>
+        </Box>
+        <Box flexDirection="column">
+          <Text dim>Sparkline</Text>
           <Box flexDirection="row">
             {sparkData.map((v, i) => (
               <Text key={i} color={v > 5 ? 'green' : v > 3 ? 'yellow' : 'red'}>
@@ -520,20 +526,35 @@ function LiveSection() {
             ))}
           </Box>
         </Box>
+      </Box>
 
-        <Box flexDirection="row" gap={2}>
-          <Box flexDirection="column" borderStyle="single" borderColor="blue" paddingX={2} paddingY={1}>
-            <Text dim>ratatat</Text>
-            <Text color="blue" bold>React + Rust TUI</Text>
+      {/* Benchmark table */}
+      <Box flexDirection="column" borderStyle="round" borderColor="yellow" paddingX={2} paddingY={1}>
+        <Box flexDirection="row" marginBottom={1}>
+          <Text bold color="yellow">ratatat vs Ink — benchmark  </Text>
+          <Text dim>ops/sec, higher is better</Text>
+        </Box>
+        {/* Header */}
+        <Box flexDirection="row">
+          <Text dim bold>{'Suite'.padEnd(28)}</Text>
+          <Text dim bold>{'ratatat'.padEnd(14)}</Text>
+          <Text dim bold>{'Ink'.padEnd(14)}</Text>
+          <Text dim bold>Speedup</Text>
+        </Box>
+        <Box flexDirection="row"><Text dim>{'─'.repeat(62)}</Text></Box>
+        {/* Rows */}
+        {benchRows.map((r, i) => (
+          <Box key={i} flexDirection="row">
+            <Text color="white">{r.label.padEnd(28)}</Text>
+            <Text color="cyan"  bold>{r.ratatat.padEnd(14)}</Text>
+            <Text color="gray">{r.ink.padEnd(14)}</Text>
+            <Text color="green" bold>🚀 {r.speedup}</Text>
           </Box>
-          <Box flexDirection="column" borderStyle="single" borderColor="magenta" paddingX={2} paddingY={1}>
-            <Text dim>benchmark</Text>
-            <Text color="magenta" bold>36× faster than Ink</Text>
-          </Box>
-          <Box flexDirection="column" borderStyle="single" borderColor="green" paddingX={2} paddingY={1}>
-            <Text dim>stress test</Text>
-            <Text color="green" bold>303 FPS sustained</Text>
-          </Box>
+        ))}
+        <Box flexDirection="row" marginTop={1}>
+          <Text dim>stress test  </Text>
+          <Text color="green" bold>303 FPS sustained</Text>
+          <Text dim>  ·  8,648 cells/frame  ·  188×50 terminal  ·  zero memory growth</Text>
         </Box>
       </Box>
     </Box>

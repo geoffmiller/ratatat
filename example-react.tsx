@@ -25,9 +25,8 @@ const App = () => {
         if (key.upArrow) setCounter(c => c + 1);
         if (key.downArrow) setCounter(c => c - 1);
         
-        if (char === '\u0003' || char === 'q') {
-             app.stop();
-             process.exit(0);
+        if (char === 'q') {
+             app.quit();
         }
     });
 

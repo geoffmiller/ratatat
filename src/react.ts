@@ -73,6 +73,20 @@ export function render(element: React.ReactElement) {
   // Wire reconciler commits → requestRender (every React state update triggers a repaint)
   setOnAfterCommit(() => app.requestRender());
 
+  // Ctrl+C: clean shutdown — restore terminal, stop stdin, exit
+  input.on('exit', () => {
+    app.stop();
+    input.stop();
+    process.exit(0);
+  });
+
+  // app.quit(): programmatic clean exit from useApp()
+  app.on('quit', () => {
+    app.stop();
+    input.stop();
+    process.exit(0);
+  });
+
   input.start();
   app.start();
 

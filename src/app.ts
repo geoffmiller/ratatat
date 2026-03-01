@@ -30,6 +30,11 @@ export class RatatatApp extends EventEmitter {
     this.isRunning = true;
   }
 
+  /** Request a clean exit — restores terminal, stops input, exits the process. */
+  quit() {
+    this.emit('quit');
+  }
+
   /** Exits raw mode + alternate screen. */
   stop() {
     this.isRunning = false;

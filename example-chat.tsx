@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { Box, Text, render, useInput, useApp } from './dist/index.js';
+import { Box, Text, render, useInput } from './dist/index.js';
 
 // React 18 Scheduler Polyfills for Node
 if (typeof global !== 'undefined' && !global.document) {
@@ -20,7 +20,6 @@ let messageId = 0;
 
 function ChatApp() {
 	const [input, setInput] = useState('');
-	const app = useApp();
 
 	const [messages, setMessages] = useState<
 		Array<{
@@ -43,11 +42,7 @@ function ChatApp() {
 			}
 		} else if (key.backspace || key.delete) {
 			setInput(currentInput => currentInput.slice(0, -1));
-		} else if (character === '\u0003') {
-           // Ctrl+C
-           app.stop();
-           process.exit(0);
-        } else {
+		} else {
 			setInput(currentInput => currentInput + character);
 		}
 	});

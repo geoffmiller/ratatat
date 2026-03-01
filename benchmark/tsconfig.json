@@ -1,10 +1,17 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "moduleResolution": "NodeNext",
-    "module": "NodeNext",
-    "outDir": "lib"
+    "target": "ESNext",
+    "strict": false,
+    "moduleResolution": "node",
+    "module": "ESNext",
+    "outDir": ".",
+    "rootDir": ".",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
-  "include": ["."],
-  "exclude": ["lib"]
+  "files": ["bench.ts"],
+  "exclude": []
 }

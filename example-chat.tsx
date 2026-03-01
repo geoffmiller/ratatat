@@ -49,7 +49,7 @@ function ChatApp() {
 
 	return (
 		<Box flexDirection="column" padding={1} width={80} height={24} borderStyle="round" borderColor={2}>
-            <Box flexDirection="column" height={20} borderStyle="single" borderColor={4} padding={1}>
+            <Box flexDirection="column" height={18} borderStyle="single" borderColor={4} padding={1}>
 				{messages.map(message => (
 					<Text fg={255} bg={0} key={message.id}>{message.text}</Text>
 				))}

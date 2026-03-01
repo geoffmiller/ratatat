@@ -130,7 +130,17 @@ const hostConfig: ReactReconciler.HostConfig<
   },
 
   prepareUpdate(instance, type, oldProps, newProps, rootContainer, hostContext) {
-    return true; // Always update for MVP
+    // Return null if props haven't changed — tells React to skip commitUpdate
+    // for this node. This is critical for performance: returning true always
+    // causes React to enqueue a fiber update for every node every frame,
+    // leading to unbounded memory growth under high-frequency renders.
+    const oldKeys = Object.keys(oldProps).filter(k => k !== 'children')
+    const newKeys = Object.keys(newProps).filter(k => k !== 'children')
+    if (oldKeys.length !== newKeys.length) return true
+    for (const key of newKeys) {
+      if (oldProps[key] !== newProps[key]) return true
+    }
+    return null
   },
 
   commitUpdate(instance, type, prevProps, nextProps, internalHandle) {

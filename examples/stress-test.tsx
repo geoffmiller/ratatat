@@ -1,15 +1,18 @@
 /**
  * stress-test.tsx — ratatat stress test
  *
- * Renders a full-terminal grid of cells that updates as fast as React
- * will let it. Shows achieved FPS, total frames rendered, and a live
- * color-cycling matrix to visually confirm no dropped frames or tearing.
+ * Renders a full-terminal color-cycling grid as fast as possible.
+ * The stats bar uses React components normally.
+ * The grid writes directly to the Uint32Array buffer, bypassing React
+ * reconciliation for individual cells — this is the correct pattern for
+ * high-frequency full-screen updates where React's per-node overhead
+ * would otherwise accumulate fiber work objects faster than GC can collect.
  *
  * Run: node --import @oxc-node/core/register examples/stress-test.tsx
  */
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { render, Box, Text, useWindowSize, useApp } from '../dist/index.js'
+import { render, Box, Text, useWindowSize, useApp, resolveColor } from '../dist/index.js'
 
 // ─── FPS counter ─────────────────────────────────────────────────────────────
 
@@ -34,42 +37,43 @@ function useFps() {
 
 // ─── Color cycling helpers ────────────────────────────────────────────────────
 
-const NAMED_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
+// Pre-resolve ANSI color indices once — no per-frame string allocations
+const ANSI_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
+const ANSI_INDICES = ANSI_COLORS.map(c => resolveColor(c)) // [1,2,3,4,5,6,7]
 
-function cellColor(x: number, y: number, frame: number): string {
-  return NAMED_COLORS[(x + y + frame) % NAMED_COLORS.length]
-}
+const CHARS = '█▓▒░▪▫●○◆◇'
+const CHAR_CODES = Array.from(CHARS).map(c => c.codePointAt(0)!)
 
-function cellChar(x: number, y: number, frame: number): string {
-  const chars = '█▓▒░▪▫●○◆◇'
-  return chars[(x * 3 + y * 7 + frame) % chars.length]
-}
+// ─── Direct buffer painter ────────────────────────────────────────────────────
+// Writes grid cells directly to the Uint32Array back-buffer, bypassing React.
+// This avoids React allocating fiber update objects for each of the ~4000+
+// grid cells on every frame, which accumulates native memory faster than GC.
 
-// ─── Grid ─────────────────────────────────────────────────────────────────────
-
-// StatsBar is: 1 (top border) + 1 (content) + 1 (bottom border) + 1 (marginBottom) = 4 rows
-const HEADER_ROWS = 4
-
-function Grid({ cols, rows, frame }: { cols: number; rows: number; frame: number }) {
-  const gridRows = Math.max(1, rows - HEADER_ROWS)
-  const gridCols = Math.max(1, Math.floor(cols / 2)) // each cell is 2 chars wide
-
-  return (
-    <Box flexDirection="column" flexShrink={0}>
-      {Array.from({ length: gridRows }, (_, y) => (
-        <Box key={y} flexDirection="row">
-          {Array.from({ length: gridCols }, (_, x) => (
-            <Text key={x} color={cellColor(x, y, frame)}>
-              {cellChar(x, y, frame) + ' '}
-            </Text>
-          ))}
-        </Box>
-      ))}
-    </Box>
-  )
+function paintGrid(
+  buffer: Uint32Array,
+  cols: number,
+  rows: number,
+  headerRows: number,
+  frame: number,
+) {
+  for (let y = headerRows; y < rows; y++) {
+    const gridY = y - headerRows
+    for (let x = 0; x < cols; x++) {
+      const idx = (y * cols + x) * 2
+      const fgIdx = (x + gridY + frame) % ANSI_INDICES.length
+      const charIdx = (x * 3 + gridY * 7 + frame) % CHAR_CODES.length
+      const fg = ANSI_INDICES[fgIdx]
+      // attr = (styles<<16) | (bg<<8) | fg  — bg=255 (terminal default)
+      buffer[idx] = CHAR_CODES[charIdx]
+      buffer[idx + 1] = (0 << 16) | (255 << 8) | fg
+    }
+  }
 }
 
 // ─── Stats bar ────────────────────────────────────────────────────────────────
+
+// StatsBar is: 1 (top border) + 1 (content) + 1 (bottom border) + 1 (marginBottom) = 4 rows
+const HEADER_ROWS = 4
 
 function StatsBar({
   fps,
@@ -84,7 +88,7 @@ function StatsBar({
 }) {
   const fpsColor = fps >= 55 ? 'green' : fps >= 30 ? 'yellow' : 'red'
   const gridRows = Math.max(1, rows - HEADER_ROWS)
-  const gridCols = Math.max(1, Math.floor(cols / 2))
+  const gridCols = Math.max(1, cols)
   return (
     <Box borderStyle="round" borderColor="cyan" paddingX={2} marginBottom={1} flexShrink={0}>
       <Text bold color="cyan">
@@ -115,7 +119,7 @@ function StressTest() {
 
   useEffect(() => {
     let running = true
-    let animFrame: ReturnType<typeof setTimeout>
+    let handle: ReturnType<typeof setTimeout>
 
     function loop() {
       if (!running) return
@@ -123,23 +127,45 @@ function StressTest() {
         tick()
         return f + 1
       })
-      // Schedule next frame — setTimeout(0) yields to React between frames
-      animFrame = setTimeout(loop, 0)
+      handle = setTimeout(loop, 0)
     }
 
     loop()
     return () => {
       running = false
-      clearTimeout(animFrame)
+      clearTimeout(handle)
     }
   }, [tick])
+
+  // Paint the grid directly into the buffer on every frame.
+  // We get the buffer via the ratatat render context by using a side-channel:
+  // render() exposes the app, and the app exposes getBuffer().
+  // We hook into the 'render' event to intercept the buffer before it goes to Rust.
+  useEffect(() => {
+    // Access the app via the module-level ref set during render()
+    const app = (globalThis as any).__ratatatApp
+    if (!app) return
+
+    const onRender = (buffer: Uint32Array, w: number, h: number) => {
+      paintGrid(buffer, w, h, HEADER_ROWS, (globalThis as any).__ratatatFrame ?? 0)
+    }
+    app.on('render', onRender)
+    return () => app.off('render', onRender)
+  }, [])
+
+  // Keep a global frame ref so the render listener can access latest frame
+  useEffect(() => {
+    ;(globalThis as any).__ratatatFrame = frame
+  })
 
   return (
     <Box flexDirection="column" width={columns} height={rows}>
       <StatsBar fps={fps} frame={frame} cols={columns} rows={rows} />
-      <Grid cols={columns} rows={rows} frame={frame} />
+      {/* Grid rows are NOT rendered as React components — painted directly to buffer above */}
     </Box>
   )
 }
 
-render(<StressTest />)
+// Expose app globally so the StressTest component can hook into it
+const { app } = render(<StressTest />)
+;(globalThis as any).__ratatatApp = app

@@ -24,8 +24,20 @@ export const NAMED_COLORS: Record<string, number> = {
 };
 
 /**
+ * Map an RGB triple (0-255 each) to the nearest ANSI 256-color index.
+ * Colors 16-231 form a 6×6×6 RGB cube: index = 16 + 36r + 6g + b (r/g/b each 0-5).
+ */
+function rgbToAnsi256(r: number, g: number, b: number): number {
+  const ri = Math.round(r / 51);
+  const gi = Math.round(g / 51);
+  const bi = Math.round(b / 51);
+  return 16 + 36 * ri + 6 * gi + bi;
+}
+
+/**
  * Resolve a color value to an ANSI 256-color index.
- * Accepts: number (pass-through), string name ("green"), or undefined (→ 255 = terminal default).
+ * Accepts: number (pass-through), string name ("green"), hex ("#FF8800"),
+ * rgb() ("rgb(255,136,0)"), ansi256() ("ansi256(42)"), or undefined (→ 255 = terminal default).
  */
 export function resolveColor(color: number | string | undefined): number {
   if (color === undefined) return 255;
@@ -34,6 +46,16 @@ export function resolveColor(color: number | string | undefined): number {
   // ansi256(N) syntax
   const ansiMatch = /^ansi256\(\s*(\d+)\s*\)$/.exec(color);
   if (ansiMatch) return Number(ansiMatch[1]);
+  // #RRGGBB hex
+  const hexMatch = /^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/.exec(color);
+  if (hexMatch) return rgbToAnsi256(
+    parseInt(hexMatch[1]!, 16),
+    parseInt(hexMatch[2]!, 16),
+    parseInt(hexMatch[3]!, 16)
+  );
+  // rgb(R, G, B)
+  const rgbMatch = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/.exec(color);
+  if (rgbMatch) return rgbToAnsi256(Number(rgbMatch[1]), Number(rgbMatch[2]), Number(rgbMatch[3]));
   return 255; // unrecognised → terminal default
 }
 

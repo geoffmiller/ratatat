@@ -76,9 +76,9 @@ const hostConfig: ReactReconciler.HostConfig<
   createInstance(type, props, rootContainer, hostContext, internalHandle) {
     const node = new LayoutNode();
     
-    // Apply Yoga styles
+    // Apply Yoga styles — Box defaults to flexDirection:'row' (like CSS, unlike Yoga's column default)
     const stylesToApply: Styles = { ...props };
-    if (type === 'text' && stylesToApply.flexDirection === undefined) {
+    if (stylesToApply.flexDirection === undefined) {
       stylesToApply.flexDirection = 'row';
     }
     applyStyles(node.yogaNode, stylesToApply);

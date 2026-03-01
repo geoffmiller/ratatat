@@ -1,5 +1,6 @@
 #![deny(clippy::all)]
 
+#[cfg(not(unix))] // Move the import specific to non-unix
 use std::io::{self, Write};
 use napi_derive::napi;
 use napi::bindgen_prelude::Uint32Array;
@@ -40,16 +41,16 @@ impl Renderer {
 
         let mut current_x: i32 = -1;
         let mut current_y: i32 = -1;
-        
+
         let mut last_fg = 255;
         let mut last_bg = 255;
         let mut last_style = 0;
-        
+
         // Ensure starting state is reset
         output.push_str("\x1b[0m");
 
         let cols = self.width as usize;
-        
+
         for i in 0..((self.width as usize) * (self.height as usize)) {
             let offset = i * 2;
             let char_code = back_buffer[offset];
@@ -72,14 +73,14 @@ impl Renderer {
                 let fg = (attr_code & 0xFF) as u8;
                 let bg = ((attr_code >> 8) & 0xFF) as u8;
                 let styles = ((attr_code >> 16) & 0xFF) as u8;
-                
+
                 let ch = char::from_u32(char_code).unwrap_or(' ');
 
                 // Diff Styles
                 if styles != last_style {
                     output.push_str(&ansi::get_styles_ansi(styles));
                     last_style = styles;
-                    
+
                     // Style reset can clear colors, so force color redraw
                     if styles == 0 {
                         last_fg = 255;
@@ -92,7 +93,7 @@ impl Renderer {
                     output.push_str(&ansi::get_fg_ansi(fg));
                     last_fg = fg;
                 }
-                
+
                 if bg != last_bg {
                     output.push_str(&ansi::get_bg_ansi(bg));
                     last_bg = bg;
@@ -125,11 +126,6 @@ impl Renderer {
 mod tests {
     use super::*;
 
-    // Helper to pack a cell legacy syntax, but now not used as much
-    fn pack(ch: char, fg: u8, bg: u8, styles: u8) -> u64 {
-        (ch as u64) | ((fg as u64) << 32) | ((bg as u64) << 40) | ((styles as u64) << 48)
-    }
-
     #[test]
     fn test_diffing_engine_empty() {
         let mut renderer = Renderer::new(10, 10);
@@ -147,7 +143,7 @@ mod tests {
         // offset 22, 23
         back_buffer[22] = 'A' as u32; 
         back_buffer[23] = ((0 as u32) << 16) | ((2 as u32) << 8) | (1 as u32);
-        
+
         let diff = renderer.generate_diff(&back_buffer);
         // Should contain reset + move_cursor + fg + bg + 'A'
         assert!(diff.contains("\x1b[2;2H")); // Move cursor to (1,1) -> row 2, col 2

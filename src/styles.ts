@@ -36,7 +36,7 @@ export type Styles = {
 
   alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline';
   alignSelf?: 'flex-start' | 'center' | 'flex-end' | 'auto' | 'stretch' | 'baseline';
-  alignContent?: 'flex-start' | 'flex-end' | 'center' | 'stretch' | 'space-between' | 'space-around' | 'space-evenly';
+  alignContent?: 'flex-start' | 'flex-end' | 'center' | 'stretch' | 'space-between' | 'space-around';
   justifyContent?: 'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly' | 'center';
 
   width?: number | string;
@@ -169,7 +169,7 @@ const applyFlexStyles = (node: YogaNode, style: Styles): void => {
     const map: Record<string, any> = {
       'flex-start': Yoga.JUSTIFY_FLEX_START, 'center': Yoga.JUSTIFY_CENTER,
       'flex-end': Yoga.JUSTIFY_FLEX_END, 'space-between': Yoga.JUSTIFY_SPACE_BETWEEN,
-      'space-around': Yoga.JUSTIFY_SPACE_AROUND
+      'space-around': Yoga.JUSTIFY_SPACE_AROUND, 'space-evenly': Yoga.JUSTIFY_SPACE_EVENLY
     };
     node.setJustifyContent(map[style.justifyContent || 'flex-start']);
   }

@@ -33,7 +33,7 @@
     ]
   },
   "engines": {
-    "node": ">= 6.14.2 < 7 || >= 8.11.2 < 9 || >= 9.11.0 < 10 || >= 10.0.0"
+    "node": ">=18"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -56,6 +56,23 @@
     "version": "napi version",
     "prepare": "husky"
   },
+  "ava": {
+    "files": [
+      "__test__/**/*.spec.ts"
+    ],
+    "extensions": {
+      "ts": "module"
+    },
+    "timeout": "2m",
+    "workerThreads": false,
+    "environmentVariables": {
+      "OXC_TSCONFIG_PATH": "./__test__/tsconfig.json"
+    },
+    "nodeArguments": [
+      "--import",
+      "@oxc-node/core/register"
+    ]
+  },
   "devDependencies": {
     "@emnapi/core": "^1.5.0",
     "@emnapi/runtime": "^1.5.0",
@@ -76,8 +93,19 @@
     "npm-run-all2": "^8.0.4",
     "oxlint": "^1.14.0",
     "prettier": "^3.6.2",
+    "react-test-renderer": "^19.2.4",
     "tinybench": "^6.0.0",
     "typescript": "^5.9.2"
+  },
+  "type": "module",
+  "dependencies": {
+    "cli-boxes": "^4.0.1",
+    "eventemitter3": "^5.0.4",
+    "events": "^3.3.0",
+    "react": "^19.2.4",
+    "react-reconciler": "^0.33.0",
+    "scheduler": "^0.27.0",
+    "yoga-layout-prebuilt": "^1.10.0"
   },
   "lint-staged": {
     "*.@(js|ts|tsx)": [
@@ -90,20 +118,6 @@
       "taplo format"
     ]
   },
-  "ava": {
-    "extensions": {
-      "ts": "module"
-    },
-    "timeout": "2m",
-    "workerThreads": false,
-    "environmentVariables": {
-      "OXC_TSCONFIG_PATH": "./__test__/tsconfig.json"
-    },
-    "nodeArguments": [
-      "--import",
-      "@oxc-node/core/register"
-    ]
-  },
   "prettier": {
     "printWidth": 120,
     "semi": false,
@@ -111,14 +125,5 @@
     "singleQuote": true,
     "arrowParens": "always"
   },
-  "packageManager": "yarn@4.12.0",
-  "dependencies": {
-    "cli-boxes": "^4.0.1",
-    "eventemitter3": "^5.0.4",
-    "events": "^3.3.0",
-    "react": "^19.2.4",
-    "react-reconciler": "^0.33.0",
-    "scheduler": "^0.27.0",
-    "yoga-layout-prebuilt": "^1.10.0"
-  }
+  "packageManager": "yarn@4.12.0"
 }

@@ -1,6 +1,8 @@
 import EventEmitter from 'eventemitter3';
 
 export class InputParser extends EventEmitter {
+  private _boundHandleData: ((data: string) => void) | null = null;
+
   constructor(private stdin: NodeJS.ReadStream) {
     super();
   }
@@ -9,13 +11,17 @@ export class InputParser extends EventEmitter {
     this.stdin.setRawMode(true);
     this.stdin.resume();
     this.stdin.setEncoding('utf8');
-    this.stdin.on('data', this.handleData.bind(this));
+    this._boundHandleData = this.handleData.bind(this);
+    this.stdin.on('data', this._boundHandleData);
   }
 
   stop() {
     this.stdin.setRawMode(false);
     this.stdin.pause();
-    this.stdin.removeListener('data', this.handleData.bind(this));
+    if (this._boundHandleData) {
+      this.stdin.removeListener('data', this._boundHandleData);
+      this._boundHandleData = null;
+    }
   }
 
   private handleData(data: string) {
@@ -43,7 +49,7 @@ export class InputParser extends EventEmitter {
         const x = parseInt(match[2]) - 1; // 1-indexed to 0-indexed
         const y = parseInt(match[3]) - 1;
         const isRelease = match[4] === 'm';
-        
+
         // Emulate simple Left Click
         if (buttonCode === 0 || buttonCode === 32) {
           if (!isRelease) {

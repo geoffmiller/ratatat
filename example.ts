@@ -9,22 +9,27 @@ let cursorY = 10;
 
 // Setup Rendering Loop Payload
 app.on('render', (buffer: Uint32Array, width: number, height: number) => {
-  // Clear buffer (Fill with spaces and transparent/black BG)
-  // For production this is done natively, but for MVP JS clear is fine
-  const spaceCell = Cell.pack(' ', 255, 0, 0); 
-  buffer.fill(spaceCell);
+  // Clear buffer — 2 u32 slots per cell: [charCode, attrCode]
+  for (let i = 0; i < width * height; i++) {
+    buffer[i * 2] = 32;          // space char code
+    buffer[i * 2 + 1] = 0x00FFFF; // default fg=255, bg=255, styles=0
+  }
 
-  // Draw a bouncing box in the middle to prove 60fps renders are smooth
+  // Draw a message at row 2, col 5. BG=2 (green), FG=15 (white), Style=1 (bold)
   const msg = "Hello from Ratatat Rust Native Engine!";
-  for(let i=0; i<msg.length; i++) {
-    // Write characters. BG=2 (green), FG=15(white), Style=1(Bold)
-    buffer[2 * width + 5 + i] = Cell.pack(msg[i], 15, 2, 1);
+  for (let i = 0; i < msg.length; i++) {
+    const [ch, attr] = Cell.pack(msg[i], 15, 2, 1);
+    const idx = (2 * width + 5 + i) * 2;
+    buffer[idx] = ch;
+    buffer[idx + 1] = attr;
   }
 
   // Draw the mouse cursor
-  const cursorCell = Cell.pack('X', 1, 255, 1); // Red X, Bold
+  const [ch, attr] = Cell.pack('X', 1, 255, 1); // Red X, Bold
   if (cursorX >= 0 && cursorX < width && cursorY >= 0 && cursorY < height) {
-    buffer[cursorY * width + cursorX] = cursorCell;
+    const idx = (cursorY * width + cursorX) * 2;
+    buffer[idx] = ch;
+    buffer[idx + 1] = attr;
   }
 });
 

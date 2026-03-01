@@ -1,27 +1,40 @@
 /**
- * Bit Layout (Little-Endian)
- * [31 .. 24] | [23 .. 16] | [15 ..  8] | [ 7 ..  0]
- *    STYLES  |  BG COLOR  |  FG COLOR  | ASCII CHAR
+ * 2×u32 per-cell back-buffer layout:
+ *   buffer[idx * 2]     = charCode  (Unicode codepoint, u32)
+ *   buffer[idx * 2 + 1] = attrCode  = (styles << 16) | (bg << 8) | fg
  */
 export const Cell = {
-  pack(char: string, fg: number = 255, bg: number = 255, styles: number = 0): number {
-    return (char.charCodeAt(0) & 0xff) | ((fg & 0xff) << 8) | ((bg & 0xff) << 16) | ((styles & 0xff) << 24)
+  /**
+   * Pack a cell into a [charCode, attrCode] tuple.
+   * charCode = char.charCodeAt(0)
+   * attrCode = (styles & 0xFF) << 16 | (bg & 0xFF) << 8 | (fg & 0xFF)
+   *
+   * Write to buffer as: buffer[idx*2] = charCode; buffer[idx*2+1] = attrCode
+   */
+  pack(char: string, fg: number = 255, bg: number = 255, styles: number = 0): [number, number] {
+    const charCode = char.charCodeAt(0)
+    const attrCode = ((styles & 0xff) << 16) | ((bg & 0xff) << 8) | (fg & 0xff)
+    return [charCode, attrCode]
   },
 
-  getChar(cell: number): string {
-    return String.fromCharCode(cell & 0xff)
+  /** Read the char character from a raw char slot value (buffer[idx*2]) */
+  getChar(charSlot: number): string {
+    return String.fromCharCode(charSlot)
   },
 
-  getFg(cell: number): number {
-    return (cell >> 8) & 0xff
+  /** Read fg color from an attr slot value (buffer[idx*2+1]) — bits 7:0 */
+  getFg(attrSlot: number): number {
+    return attrSlot & 0xff
   },
 
-  getBg(cell: number): number {
-    return (cell >> 16) & 0xff
+  /** Read bg color from an attr slot value (buffer[idx*2+1]) — bits 15:8 */
+  getBg(attrSlot: number): number {
+    return (attrSlot >> 8) & 0xff
   },
 
-  getStyles(cell: number): number {
-    return (cell >> 24) & 0xff
+  /** Read styles bitmask from an attr slot value (buffer[idx*2+1]) — bits 23:16 */
+  getStyles(attrSlot: number): number {
+    return (attrSlot >> 16) & 0xff
   },
 }
 

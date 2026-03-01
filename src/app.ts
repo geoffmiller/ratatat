@@ -20,48 +20,42 @@ export class RatatatApp extends EventEmitter {
     this.backBuffer = new Uint32Array(this.width * this.height * 2);
   }
 
+  /** Enters raw mode + alternate screen. Does NOT start any render loop. */
   start() {
     if (this.isRunning) return;
-    
+
     // Enter raw mode and alternate screen
     TerminalSetup.enter();
 
     this.isRunning = true;
-    
-    // Begin the render loop queue
-    this.queueRender();
   }
 
+  /** Exits raw mode + alternate screen. */
   stop() {
     this.isRunning = false;
     TerminalSetup.leave();
   }
 
+  /** Returns the shared Uint32Array back-buffer (width * height * 2 u32 cells). */
   getBuffer(): Uint32Array {
     return this.backBuffer;
   }
 
-  getSize(): { width: number, height: number } {
+  /** Returns current terminal dimensions. */
+  getSize(): { width: number; height: number } {
     return { width: this.width, height: this.height };
   }
 
-  // Request a render on the next Node.js tick
+  /**
+   * Schedules a single render on the next Node.js tick.
+   * Debounced: multiple calls before the tick fires result in exactly one render.
+   * Emits: 'render' (buffer: Uint32Array, width: number, height: number)
+   */
   requestRender() {
     if (!this.renderQueued && this.isRunning) {
       this.renderQueued = true;
       setTimeout(() => this.tick(), 0);
     }
-  }
-
-  private queueRender() {
-    if (!this.isRunning) return;
-    
-    // We use setTimeout to allow Node's async I/O events to process
-    // Targeting roughly 60 FPS (16.6ms)
-    setTimeout(() => {
-      this.tick();
-      this.queueRender();
-    }, 16);
   }
 
   private tick() {

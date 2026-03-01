@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useRef } from 'react';
 import { RatatatApp } from './app.js';
 import { InputParser } from './input.js';
 
@@ -22,8 +22,9 @@ export interface Key {
 export type InputHandler = (input: string, key: Key) => void;
 
 /**
- * React hook that lets components listen to keyboard inputs easily,
- * tracking arrow keys, enter, backspace natively.
+ * Subscribes to keyboard input. Uses a stable ref so the effect runs
+ * exactly once (on mount) regardless of how often the component re-renders.
+ * Always invokes the latest handler passed by the caller.
  */
 export const useInput = (handler: InputHandler) => {
   const context = useContext(RatatatContext);
@@ -32,6 +33,15 @@ export const useInput = (handler: InputHandler) => {
     throw new Error('useInput must be used within a Ratatat App environment');
   }
 
+  // 1. Stable ref initialized with the first handler value
+  const handlerRef = useRef<InputHandler>(handler);
+
+  // 2. Sync ref on every render (no dep array) — always up to date
+  useEffect(() => {
+    handlerRef.current = handler;
+  });
+
+  // 3. Stable effect: subscribe once per context instance, use ref inside
   useEffect(() => {
     const handleKeydown = (keyName: string) => {
       const isUp = keyName === 'up';
@@ -41,40 +51,46 @@ export const useInput = (handler: InputHandler) => {
       const isEnter = keyName === 'enter';
       const isBackspace = keyName === 'backspace';
 
-      handler('', {
+      handlerRef.current('', {
         upArrow: isUp,
         downArrow: isDown,
         leftArrow: isLeft,
         rightArrow: isRight,
         return: isEnter,
         backspace: isBackspace,
-        delete: false
+        delete: false,
       });
     };
 
     const handleData = (data: string) => {
-       // Printable characters fall through to this listener
-       // Ignore ANSI escape codes completely so it doesn't leak raw strings
-       if (data.startsWith('\u001b')) return;
-       // Ignore enter/carriage return as it's handled by keydown
-       if (data === '\r' || data === '\n') return;
-       // Ignore backspace payload (127) as it's processed previously if supported
-       if (data === '\u007f') {
-          handler('', {
-            upArrow: false, downArrow: false, leftArrow: false, rightArrow: false, return: false, backspace: true, delete: false
-          });
-          return;
-       }
+      // Printable characters fall through to this listener
+      // Ignore ANSI escape codes completely so it doesn't leak raw strings
+      if (data.startsWith('\u001b')) return;
+      // Ignore enter/carriage return as it's handled by keydown
+      if (data === '\r' || data === '\n') return;
+      // Ignore backspace payload (127) as it's processed previously if supported
+      if (data === '\u007f') {
+        handlerRef.current('', {
+          upArrow: false,
+          downArrow: false,
+          leftArrow: false,
+          rightArrow: false,
+          return: false,
+          backspace: true,
+          delete: false,
+        });
+        return;
+      }
 
-       handler(data, {
-         upArrow: false,
-         downArrow: false,
-         leftArrow: false,
-         rightArrow: false,
-         return: false,
-         backspace: false,
-         delete: false
-       });
+      handlerRef.current(data, {
+        upArrow: false,
+        downArrow: false,
+        leftArrow: false,
+        rightArrow: false,
+        return: false,
+        backspace: false,
+        delete: false,
+      });
     };
 
     context.input.on('keydown', handleKeydown);
@@ -84,7 +100,7 @@ export const useInput = (handler: InputHandler) => {
       context.input.off('keydown', handleKeydown);
       context.input.off('data', handleData);
     };
-  }, [context, handler]);
+  }, [context]);
 };
 
 /**

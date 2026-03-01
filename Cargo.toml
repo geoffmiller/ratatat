@@ -1,6 +1,5 @@
-
 [package]
-authors = ["LongYinan <lynweklm@gmail.com>"]
+authors = ["geoffmiller <godsendgeoff@gmail.com>"]
 edition = "2021"
 name = "ratatat"
 version = "0.1.0"
@@ -18,5 +17,3 @@ napi-derive = "3.0.0"
 napi-build = "2"
 
 [profile.release]
-lto = true
-strip = "symbols"

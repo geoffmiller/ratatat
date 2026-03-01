@@ -2,7 +2,7 @@
 // Ratatat port of ink/examples/counter
 // Original: https://github.com/vadimdemedes/ink/tree/master/examples/counter
 import React from 'react';
-import { render, Text } from './dist/index.js';
+import { render, Text } from '../dist/index.js';
 
 // React 18 Scheduler Polyfills for Node
 if (typeof global !== 'undefined' && !global.document) {

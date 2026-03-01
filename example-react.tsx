@@ -10,7 +10,10 @@ if (typeof global !== 'undefined' && !global.document) {
         removeEventListener: () => {}
     };
     global.window = global;
-    global.navigator = { scheduling: { isInputPending: () => false } };
+    Object.defineProperty(global, 'navigator', {
+        value: { scheduling: { isInputPending: () => false } },
+        writable: true, configurable: true
+    });
 }
 
 const App = () => {

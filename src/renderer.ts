@@ -13,14 +13,19 @@ export function renderTreeToBuffer(
       buffer[i + 1] = (0 << 16) | (255 << 8) | 255;
   }
 
-  // Recurse and paint
+  // Recurse and paint — initial clip is the full screen
   try {
-    paintNode(root, buffer, cols, rows, 0, 0, root.fg, root.bg, root.styles);
+    paintNode(root, buffer, cols, rows, 0, 0, root.fg, root.bg, root.styles, 0, 0, cols - 1, rows - 1);
   } catch (err) {
     console.error("Renderer Error:", err);
   }
 }
 
+/**
+ * clipX1/clipY1/clipX2/clipY2 — the rectangle this node is allowed to paint into.
+ * Children are further clipped to this node's content area (inside border+padding).
+ * This prevents children from overwriting their parent's border characters.
+ */
 function paintNode(
   node: LayoutNode,
   buffer: Uint32Array,
@@ -30,7 +35,11 @@ function paintNode(
   parentY: number,
   parentFg: number,
   parentBg: number,
-  parentStyles: number
+  parentStyles: number,
+  clipX1: number,
+  clipY1: number,
+  clipX2: number,
+  clipY2: number,
 ) {
   const layout = node.getLayout();
 
@@ -44,120 +53,101 @@ function paintNode(
   const bg = node.bg !== 255 ? node.bg : parentBg;
   const styles = node.styles !== 0 ? node.styles : parentStyles;
 
-  // Paint Background/Foreground of the box
-  // If the node has no specific character but does have colors, paint spaces
+  // Helper: write a cell only if it falls within both the screen and the clip rect
+  const writeCell = (sx: number, sy: number, charCode: number, attrCode: number) => {
+    if (sx < 0 || sx >= cols || sy < 0 || sy >= rows) return;
+    if (sx < clipX1 || sx > clipX2 || sy < clipY1 || sy > clipY2) return;
+    const idx = (sy * cols + sx) * 2;
+    buffer[idx] = charCode;
+    buffer[idx + 1] = attrCode;
+  };
+
   if (!node.text) {
-     const charCode = 32; // ' '
-     const attrCode = (styles << 16) | (bg << 8) | fg;
-     for (let y = 0; y < h; y++) {
-       for (let x = 0; x < w; x++) {
-         const screenX = absX + x;
-         const screenY = absY + y;
-         if (screenX >= 0 && screenX < cols && screenY >= 0 && screenY < rows) {
-           const idx = (screenY * cols + screenX) * 2;
-           buffer[idx] = charCode;
-           buffer[idx + 1] = attrCode;
-         }
-       }
-     }
-     
-     // Box Borders (After background)
-     if (node._style?.borderStyle) {
-        const box = (cliBoxes as any)[node._style.borderStyle];
-        const attrCode = (styles << 16) | (bg << 8) | fg;
-        
-        const showTopBorder = node._style.borderTop !== false;
-        const showBottomBorder = node._style.borderBottom !== false;
-        const showLeftBorder = node._style.borderLeft !== false;
-        const showRightBorder = node._style.borderRight !== false;
-        
-        // Top and Bottom
-        for (let x = 0; x < w; x++) {
-            const screenX = absX + x;
-            if (showTopBorder && absY >= 0 && absY < rows && screenX >= 0 && screenX < cols) {
-               const charC = (x === 0 && showLeftBorder ? box.topLeft : x === w - 1 && showRightBorder ? box.topRight : box.top).codePointAt(0);
-               const idx = (absY * cols + screenX) * 2;
-               buffer[idx] = charC;
-               buffer[idx + 1] = attrCode;
-            }
-            if (showBottomBorder && absY + h - 1 >= 0 && absY + h - 1 < rows && screenX >= 0 && screenX < cols) {
-               const charC = (x === 0 && showLeftBorder ? box.bottomLeft : x === w - 1 && showRightBorder ? box.bottomRight : box.bottom).codePointAt(0);
-               const idx = ((absY + h - 1) * cols + screenX) * 2;
-               buffer[idx] = charC;
-               buffer[idx + 1] = attrCode;
-            }
-        }
-        
-        // Left and Right
-        for (let y = showTopBorder ? 1 : 0; y < (showBottomBorder ? h - 1 : h); y++) {
-            const screenY = absY + y;
-            if (screenY >= 0 && screenY < rows) {
-                if (showLeftBorder && absX >= 0 && absX < cols) {
-                   const idx = (screenY * cols + absX) * 2;
-                   buffer[idx] = box.left.codePointAt(0);
-                   buffer[idx + 1] = attrCode;
-                }
-                if (showRightBorder && absX + w - 1 >= 0 && absX + w - 1 < cols) {
-                   const idx = (screenY * cols + (absX + w - 1)) * 2;
-                   buffer[idx] = box.right.codePointAt(0);
-                   buffer[idx + 1] = attrCode;
-                }
-            }
-        }
-     }
-  } else {
-    // Has text: paint the bounding box background first
+    const charCode = 32; // ' '
     const attrCode = (styles << 16) | (bg << 8) | fg;
-    
-    // Only paint a background block if this node has an explicit background override
-    // Otherwise it inherits from the Flexbox parent's background already
-    if (node.bg !== 255) {
-        for (let y = 0; y < h; y++) {
-          for (let x = 0; x < w; x++) {
-            const screenX = absX + x;
-            const screenY = absY + y;
-            if (screenX >= 0 && screenX < cols && screenY >= 0 && screenY < rows) {
-              const idx = (screenY * cols + screenX) * 2;
-              buffer[idx] = 32; // ' '
-              buffer[idx + 1] = attrCode;
-            }
-          }
+
+    // Fill background
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        writeCell(absX + x, absY + y, charCode, attrCode);
+      }
+    }
+
+    // Draw border on top of background
+    if (node._style?.borderStyle) {
+      const box = (cliBoxes as any)[node._style.borderStyle];
+      const borderFg = node._style.borderColor !== undefined ? node._style.borderColor : fg;
+      const borderAttr = (styles << 16) | (bg << 8) | borderFg;
+
+      const showTop    = node._style.borderTop    !== false;
+      const showBottom = node._style.borderBottom !== false;
+      const showLeft   = node._style.borderLeft   !== false;
+      const showRight  = node._style.borderRight  !== false;
+
+      // Top row
+      if (showTop) {
+        for (let x = 0; x < w; x++) {
+          const ch = x === 0 && showLeft  ? box.topLeft
+                   : x === w-1 && showRight ? box.topRight
+                   : box.top;
+          writeCell(absX + x, absY, ch.codePointAt(0)!, borderAttr);
         }
+      }
+
+      // Bottom row
+      if (showBottom) {
+        for (let x = 0; x < w; x++) {
+          const ch = x === 0 && showLeft  ? box.bottomLeft
+                   : x === w-1 && showRight ? box.bottomRight
+                   : box.bottom;
+          writeCell(absX + x, absY + h - 1, ch.codePointAt(0)!, borderAttr);
+        }
+      }
+
+      // Left and right columns (skip corners already drawn)
+      const yStart = showTop    ? 1 : 0;
+      const yEnd   = showBottom ? h - 1 : h;
+      for (let y = yStart; y < yEnd; y++) {
+        if (showLeft)  writeCell(absX,         absY + y, box.left.codePointAt(0)!,  borderAttr);
+        if (showRight) writeCell(absX + w - 1, absY + y, box.right.codePointAt(0)!, borderAttr);
+      }
+    }
+  } else {
+    // Text node: optionally fill background, then paint characters
+    const attrCode = (styles << 16) | (bg << 8) | fg;
+
+    if (node.bg !== 255) {
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          writeCell(absX + x, absY + y, 32, attrCode);
+        }
+      }
     }
 
     let cursorX = 0;
     let cursorY = 0;
-
     for (let i = 0; i < node.text.length; i++) {
-        // Line break manually or automatically wrap
-        if (node.text[i] === '\n') {
-            cursorX = 0;
-            cursorY++;
-            continue;
-        }
-        if (cursorX >= w) {
-            cursorX = 0;
-            cursorY++;
-        }
-        if (cursorY >= h) break; // Truncate at box boundary
+      if (node.text[i] === '\n') { cursorX = 0; cursorY++; continue; }
+      if (cursorX >= w)          { cursorX = 0; cursorY++; }
+      if (cursorY >= h) break;
 
-        const screenX = absX + cursorX;
-        const screenY = absY + cursorY;
-        
-        if (screenX >= 0 && screenX < cols && screenY >= 0 && screenY < rows) {
-           const idx = (screenY * cols + screenX) * 2;
-           buffer[idx] = node.text.codePointAt(i) || 32;
-           buffer[idx + 1] = attrCode;
-        }
-        
-        if (node.text.codePointAt(i)! > 0xFFFF) i++;
-        
-        cursorX++;
+      writeCell(absX + cursorX, absY + cursorY, node.text.codePointAt(i) || 32, attrCode);
+      if (node.text.codePointAt(i)! > 0xFFFF) i++;
+      cursorX++;
     }
   }
 
-  // Paint Children
+  // Compute the clip rect for children: inside this node's border (if any)
+  const hasBorder = !!node._style?.borderStyle;
+  const borderInset = hasBorder ? 1 : 0;
+  const childClipX1 = Math.max(clipX1, absX + borderInset);
+  const childClipY1 = Math.max(clipY1, absY + borderInset);
+  const childClipX2 = Math.min(clipX2, absX + w - 1 - borderInset);
+  const childClipY2 = Math.min(clipY2, absY + h - 1 - borderInset);
+
+  // Paint children, clipped to this node's content area
   for (const child of node.children) {
-    paintNode(child, buffer, cols, rows, absX, absY, fg, bg, styles);
+    paintNode(child, buffer, cols, rows, absX, absY, fg, bg, styles,
+              childClipX1, childClipY1, childClipX2, childClipY2);
   }
 }

@@ -193,7 +193,7 @@ const hostConfig: ReactReconciler.HostConfig<
   getCurrentEventPriority: () => DefaultEventPriority,
   setCurrentUpdatePriority: (p: any) => {},
   getCurrentUpdatePriority: () => DefaultEventPriority,
-  detachDeletedInstance: () => {},
+  detachDeletedInstance: (instance: LayoutNode) => { instance.destroy(); },
   resolveUpdatePriority: () => DefaultEventPriority,
   trackSchedulerEvent: () => {},
   resolveEventType: () => null,

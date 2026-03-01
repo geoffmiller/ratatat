@@ -5,7 +5,8 @@ export class LayoutNode {
   public yogaNode: YogaNode;
   public children: LayoutNode[] = [];
   public parent: LayoutNode | null = null;
-  
+  private _destroyed = false;
+
   // Custom terminal props
   private _text?: string;
   public fg: number = 255;
@@ -17,15 +18,12 @@ export class LayoutNode {
     this._text = value;
     if (value !== undefined) {
       this.yogaNode.setMeasureFunc((width, widthMode, height, heightMode) => {
-        let textLen = value.length;
-        if (textLen === 0) return { width: 0, height: 0 };
-        
-        // Handle newlines intuitively
+        if (value.length === 0) return { width: 0, height: 0 };
+
         const lines = value.split('\n');
         const maxLineWidth = Math.max(...lines.map(l => l.length));
-        
+
         let targetWidth = maxLineWidth;
-        
         if (widthMode === Yoga.MEASURE_MODE_EXACTLY) {
           targetWidth = width;
         } else if (widthMode === Yoga.MEASURE_MODE_AT_MOST) {
@@ -34,8 +32,7 @@ export class LayoutNode {
 
         let targetHeight = lines.length;
         if (targetWidth > 0 && maxLineWidth > targetWidth) {
-           // Wrap lines
-           targetHeight = lines.reduce((acc, line) => acc + Math.ceil(line.length / targetWidth), 0);
+          targetHeight = lines.reduce((acc, line) => acc + Math.ceil(line.length / targetWidth), 0);
         }
 
         if (heightMode === Yoga.MEASURE_MODE_EXACTLY) {
@@ -76,6 +73,21 @@ export class LayoutNode {
     }
   }
 
+  /**
+   * Free this node's Yoga allocation. Called via detachDeletedInstance
+   * in the reconciler after React has permanently removed this node.
+   *
+   * Does NOT recurse — React calls detachDeletedInstance on every node
+   * in a deleted subtree individually, so each node frees only itself.
+   * The _destroyed guard prevents double-free if free() is also called.
+   */
+  destroy() {
+    if (this._destroyed) return;
+    this._destroyed = true;
+    this.children = [];
+    this.yogaNode.free();
+  }
+
   calculateLayout(width: number, height: number) {
     this.yogaNode.setWidth(width);
     this.yogaNode.setHeight(height);
@@ -86,7 +98,8 @@ export class LayoutNode {
     return this.yogaNode.getComputedLayout();
   }
 
+  /** @deprecated use destroy() */
   free() {
-    this.yogaNode.free();
+    this.destroy();
   }
 }

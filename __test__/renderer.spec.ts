@@ -184,3 +184,68 @@ test('renderer: outer bottom border NOT overwritten after messages + input', (t)
     t.is(ch, ROUND.h, `outer bottom edge col ${col}`)
   }
 })
+
+// ─── Yoga node lifecycle ──────────────────────────────────────────────────────
+
+test('LayoutNode.destroy() frees yogaNode and sets _destroyed guard', t => {
+  const node = new LayoutNode()
+  // @ts-ignore — accessing private
+  t.false(node._destroyed, 'not destroyed initially')
+  node.destroy()
+  // @ts-ignore
+  t.true(node._destroyed, 'destroyed after destroy()')
+  // double-destroy should not throw
+  t.notThrows(() => node.destroy(), 'double destroy is safe')
+})
+
+test.serial('detachDeletedInstance frees Yoga nodes when React removes children', async t => {
+  const React = (await import('react')).default
+  const { act } = await import('react')
+  const { create: createTestRenderer } = await import('react-test-renderer')
+  const { RatatatReconciler } = await import('../dist/reconciler.js')
+
+  // @ts-ignore
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true
+
+  let destroyCalls = 0
+  const origDestroy = LayoutNode.prototype.destroy
+  LayoutNode.prototype.destroy = function() {
+    destroyCalls++
+    return origDestroy.call(this)
+  }
+
+  const root = new LayoutNode()
+  const container = RatatatReconciler.createContainer(root, 0, null, false, null, '', () => {}, null)
+
+  // Mount 4 children
+  await act(async () => {
+    RatatatReconciler.updateContainer(
+      React.createElement('box', null,
+        React.createElement('text', null, 'A'),
+        React.createElement('text', null, 'B'),
+        React.createElement('text', null, 'C'),
+        React.createElement('text', null, 'D'),
+      ),
+      container, null, () => {}
+    )
+  })
+
+  t.is(destroyCalls, 0, 'no destroys on initial mount')
+  t.is(root.children[0]?.children.length, 4, '4 children mounted')
+
+  // Shrink to 1 — removes 3 nodes
+  await act(async () => {
+    RatatatReconciler.updateContainer(
+      React.createElement('box', null,
+        React.createElement('text', null, 'A'),
+      ),
+      container, null, () => {}
+    )
+  })
+
+  t.is(destroyCalls, 3, 'destroy called for each removed node')
+  t.is(root.children[0]?.children.length, 1, '1 child remains')
+
+  // Restore
+  LayoutNode.prototype.destroy = origDestroy
+})

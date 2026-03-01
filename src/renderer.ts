@@ -13,19 +13,82 @@ export function renderTreeToBuffer(
       buffer[i + 1] = (0 << 16) | (255 << 8) | 255;
   }
 
-  // Recurse and paint — initial clip is the full screen
+  // Two-pass render:
+  //   Pass 1: paint backgrounds + text for the whole tree (children can overpaint freely)
+  //   Pass 2: repaint borders on top of everything (so no child can overwrite them)
+  const borderJobs: Array<{ node: LayoutNode; absX: number; absY: number; w: number; h: number; fg: number; bg: number; styles: number }> = [];
+
   try {
-    paintNode(root, buffer, cols, rows, 0, 0, root.fg, root.bg, root.styles, 0, 0, cols - 1, rows - 1);
+    paintNode(root, buffer, cols, rows, 0, 0, root.fg, root.bg, root.styles, borderJobs);
+    // Repaint all borders on top, in tree order (parents before children = correct stacking)
+    for (const job of borderJobs) {
+      paintBorder(job.node, buffer, cols, rows, job.absX, job.absY, job.w, job.h, job.fg, job.bg, job.styles);
+    }
   } catch (err) {
     console.error("Renderer Error:", err);
   }
 }
 
-/**
- * clipX1/clipY1/clipX2/clipY2 — the rectangle this node is allowed to paint into.
- * Children are further clipped to this node's content area (inside border+padding).
- * This prevents children from overwriting their parent's border characters.
- */
+function writeCell(
+  buffer: Uint32Array, cols: number, rows: number,
+  sx: number, sy: number, charCode: number, attrCode: number
+) {
+  if (sx < 0 || sx >= cols || sy < 0 || sy >= rows) return;
+  const idx = (sy * cols + sx) * 2;
+  buffer[idx] = charCode;
+  buffer[idx + 1] = attrCode;
+}
+
+function paintBorder(
+  node: LayoutNode,
+  buffer: Uint32Array,
+  cols: number,
+  rows: number,
+  absX: number,
+  absY: number,
+  w: number,
+  h: number,
+  fg: number,
+  bg: number,
+  styles: number,
+) {
+  if (!node._style?.borderStyle) return;
+
+  const box = (cliBoxes as any)[node._style.borderStyle];
+  const borderFg  = node._style.borderColor !== undefined ? node._style.borderColor : fg;
+  const borderAttr = (styles << 16) | (bg << 8) | borderFg;
+
+  const showTop    = node._style.borderTop    !== false;
+  const showBottom = node._style.borderBottom !== false;
+  const showLeft   = node._style.borderLeft   !== false;
+  const showRight  = node._style.borderRight  !== false;
+
+  if (showTop) {
+    for (let x = 0; x < w; x++) {
+      const ch = (x === 0 && showLeft) ? box.topLeft
+               : (x === w-1 && showRight) ? box.topRight
+               : box.top;
+      writeCell(buffer, cols, rows, absX + x, absY, ch.codePointAt(0)!, borderAttr);
+    }
+  }
+
+  if (showBottom) {
+    for (let x = 0; x < w; x++) {
+      const ch = (x === 0 && showLeft) ? box.bottomLeft
+               : (x === w-1 && showRight) ? box.bottomRight
+               : box.bottom;
+      writeCell(buffer, cols, rows, absX + x, absY + h - 1, ch.codePointAt(0)!, borderAttr);
+    }
+  }
+
+  const yStart = showTop    ? 1 : 0;
+  const yEnd   = showBottom ? h - 1 : h;
+  for (let y = yStart; y < yEnd; y++) {
+    if (showLeft)  writeCell(buffer, cols, rows, absX,         absY + y, box.left.codePointAt(0)!,  borderAttr);
+    if (showRight) writeCell(buffer, cols, rows, absX + w - 1, absY + y, box.right.codePointAt(0)!, borderAttr);
+  }
+}
+
 function paintNode(
   node: LayoutNode,
   buffer: Uint32Array,
@@ -36,90 +99,40 @@ function paintNode(
   parentFg: number,
   parentBg: number,
   parentStyles: number,
-  clipX1: number,
-  clipY1: number,
-  clipX2: number,
-  clipY2: number,
+  borderJobs: Array<{ node: LayoutNode; absX: number; absY: number; w: number; h: number; fg: number; bg: number; styles: number }>,
 ) {
   const layout = node.getLayout();
 
-  // Calculate absolute positions
   const absX = Math.round(parentX + layout.left);
   const absY = Math.round(parentY + layout.top);
-  const w = Math.round(layout.width);
-  const h = Math.round(layout.height);
+  const w    = Math.round(layout.width);
+  const h    = Math.round(layout.height);
 
-  const fg = node.fg !== 255 ? node.fg : parentFg;
-  const bg = node.bg !== 255 ? node.bg : parentBg;
-  const styles = node.styles !== 0 ? node.styles : parentStyles;
-
-  // Helper: write a cell only if it falls within both the screen and the clip rect
-  const writeCell = (sx: number, sy: number, charCode: number, attrCode: number) => {
-    if (sx < 0 || sx >= cols || sy < 0 || sy >= rows) return;
-    if (sx < clipX1 || sx > clipX2 || sy < clipY1 || sy > clipY2) return;
-    const idx = (sy * cols + sx) * 2;
-    buffer[idx] = charCode;
-    buffer[idx + 1] = attrCode;
-  };
+  const fg     = node.fg     !== 255 ? node.fg     : parentFg;
+  const bg     = node.bg     !== 255 ? node.bg     : parentBg;
+  const styles = node.styles !== 0   ? node.styles : parentStyles;
 
   if (!node.text) {
-    const charCode = 32; // ' '
-    const attrCode = (styles << 16) | (bg << 8) | fg;
-
     // Fill background
+    const attrCode = (styles << 16) | (bg << 8) | fg;
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        writeCell(absX + x, absY + y, charCode, attrCode);
+        writeCell(buffer, cols, rows, absX + x, absY + y, 32, attrCode);
       }
     }
 
-    // Draw border on top of background
+    // Queue border repaint for pass 2 (so children can't erase it)
     if (node._style?.borderStyle) {
-      const box = (cliBoxes as any)[node._style.borderStyle];
-      const borderFg = node._style.borderColor !== undefined ? node._style.borderColor : fg;
-      const borderAttr = (styles << 16) | (bg << 8) | borderFg;
-
-      const showTop    = node._style.borderTop    !== false;
-      const showBottom = node._style.borderBottom !== false;
-      const showLeft   = node._style.borderLeft   !== false;
-      const showRight  = node._style.borderRight  !== false;
-
-      // Top row
-      if (showTop) {
-        for (let x = 0; x < w; x++) {
-          const ch = x === 0 && showLeft  ? box.topLeft
-                   : x === w-1 && showRight ? box.topRight
-                   : box.top;
-          writeCell(absX + x, absY, ch.codePointAt(0)!, borderAttr);
-        }
-      }
-
-      // Bottom row
-      if (showBottom) {
-        for (let x = 0; x < w; x++) {
-          const ch = x === 0 && showLeft  ? box.bottomLeft
-                   : x === w-1 && showRight ? box.bottomRight
-                   : box.bottom;
-          writeCell(absX + x, absY + h - 1, ch.codePointAt(0)!, borderAttr);
-        }
-      }
-
-      // Left and right columns (skip corners already drawn)
-      const yStart = showTop    ? 1 : 0;
-      const yEnd   = showBottom ? h - 1 : h;
-      for (let y = yStart; y < yEnd; y++) {
-        if (showLeft)  writeCell(absX,         absY + y, box.left.codePointAt(0)!,  borderAttr);
-        if (showRight) writeCell(absX + w - 1, absY + y, box.right.codePointAt(0)!, borderAttr);
-      }
+      borderJobs.push({ node, absX, absY, w, h, fg, bg, styles });
     }
   } else {
-    // Text node: optionally fill background, then paint characters
+    // Text node: optionally fill background then paint characters
     const attrCode = (styles << 16) | (bg << 8) | fg;
 
     if (node.bg !== 255) {
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
-          writeCell(absX + x, absY + y, 32, attrCode);
+          writeCell(buffer, cols, rows, absX + x, absY + y, 32, attrCode);
         }
       }
     }
@@ -131,23 +144,14 @@ function paintNode(
       if (cursorX >= w)          { cursorX = 0; cursorY++; }
       if (cursorY >= h) break;
 
-      writeCell(absX + cursorX, absY + cursorY, node.text.codePointAt(i) || 32, attrCode);
+      writeCell(buffer, cols, rows, absX + cursorX, absY + cursorY, node.text.codePointAt(i) || 32, attrCode);
       if (node.text.codePointAt(i)! > 0xFFFF) i++;
       cursorX++;
     }
   }
 
-  // Compute the clip rect for children: inside this node's border (if any)
-  const hasBorder = !!node._style?.borderStyle;
-  const borderInset = hasBorder ? 1 : 0;
-  const childClipX1 = Math.max(clipX1, absX + borderInset);
-  const childClipY1 = Math.max(clipY1, absY + borderInset);
-  const childClipX2 = Math.min(clipX2, absX + w - 1 - borderInset);
-  const childClipY2 = Math.min(clipY2, absY + h - 1 - borderInset);
-
-  // Paint children, clipped to this node's content area
+  // Recurse into children
   for (const child of node.children) {
-    paintNode(child, buffer, cols, rows, absX, absY, fg, bg, styles,
-              childClipX1, childClipY1, childClipX2, childClipY2);
+    paintNode(child, buffer, cols, rows, absX, absY, fg, bg, styles, borderJobs);
   }
 }

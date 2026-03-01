@@ -1,5 +1,6 @@
 import { LayoutNode } from './layout.js';
 import cliBoxes from 'cli-boxes';
+import { resolveColor } from './styles.js';
 
 export function renderTreeToBuffer(
   root: LayoutNode,
@@ -55,7 +56,7 @@ function paintBorder(
   if (!node._style?.borderStyle) return;
 
   const box = (cliBoxes as any)[node._style.borderStyle];
-  const borderFg  = node._style.borderColor !== undefined ? node._style.borderColor : fg;
+  const borderFg  = node._style.borderColor !== undefined ? resolveColor(node._style.borderColor) : fg;
   const borderAttr = (styles << 16) | (bg << 8) | borderFg;
 
   const showTop    = node._style.borderTop    !== false;

@@ -1,6 +1,42 @@
 import { YogaNode } from 'yoga-layout';
 import Yoga from 'yoga-layout-prebuilt';
 
+// Standard ANSI 16-color name → index mapping
+// Matches chalk/Ink color names exactly so examples port 1:1
+export const NAMED_COLORS: Record<string, number> = {
+  black:   0,
+  red:     1,
+  green:   2,
+  yellow:  3,
+  blue:    4,
+  magenta: 5,
+  cyan:    6,
+  white:   7,
+  // bright variants
+  blackBright:   8,  gray: 8, grey: 8,
+  redBright:     9,
+  greenBright:   10,
+  yellowBright:  11,
+  blueBright:    12,
+  magentaBright: 13,
+  cyanBright:    14,
+  whiteBright:   15,
+};
+
+/**
+ * Resolve a color value to an ANSI 256-color index.
+ * Accepts: number (pass-through), string name ("green"), or undefined (→ 255 = terminal default).
+ */
+export function resolveColor(color: number | string | undefined): number {
+  if (color === undefined) return 255;
+  if (typeof color === 'number') return color;
+  if (color in NAMED_COLORS) return NAMED_COLORS[color]!;
+  // ansi256(N) syntax
+  const ansiMatch = /^ansi256\(\s*(\d+)\s*\)$/.exec(color);
+  if (ansiMatch) return Number(ansiMatch[1]);
+  return 255; // unrecognised → terminal default
+}
+
 export type Styles = {
   position?: 'absolute' | 'relative' | 'static';
   top?: number | string;
@@ -55,14 +91,27 @@ export type Styles = {
   borderLeft?: boolean;
   borderRight?: boolean;
 
-  borderColor?: number;
-  borderTopColor?: number;
-  borderBottomColor?: number;
-  borderLeftColor?: number;
-  borderRightColor?: number;
+  borderColor?: number | string;
+  borderTopColor?: number | string;
+  borderBottomColor?: number | string;
+  borderLeftColor?: number | string;
+  borderRightColor?: number | string;
 
-  backgroundColor?: number;
-  color?: number;
+  backgroundColor?: number | string;
+  color?: number | string;
+
+  // Ink-compatible Text style props (set bits in the styles byte)
+  bold?: boolean;
+  dim?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strikethrough?: boolean;
+  inverse?: boolean;
+
+  // Terminal-specific numeric props (ratatat native)
+  fg?: number | string;
+  bg?: number | string;
+  styles?: number;
 };
 
 const positionEdges = [

@@ -4,7 +4,7 @@ import { DefaultEventPriority, NoEventPriority } from 'react-reconciler/constant
 import * as Scheduler from 'scheduler';
 import { createContext } from 'react';
 import { LayoutNode } from './layout.js';
-import { applyStyles, Styles } from './styles.js';
+import { applyStyles, resolveColor, Styles } from './styles.js';
 import Yoga from 'yoga-layout-prebuilt';
 
 type Type = 'box' | 'text';
@@ -26,6 +26,43 @@ type TransitionStatus = any;
 export let onAfterCommit: (() => void) | null = null;
 export function setOnAfterCommit(fn: (() => void) | null) { onAfterCommit = fn; }
 
+/**
+ * Resolve Ink-compatible color/style props into ratatat's numeric fg/bg/styles values.
+ * Ink uses: color="green", backgroundColor="red", bold, italic, dim, underline, etc.
+ * Ratatat uses: fg=<ansi-index>, bg=<ansi-index>, styles=<bitfield>
+ */
+function resolveNodeColors(props: Props): { fg: number; bg: number; styles: number } {
+  // fg: explicit numeric fg > color prop > 255 (terminal default)
+  const fg = resolveColor(
+    props.fg !== undefined ? props.fg :
+    props.color !== undefined ? props.color : undefined
+  );
+
+  // bg: explicit numeric bg > backgroundColor prop > 255 (terminal default)
+  const bg = resolveColor(
+    props.bg !== undefined ? props.bg :
+    props.backgroundColor !== undefined ? props.backgroundColor : undefined
+  );
+
+  // styles bitfield — explicit number overrides, otherwise build from boolean props
+  let styles: number;
+  if (props.styles !== undefined) {
+    styles = props.styles;
+  } else {
+    styles = 0;
+    if (props.bold)          styles |= 1;
+    if (props.dim)           styles |= 2;
+    if (props.italic)        styles |= 4;
+    if (props.underline)     styles |= 8;
+    if (props.blink)         styles |= 16;
+    if (props.inverse)       styles |= 32;
+    if (props.hidden)        styles |= 64;
+    if (props.strikethrough) styles |= 128;
+  }
+
+  return { fg, bg, styles };
+}
+
 const hostConfig: ReactReconciler.HostConfig<
   Type, Props, Container, Instance, TextInstance, SuspenseInstance, 
   HydratableInstance, PublicInstance, HostContext, UpdatePayload, 
@@ -46,10 +83,11 @@ const hostConfig: ReactReconciler.HostConfig<
     }
     applyStyles(node.yogaNode, stylesToApply);
     
-    // Apply custom Terminal properties out-of-band of layout
-    if (props.bg !== undefined) node.bg = props.bg;
-    if (props.fg !== undefined) node.fg = props.fg;
-    if (props.styles !== undefined) node.styles = props.styles;
+    // Resolve color/style props (Ink-compat + ratatat-native)
+    const { fg, bg, styles } = resolveNodeColors(props);
+    node.fg = fg;
+    node.bg = bg;
+    node.styles = styles;
     node._style = props;
 
     return node;
@@ -99,10 +137,11 @@ const hostConfig: ReactReconciler.HostConfig<
     // Re-apply Yoga styles on update (React 19 signature: instance, type, oldProps, newProps, fiber)
     applyStyles(instance.yogaNode, nextProps as Styles, prevProps as Styles);
 
-    // Re-apply custom properties
-    if (nextProps.bg !== undefined) instance.bg = nextProps.bg;
-    if (nextProps.fg !== undefined) instance.fg = nextProps.fg;
-    if (nextProps.styles !== undefined) instance.styles = nextProps.styles;
+    // Re-resolve color/style props
+    const { fg, bg, styles } = resolveNodeColors(nextProps);
+    instance.fg = fg;
+    instance.bg = bg;
+    instance.styles = styles;
     instance._style = nextProps;
   },
 
@@ -144,7 +183,6 @@ const hostConfig: ReactReconciler.HostConfig<
   shouldYield: Scheduler.unstable_shouldYield,
   now: Scheduler.unstable_now,
 
-  isPrimaryRenderer: true,
   warnsIfNotActing: true,
   
   getInstanceFromNode: () => null,

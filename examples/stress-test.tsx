@@ -47,13 +47,15 @@ function cellChar(x: number, y: number, frame: number): string {
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
 
+// StatsBar is: 1 (top border) + 1 (content) + 1 (bottom border) + 1 (marginBottom) = 4 rows
+const HEADER_ROWS = 4
+
 function Grid({ cols, rows, frame }: { cols: number; rows: number; frame: number }) {
-  // Reserve top rows for the stats bar
-  const gridRows = rows - 4
-  const gridCols = Math.floor(cols / 2) // each cell is 2 chars wide
+  const gridRows = Math.max(1, rows - HEADER_ROWS)
+  const gridCols = Math.max(1, Math.floor(cols / 2)) // each cell is 2 chars wide
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" flexShrink={0}>
       {Array.from({ length: gridRows }, (_, y) => (
         <Box key={y} flexDirection="row">
           {Array.from({ length: gridCols }, (_, x) => (
@@ -81,8 +83,10 @@ function StatsBar({
   rows: number
 }) {
   const fpsColor = fps >= 55 ? 'green' : fps >= 30 ? 'yellow' : 'red'
+  const gridRows = Math.max(1, rows - HEADER_ROWS)
+  const gridCols = Math.max(1, Math.floor(cols / 2))
   return (
-    <Box borderStyle="round" borderColor="cyan" paddingX={2} marginBottom={1}>
+    <Box borderStyle="round" borderColor="cyan" paddingX={2} marginBottom={1} flexShrink={0}>
       <Text bold color="cyan">
         ratatat stress test{'  '}
       </Text>
@@ -93,7 +97,7 @@ function StatsBar({
         {'  '}
         Terminal: <Text color="white">{cols}×{rows}</Text>
         {'  '}
-        Cells/frame: <Text color="white">{(Math.floor(cols / 2) * (rows - 4)).toLocaleString()}</Text>
+        Cells/frame: <Text color="white">{(gridCols * gridRows).toLocaleString()}</Text>
         {'  '}
         <Text dim>Ctrl+C to exit</Text>
       </Text>

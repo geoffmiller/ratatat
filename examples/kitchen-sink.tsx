@@ -400,10 +400,16 @@ function paintGraph(
 // TabBar(3) + paddingTop(1) + SectionHeading(1) + subtitle(1) + values(1) + marginTop(1) = 8
 const GRAPH_HEADER_ROWS = 8
 
-function GraphSection({ frame, active }: { frame: number; active: boolean }) {
+function GraphSection({ active }: { active: boolean }) {
   const { columns, rows } = useWindowSize()
-  // Reserve rows: outer padding(1 top) + header rows + status bar (~3) + label row(1) + padding(1 bottom)
+  const [frame, setFrame] = useState(0)
   const barRows = Math.max(4, rows - GRAPH_HEADER_ROWS - 6)
+
+  const onTick = React.useCallback((f: number) => setFrame(f), [])
+  useAnimationLoop(active, onTick)
+
+  // Keep global frame ref for the buffer painter
+  useEffect(() => { ;(globalThis as any).__kitchenFrame = frame })
 
   useEffect(() => {
     if (!active) return
@@ -454,8 +460,12 @@ function GraphSection({ frame, active }: { frame: number; active: boolean }) {
 
 // ─── Live ─────────────────────────────────────────────────────────────────────
 
-function LiveSection({ frame }: { frame: number }) {
+function LiveSection() {
   const { columns, rows } = useWindowSize()
+  const [frame, setFrame] = useState(0)
+
+  const onTick = React.useCallback((f: number) => setFrame(f), [])
+  useAnimationLoop(true, onTick)
   const now = new Date()
   const time = now.toTimeString().split(' ')[0]
   const date = now.toDateString()
@@ -550,23 +560,32 @@ function TabBar({ current }: { current: number }) {
   )
 }
 
+// ─── Animated sections drive their own tick loop ─────────────────────────────
+// Static sections (Borders, Colors, etc.) produce no renders when idle — the
+// FPS HUD will show the true rate, not a forced 10 FPS from an unnecessary timer.
+
+function useAnimationLoop(active: boolean, onTick: (frame: number) => void) {
+  const frameRef = React.useRef(0)
+  useEffect(() => {
+    if (!active) return
+    let running = true
+    let handle: ReturnType<typeof setTimeout>
+    function loop() {
+      if (!running) return
+      frameRef.current++
+      onTick(frameRef.current)
+      handle = setTimeout(loop, 0)
+    }
+    loop()
+    return () => { running = false; clearTimeout(handle) }
+  }, [active, onTick])
+}
+
 // ─── App ─────────────────────────────────────────────────────────────────────
 
 function KitchenSink() {
   const { exit } = useApp()
   const [sectionIdx, setSectionIdx] = useState(0)
-  const [frame, setFrame] = useState(0)
-
-  // Tick every ~100ms for animations
-  useEffect(() => {
-    const t = setInterval(() => setFrame(f => f + 1), 100)
-    return () => clearInterval(t)
-  }, [])
-
-  // Keep global frame ref for buffer painter
-  useEffect(() => {
-    ;(globalThis as any).__kitchenFrame = frame
-  })
 
   useInput((input, key) => {
     if (input === 'q' || input === 'Q') exit()
@@ -583,15 +602,15 @@ function KitchenSink() {
       <TabBar current={sectionIdx} />
 
       {/* Section content fills remaining space */}
-      <Box flexDirection="column" flexGrow={1} paddingX={2} paddingTop={1} overflow="hidden">
+      <Box flexDirection="column" flexGrow={1} paddingX={2} paddingTop={1}>
         {currentSection === 'Borders'     && <BordersSection />}
         {currentSection === 'Colors'      && <ColorsSection />}
         {currentSection === 'Text'        && <TextSection />}
         {currentSection === 'Backgrounds' && <BackgroundsSection />}
         {currentSection === 'Layout'      && <LayoutSection />}
         {currentSection === 'Focus'       && <FocusSection />}
-        {currentSection === 'Graph'       && <GraphSection frame={frame} active={isGraphActive} />}
-        {currentSection === 'Live'        && <LiveSection frame={frame} />}
+        {currentSection === 'Graph'       && <GraphSection active={isGraphActive} />}
+        {currentSection === 'Live'        && <LiveSection />}
       </Box>
     </Box>
   )

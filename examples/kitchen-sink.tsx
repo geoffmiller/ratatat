@@ -19,7 +19,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react'
 import os from 'os'
-import { execSync } from 'child_process'
+import { exec } from 'child_process'
 import {
   render, Box, Text, Newline, Spacer,
   useApp, useWindowSize, useInput, useFocus, useFocusManager,
@@ -840,10 +840,10 @@ interface ProcInfo {
   cmd: string
 }
 
-function readProcs(): ProcInfo[] {
-  try {
-    const out = execSync('ps aux', { timeout: 500 }).toString()
-    return out.trim().split('\n').slice(1).map(line => {
+function readProcs(cb: (procs: ProcInfo[]) => void) {
+  exec('ps aux', { timeout: 2000 }, (err, stdout) => {
+    if (err) return cb([])
+    const procs = stdout.trim().split('\n').slice(1).map(line => {
       const parts = line.trim().split(/\s+/)
       return {
         user: parts[0] ?? '',
@@ -853,7 +853,8 @@ function readProcs(): ProcInfo[] {
         cmd:  parts.slice(10).join(' '),
       }
     })
-  } catch { return [] }
+    cb(procs)
+  })
 }
 
 function miniBar(pct: number, width: number, color: string) {
@@ -897,8 +898,8 @@ function HtopSection({ active }: { active: boolean }) {
 
   useEffect(() => {
     if (!active) return
-    // Initial process list
-    setProcs(readProcs())
+    // Initial process list (async — don't block event loop)
+    readProcs(setProcs)
 
     const t = setInterval(() => {
       const curr = os.cpus()
@@ -907,7 +908,7 @@ function HtopSection({ active }: { active: boolean }) {
       setMemUsed(os.totalmem() - os.freemem())
       setLoadAvg(os.loadavg())
       setUptime(os.uptime())
-      setProcs(readProcs())
+      readProcs(setProcs)
     }, 1000)
     return () => clearInterval(t)
   }, [active])

@@ -37,9 +37,18 @@ function useFpsCounter() {
   const [fps, setFps] = useState(0);
   const frames = useRef(0);
   const windowStart = useRef(Date.now());
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const onRender = () => {
+      // Reset the idle timeout — 2s of no renders → show '--'
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      idleTimer.current = setTimeout(() => {
+        setFps(0);
+        frames.current = 0;
+        windowStart.current = Date.now();
+      }, 2000);
+
       frames.current++;
       const now = Date.now();
       const elapsed = now - windowStart.current;
@@ -51,7 +60,10 @@ function useFpsCounter() {
     };
 
     app.on('render', onRender);
-    return () => { app.off('render', onRender); };
+    return () => {
+      app.off('render', onRender);
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+    };
   }, [app]);
 
   return fps;

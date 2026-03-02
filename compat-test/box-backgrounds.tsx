@@ -118,3 +118,7 @@ function BoxBackgrounds() {
 }
 
 export default BoxBackgrounds;
+
+import React from 'react';
+import { render } from '../dist/index.js';
+render(React.createElement(BoxBackgrounds));

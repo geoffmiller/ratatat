@@ -224,6 +224,7 @@ const hostConfig: ReactReconciler.HostConfig<
   trackSchedulerEvent: () => {},
   resolveEventType: () => null,
   resolveEventTimeStamp: () => -1.1,
+  shouldAttemptEagerTransition: () => false,
   requestPostPaintCallback: () => {},
   maySuspendCommit: () => true,
   preloadInstance: () => true,

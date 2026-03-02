@@ -59,11 +59,12 @@ export const Spacer: React.FC = () => {
  * Must live inside FocusProvider to access FocusContext.
  */
 const TabHandler: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { focusNext, focusPrevious } = useFocusManager();
+  const { focusNext, focusPrevious, disableFocus, enableFocus } = useFocusManager();
 
   useInput((_input, key) => {
     if (key.tab && !key.shift) focusNext();
     if (key.tab && key.shift) focusPrevious();
+    if (key.escape) { disableFocus(); enableFocus(); } // reset focus (Ink built-in)
   });
 
   return React.createElement(React.Fragment, null, children);

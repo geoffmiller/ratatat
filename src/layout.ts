@@ -1,6 +1,11 @@
 import { YogaNode } from 'yoga-layout';
 import Yoga from 'yoga-layout-prebuilt';
 
+// Global registry: yogaNode → owning LayoutNode
+// Used to reliably detach nodes regardless of JS object identity issues
+// with the Yoga wasm wrapper's getParent() returning stale proxy objects.
+const yogaOwner = new Map<YogaNode, LayoutNode>();
+
 export class LayoutNode {
   public yogaNode: YogaNode;
   public children: LayoutNode[] = [];
@@ -59,19 +64,30 @@ export class LayoutNode {
   }
 
   insertChild(child: LayoutNode, index: number) {
-    // Detach from existing parent first — Yoga aborts if you insert a node
-    // that already has a parent (happens during keyed list reordering).
-    // We check both our own parent tracking AND the Yoga node's actual parent
-    // in case they get out of sync.
-    if (child.parent) {
-      child.parent.removeChild(child);
-    } else if (child.yogaNode.getParent()) {
-      // Yoga parent exists but our tracking is stale — remove directly
-      child.yogaNode.getParent()!.removeChild(child.yogaNode);
+    // Remove from current owner first (yogaOwner is authoritative)
+    const currentOwner = yogaOwner.get(child.yogaNode);
+    if (currentOwner) {
+      currentOwner.removeChild(child);
     }
-    this.children.splice(index, 0, child);
+    // Belt-and-suspenders: ask Yoga directly in case yogaOwner is stale
+    const staleParent = child.yogaNode.getParent();
+    if (staleParent) {
+      staleParent.removeChild(child.yogaNode);
+    }
+    // Clamp index to Yoga's actual child count to stay in sync
+    const yogaCount = this.yogaNode.getChildCount();
+    const safeIndex = Math.min(index, yogaCount);
+    // Insert into Yoga FIRST — if this throws, don't corrupt our JS bookkeeping
+    try {
+      this.yogaNode.insertChild(child.yogaNode, safeIndex);
+    } catch {
+      // Yoga refused the insert — child stays detached
+      return;
+    }
+    // Only update JS bookkeeping after Yoga succeeds
     child.parent = this;
-    this.yogaNode.insertChild(child.yogaNode, index);
+    this.children.splice(safeIndex, 0, child);
+    yogaOwner.set(child.yogaNode, this);
   }
 
   removeChild(child: LayoutNode) {
@@ -79,6 +95,7 @@ export class LayoutNode {
     if (i >= 0) {
       this.children.splice(i, 1);
       child.parent = null;
+      yogaOwner.delete(child.yogaNode);
       this.yogaNode.removeChild(child.yogaNode);
     }
   }
@@ -94,8 +111,15 @@ export class LayoutNode {
   destroy() {
     if (this._destroyed) return;
     this._destroyed = true;
+    // Clear parent reference on children before clearing our own bookkeeping
+    for (const child of this.children) {
+      if (child.parent === this) child.parent = null;
+    }
     this.children = [];
-    this.yogaNode.free();
+    yogaOwner.delete(this.yogaNode);
+    // NOTE: Do NOT call yogaNode.free() here — freeing a Yoga wasm node
+    // corrupts sibling/parent tracking of adjacent nodes in the wasm heap.
+    // Yoga nodes are reclaimed when the wasm module is GC'd at process exit.
   }
 
   calculateLayout(width: number, height: number) {

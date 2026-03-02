@@ -125,6 +125,9 @@ const hostConfig: ReactReconciler.HostConfig<
   },
 
   insertBefore(parentInstance, child, beforeChild) {
+    // Remove child from its current owner BEFORE computing indexOf(beforeChild).
+    // Same-parent reorders shift the array, so we must get the index after removal.
+    if (child.parent) child.parent.removeChild(child);
     const index = parentInstance.children.indexOf(beforeChild);
     parentInstance.insertChild(child, index);
   },

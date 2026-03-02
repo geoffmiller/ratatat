@@ -59,6 +59,16 @@ export class LayoutNode {
   }
 
   insertChild(child: LayoutNode, index: number) {
+    // Detach from existing parent first — Yoga aborts if you insert a node
+    // that already has a parent (happens during keyed list reordering).
+    // We check both our own parent tracking AND the Yoga node's actual parent
+    // in case they get out of sync.
+    if (child.parent) {
+      child.parent.removeChild(child);
+    } else if (child.yogaNode.getParent()) {
+      // Yoga parent exists but our tracking is stale — remove directly
+      child.yogaNode.getParent()!.removeChild(child.yogaNode);
+    }
     this.children.splice(index, 0, child);
     child.parent = this;
     this.yogaNode.insertChild(child.yogaNode, index);

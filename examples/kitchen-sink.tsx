@@ -18,6 +18,8 @@
  */
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react'
+import os from 'os'
+import { execSync } from 'child_process'
 import {
   render, Box, Text, Newline, Spacer,
   useApp, useWindowSize, useInput, useFocus, useFocusManager,
@@ -815,9 +817,6 @@ function UiSection({ active }: { active: boolean }) {
 
 // ─── Htop ─────────────────────────────────────────────────────────────────────
 
-import os from 'os'
-import { execSync } from 'child_process'
-
 // CPU utilization: diff two os.cpus() snapshots
 type CpuSnapshot = ReturnType<typeof os.cpus>
 function cpuPercents(prev: CpuSnapshot, curr: CpuSnapshot): number[] {
@@ -913,10 +912,10 @@ function HtopSection({ active }: { active: boolean }) {
     return () => clearInterval(t)
   }, [active])
 
-  useInput((_input, key) => {
+  useInput((input, _key) => {
     if (!active) return
-    if (key === 'c' || (key as any) === 'C') setSort('cpu')
-    if (key === 'm' || (key as any) === 'M') setSort('mem')
+    if (input === 'c' || input === 'C') setSort('cpu')
+    if (input === 'm' || input === 'M') setSort('mem')
   })
 
   const totalMem = os.totalmem()

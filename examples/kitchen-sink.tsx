@@ -2,7 +2,7 @@
  * kitchen-sink.tsx — ratatat interactive kitchen sink
  *
  * Navigate sections with ← → arrow keys. Each section fills the viewport.
- * Sections: Borders · Colors · Text · Backgrounds · Layout · Focus · Graph · Live
+ * Sections: Borders · Colors · Text · Backgrounds · Layout · Focus · Graph · Live · Incremental
  *
  * The Graph section renders an animated bar chart directly to the Uint32Array
  * buffer (bypassing React reconciliation for individual bars) — same technique
@@ -26,7 +26,7 @@ import {
 
 // ─── Section list ─────────────────────────────────────────────────────────────
 
-const SECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Layout', 'Focus', 'Graph', 'Live'] as const
+const SECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Layout', 'Focus', 'Graph', 'Live', 'Incremental'] as const
 type SectionName = typeof SECTIONS[number]
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -563,6 +563,149 @@ function LiveSection() {
   )
 }
 
+// ─── Incremental rendering ────────────────────────────────────────────────────
+
+const INC_SERVICES = [
+  'Server Authentication Module - Handles JWT token validation, OAuth2 flows, and session management',
+  'Database Connection Pool - Maintains persistent connections to PostgreSQL with automatic failover',
+  'API Gateway Service - Routes HTTP requests to microservices with rate limiting and transformation',
+  'User Profile Manager - Caches user data in Redis with write-through policy and invalidation',
+  'Payment Processing Engine - Integrates with Stripe, PayPal, and Square for transaction processing',
+  'Email Notification Queue - Processes outbound emails through SendGrid with retry logic',
+  'File Storage Handler - Manages S3 bucket operations with multipart uploads and CDN integration',
+  'Search Indexer Service - Maintains Elasticsearch indices with real-time document updates',
+  'Metrics Aggregation Pipeline - Collects telemetry data for Prometheus and Grafana dashboards',
+  'WebSocket Connection Manager - Handles real-time bidirectional communication for chat',
+  'Cache Invalidation Service - Coordinates distributed cache updates across Redis cluster nodes',
+  'Background Job Processor - Executes async tasks via RabbitMQ with dead letter queue handling',
+  'Rate Limiter Module - Enforces API quotas using token bucket algorithm with Redis backend',
+  'Health Check Monitor - Performs periodic service health checks with circuit breaker pattern',
+  'Configuration Manager - Loads environment-specific settings from Consul with hot reload',
+]
+
+const INC_ACTIONS = ['PROCESSING', 'COMPLETED', 'UPDATING', 'SYNCING', 'VALIDATING', 'EXECUTING']
+
+function incLogLine(index: number) {
+  const ts = new Date().toLocaleTimeString()
+  const action = INC_ACTIONS[Math.floor(Math.random() * INC_ACTIONS.length)]
+  return `[${ts}] Worker-${index} ${action}: ${(Math.random()*1000).toFixed(0)}req/s  ${(Math.random()*512).toFixed(1)}MB  CPU ${(Math.random()*100).toFixed(1)}%`
+}
+
+function incProgressBar(value: number, width = 24) {
+  const filled = Math.floor((value / 100) * width)
+  return '█'.repeat(filled) + '░'.repeat(width - filled)
+}
+
+function IncrementalSection({ active }: { active: boolean }) {
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [timestamp, setTimestamp] = useState(new Date().toLocaleTimeString())
+  const [counter, setCounter] = useState(0)
+  const [fps, setFps] = useState(0)
+  const [p1, setP1] = useState(0)
+  const [p2, setP2] = useState(33)
+  const [p3, setP3] = useState(66)
+  const [randVal, setRandVal] = useState(0)
+  const LOG_COUNT = 4
+  const [logLines, setLogLines] = useState(() =>
+    Array.from({ length: LOG_COUNT }, (_, i) => incLogLine(i))
+  )
+
+  // Clock — 1s
+  useEffect(() => {
+    if (!active) return
+    const t = setInterval(() => {
+      setTimestamp(new Date().toLocaleTimeString())
+      setCounter(c => c + 1)
+    }, 1000)
+    return () => clearInterval(t)
+  }, [active])
+
+  // High-freq updates — ~60fps
+  useEffect(() => {
+    if (!active) return
+    let frameCount = 0, lastFps = Date.now(), loopFrame = 0
+    const t = setInterval(() => {
+      loopFrame++
+      setP1(p => (p + 1) % 101)
+      setP2(p => (p + 2) % 101)
+      setP3(p => (p + 3) % 101)
+      setRandVal(Math.floor(Math.random() * 1000))
+      setLogLines(prev => {
+        const next = [...prev]
+        next[Math.floor(Math.random() * next.length)] = incLogLine(Math.floor(Math.random() * LOG_COUNT))
+        return next
+      })
+      frameCount++
+      const now = Date.now()
+      if (now - lastFps >= 1000) { setFps(frameCount); frameCount = 0; lastFps = now }
+      if (loopFrame % 10000 === 0) {
+        try { performance.clearMeasures(); performance.clearMarks() } catch {}
+      }
+    }, 16)
+    return () => clearInterval(t)
+  }, [active])
+
+  useInput((input, key) => {
+    if (!active) return
+    if (key.upArrow)   setSelectedIndex(i => (i === 0 ? INC_SERVICES.length - 1 : i - 1))
+    if (key.downArrow) setSelectedIndex(i => (i === INC_SERVICES.length - 1 ? 0 : i + 1))
+  })
+
+  const fpsColor = fps >= 55 ? 'green' : fps >= 30 ? 'yellow' : 'red'
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <SectionHeading title="Incremental Rendering" />
+
+      {/* Header stats */}
+      <Box borderStyle="round" borderColor="cyan" paddingX={2} paddingY={1} flexShrink={0}>
+        <Box flexDirection="column">
+          <Box flexDirection="row" gap={4}>
+            <Text>Time: <Text color="green" bold>{timestamp}</Text></Text>
+            <Text>Updates: <Text color="yellow" bold>{counter}</Text></Text>
+            <Text>Rand: <Text color="cyan">{randVal}</Text></Text>
+            <Text>FPS: <Text color={fpsColor} bold>{fps || '--'}</Text></Text>
+          </Box>
+          <Text>P1: <Text color="green">{incProgressBar(p1)}</Text> <Text color="green">{String(p1).padStart(3)}%</Text></Text>
+          <Text>P2: <Text color="yellow">{incProgressBar(p2)}</Text> <Text color="yellow">{String(p2).padStart(3)}%</Text></Text>
+          <Text>P3: <Text color="red">{incProgressBar(p3)}</Text> <Text color="red">{String(p3).padStart(3)}%</Text></Text>
+        </Box>
+      </Box>
+
+      {/* Live logs */}
+      <Box borderStyle="single" borderColor="yellow" paddingX={2} paddingY={1} flexShrink={0}>
+        <Box flexDirection="column">
+          <Text bold color="yellow">Live Logs <Text dim>1-2 lines update per frame at ~60fps</Text></Text>
+          {logLines.map((line, i) => (
+            <Text key={i} color="green" dim>{line}</Text>
+          ))}
+        </Box>
+      </Box>
+
+      {/* Service list */}
+      <Box borderStyle="single" borderColor="gray" paddingX={2} paddingY={1}>
+        <Box flexDirection="column">
+          <Text bold color="magenta">System Services <Text dim>↑↓ to navigate</Text></Text>
+          {INC_SERVICES.map((svc, i) => {
+            const selected = i === selectedIndex
+            return (
+              <Text key={i} color={selected ? 'cyan' : 'white'} bold={selected}>
+                {selected ? '▶ ' : '  '}{svc}
+              </Text>
+            )
+          })}
+        </Box>
+      </Box>
+
+      {/* Selected footer */}
+      <Box borderStyle="round" borderColor="magenta" paddingX={2} flexShrink={0}>
+        <Text dim>Selected: </Text>
+        <Text color="magenta" bold>{INC_SERVICES[selectedIndex].split(' - ')[0]}</Text>
+      </Box>
+    </Box>
+  )
+}
+
 // ─── Tab bar (top) ───────────────────────────────────────────────────────────
 
 function TabBar({ current }: { current: number }) {
@@ -633,6 +776,7 @@ function KitchenSink() {
 
   const currentSection = SECTIONS[sectionIdx]
   const isGraphActive = currentSection === 'Graph'
+  const isIncActive = currentSection === 'Incremental'
 
   return (
     <Box flexDirection="column" flexGrow={1}>
@@ -649,6 +793,7 @@ function KitchenSink() {
         {currentSection === 'Focus'       && <FocusSection />}
         {currentSection === 'Graph'       && <GraphSection active={isGraphActive} />}
         {currentSection === 'Live'        && <LiveSection />}
+        {currentSection === 'Incremental' && <IncrementalSection active={isIncActive} />}
       </Box>
     </Box>
   )

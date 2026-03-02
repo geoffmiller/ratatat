@@ -654,8 +654,6 @@ function IncrementalSection({ active }: { active: boolean }) {
     if (key.downArrow) setSelectedIndex(i => (i === INC_SERVICES.length - 1 ? 0 : i + 1))
   })
 
-  const fpsColor = fps >= 55 ? 'green' : fps >= 30 ? 'yellow' : 'red'
-
   return (
     <Box flexDirection="column" gap={1}>
       <SectionHeading title="Incremental Rendering" />
@@ -667,7 +665,7 @@ function IncrementalSection({ active }: { active: boolean }) {
             <Text>Time: <Text color="green" bold>{timestamp}</Text></Text>
             <Text>Updates: <Text color="yellow" bold>{counter}</Text></Text>
             <Text>Rand: <Text color="cyan">{randVal}</Text></Text>
-            <Text>FPS: <Text color={fpsColor} bold>{fps || '--'}</Text></Text>
+            <Text>{fps || '--'} updates/sec</Text>
           </Box>
           <Text>P1: <Text color="green">{incProgressBar(p1)}</Text> <Text color="green">{String(p1).padStart(3)}%</Text></Text>
           <Text>P2: <Text color="yellow">{incProgressBar(p2)}</Text> <Text color="yellow">{String(p2).padStart(3)}%</Text></Text>

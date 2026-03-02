@@ -86,7 +86,6 @@ function StatsBar({
   cols: number
   rows: number
 }) {
-  const fpsColor = fps >= 55 ? 'green' : fps >= 30 ? 'yellow' : 'red'
   const gridRows = Math.max(1, rows - HEADER_ROWS)
   const gridCols = Math.max(1, cols)
   return (
@@ -95,7 +94,7 @@ function StatsBar({
         ratatat stress test{'  '}
       </Text>
       <Text>
-        FPS: <Text color={fpsColor} bold>{String(fps).padStart(3)}</Text>
+        {String(fps).padStart(3)} updates/sec
         {'  '}
         Frame: <Text color="white">{String(frame).padStart(7)}</Text>
         {'  '}

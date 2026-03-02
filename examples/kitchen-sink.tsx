@@ -2,7 +2,7 @@
  * kitchen-sink.tsx — ratatat interactive kitchen sink
  *
  * Navigate sections with ← → arrow keys. Each section fills the viewport.
- * Sections: Borders · Colors · Text · Backgrounds · Layout · Focus · Graph · Live · Incremental
+ * Sections: Borders · Colors · Text · Backgrounds · Layout · Focus · Graph · Live · Incremental · UI
  *
  * The Graph section renders an animated bar chart directly to the Uint32Array
  * buffer (bypassing React reconciliation for individual bars) — same technique
@@ -26,7 +26,7 @@ import {
 
 // ─── Section list ─────────────────────────────────────────────────────────────
 
-const SECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Layout', 'Focus', 'Graph', 'Live', 'Incremental'] as const
+const SECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Layout', 'Focus', 'Graph', 'Live', 'Incremental', 'UI'] as const
 type SectionName = typeof SECTIONS[number]
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -706,6 +706,113 @@ function IncrementalSection({ active }: { active: boolean }) {
   )
 }
 
+// ─── UI Primitives ────────────────────────────────────────────────────────────
+// select-input + table — two foundational UI patterns side by side
+
+const SELECT_COLORS = [
+  { name: 'Red',     color: 'red'     },
+  { name: 'Green',   color: 'green'   },
+  { name: 'Yellow',  color: 'yellow'  },
+  { name: 'Blue',    color: 'blue'    },
+  { name: 'Magenta', color: 'magenta' },
+  { name: 'Cyan',    color: 'cyan'    },
+  { name: 'White',   color: 'white'   },
+  { name: 'Gray',    color: 'gray'    },
+]
+
+const TABLE_USERS = [
+  { id: 1,  name: 'ada_lovelace',    role: 'Engineer',  status: 'active'   },
+  { id: 2,  name: 'grace_hopper',    role: 'Architect',  status: 'active'   },
+  { id: 3,  name: 'alan_turing',     role: 'Researcher', status: 'idle'     },
+  { id: 4,  name: 'margaret_hamilton',role: 'Lead',      status: 'active'   },
+  { id: 5,  name: 'linus_torvalds',  role: 'Maintainer', status: 'active'   },
+  { id: 6,  name: 'barbara_liskov',  role: 'Architect',  status: 'idle'     },
+  { id: 7,  name: 'donald_knuth',    role: 'Researcher', status: 'inactive' },
+  { id: 8,  name: 'john_mccarthy',   role: 'Engineer',   status: 'inactive' },
+  { id: 9,  name: 'ken_thompson',    role: 'Engineer',   status: 'active'   },
+  { id: 10, name: 'dennis_ritchie',  role: 'Engineer',   status: 'idle'     },
+]
+
+function statusColor(s: string) {
+  return s === 'active' ? 'green' : s === 'idle' ? 'yellow' : 'gray'
+}
+
+function UiSection({ active }: { active: boolean }) {
+  const [selectedIndex, setSelectedIndex] = useState(0)
+
+  useInput((_input, key) => {
+    if (!active) return
+    if (key.upArrow)   setSelectedIndex(i => (i === 0 ? SELECT_COLORS.length - 1 : i - 1))
+    if (key.downArrow) setSelectedIndex(i => (i === SELECT_COLORS.length - 1 ? 0 : i + 1))
+  })
+
+  const selected = SELECT_COLORS[selectedIndex]
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <SectionHeading title="UI Primitives" />
+      <Text dim>Ports of Ink's select-input and table examples</Text>
+
+      <Box flexDirection="row" gap={3}>
+
+        {/* ── Select input ── */}
+        <Box flexDirection="column" gap={1} width={26}>
+          <Text bold>Color picker <Text dim>↑↓ to select</Text></Text>
+          <Box flexDirection="column" borderStyle="round" borderColor={selected.color} paddingX={1} paddingY={1}>
+            {SELECT_COLORS.map((item, i) => {
+              const isSelected = i === selectedIndex
+              return (
+                <Box key={item.name} flexDirection="row">
+                  <Text color={isSelected ? item.color : 'gray'} bold={isSelected}>
+                    {isSelected ? '▶ ' : '  '}
+                  </Text>
+                  <Text color={isSelected ? item.color : 'gray'} bold={isSelected}>
+                    {item.name}
+                  </Text>
+                </Box>
+              )
+            })}
+          </Box>
+          <Box borderStyle="single" borderColor={selected.color} paddingX={2} paddingY={1}>
+            <Text>Selected: <Text color={selected.color} bold>{selected.name}</Text></Text>
+          </Box>
+        </Box>
+
+        {/* ── Table ── */}
+        <Box flexDirection="column" gap={1} flexGrow={1}>
+          <Text bold>User table <Text dim>percentage-width columns</Text></Text>
+          <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1} paddingY={1}>
+            {/* Header */}
+            <Box flexDirection="row" marginBottom={1}>
+              <Box width="6%"><Text bold dim>ID</Text></Box>
+              <Box width="35%"><Text bold dim>Username</Text></Box>
+              <Box width="25%"><Text bold dim>Role</Text></Box>
+              <Box width="20%"><Text bold dim>Status</Text></Box>
+            </Box>
+            {/* Divider */}
+            <Box marginBottom={1}><Text dim>{'─'.repeat(58)}</Text></Box>
+            {/* Rows */}
+            {TABLE_USERS.map(user => (
+              <Box key={user.id} flexDirection="row">
+                <Box width="6%"><Text dim>{user.id}</Text></Box>
+                <Box width="35%"><Text color="cyan">{user.name}</Text></Box>
+                <Box width="25%"><Text color="white">{user.role}</Text></Box>
+                <Box width="20%">
+                  <Text color={statusColor(user.status)} bold>
+                    {user.status === 'active' ? '● ' : user.status === 'idle' ? '○ ' : '· '}
+                    {user.status}
+                  </Text>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+      </Box>
+    </Box>
+  )
+}
+
 // ─── Tab bar (top) ───────────────────────────────────────────────────────────
 
 function TabBar({ current }: { current: number }) {
@@ -777,6 +884,7 @@ function KitchenSink() {
   const currentSection = SECTIONS[sectionIdx]
   const isGraphActive = currentSection === 'Graph'
   const isIncActive = currentSection === 'Incremental'
+  const isUiActive = currentSection === 'UI'
 
   return (
     <Box flexDirection="column" flexGrow={1}>
@@ -794,6 +902,7 @@ function KitchenSink() {
         {currentSection === 'Graph'       && <GraphSection active={isGraphActive} />}
         {currentSection === 'Live'        && <LiveSection />}
         {currentSection === 'Incremental' && <IncrementalSection active={isIncActive} />}
+        {currentSection === 'UI'          && <UiSection active={isUiActive} />}
       </Box>
     </Box>
   )

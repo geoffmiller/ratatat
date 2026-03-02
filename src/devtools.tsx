@@ -2,7 +2,7 @@
  * DevTools — optional development overlay for ratatat apps.
  *
  * Wraps your app and renders a HUD in the bottom-right corner.
- * FPS is measured from actual render events (not a timer guess).
+ * Render rate is measured from actual render events (not a timer guess).
  *
  * Usage:
  *   import { DevTools } from 'ratatat'
@@ -57,14 +57,12 @@ function useFpsCounter() {
   return fps;
 }
 
-/** Small FPS badge — color-coded green/yellow/red */
+/** Small updates/sec badge */
 function FpsHud({ fps }: { fps: number }) {
-  const color = fps === 0 ? 'gray' : fps >= 55 ? 'green' : fps >= 30 ? 'yellow' : 'red';
-  const label = fps === 0 ? ' -- ' : String(fps).padStart(3);
+  const label = fps === 0 ? '--' : String(fps);
   return (
-    <Box borderStyle="round" borderColor={color} paddingX={1}>
-      <Text color={color} bold>{label}</Text>
-      <Text color={color} dim> fps</Text>
+    <Box borderStyle="round" borderColor="gray" paddingX={1}>
+      <Text dim>{label} updates/sec</Text>
     </Box>
   );
 }

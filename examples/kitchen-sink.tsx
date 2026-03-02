@@ -2,7 +2,8 @@
  * kitchen-sink.tsx — ratatat interactive kitchen sink
  *
  * Navigate sections with ← → arrow keys. Each section fills the viewport.
- * Sections: Borders · Colors · Text · Backgrounds · Layout · Focus · Graph · Live · Incremental · UI · Htop · Static
+ * Sections: Layout · Focus · Graph · Live · Incremental · UI · Htop · Static
+ *   UI sub-sections (◀ ▶): Borders · Colors · Text · Backgrounds · Primitives
  *
  * The Graph section renders an animated bar chart directly to the Uint32Array
  * buffer (bypassing React reconciliation for individual bars) — same technique
@@ -28,7 +29,7 @@ import {
 
 // ─── Section list ─────────────────────────────────────────────────────────────
 
-const SECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Layout', 'Focus', 'Graph', 'Live', 'Incremental', 'UI', 'Htop', 'Static'] as const
+const SECTIONS = ['Layout', 'Focus', 'Graph', 'Live', 'Incremental', 'UI', 'Htop', 'Static'] as const
 type SectionName = typeof SECTIONS[number]
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -44,7 +45,7 @@ function SectionHeading({ title }: { title: string }) {
 
 // ─── Borders ──────────────────────────────────────────────────────────────────
 
-function BordersSection() {
+function BordersSubsection() {
   const styles = ['single', 'double', 'round', 'bold', 'singleDouble', 'doubleSingle', 'classic'] as const
   return (
     <Box flexDirection="column">
@@ -73,7 +74,7 @@ function BordersSection() {
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
 
-function ColorsSection() {
+function ColorsSubsection() {
   const named = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'gray']
   const hexes = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#c77dff', '#ff9f43', '#f8961e', '#90e0ef']
   return (
@@ -126,7 +127,7 @@ function ColorsSection() {
 
 // ─── Text styles ──────────────────────────────────────────────────────────────
 
-function TextSection() {
+function TextSubsection() {
   return (
     <Box flexDirection="column">
       <SectionHeading title="Text Styles" />
@@ -166,7 +167,7 @@ function TextSection() {
 
 // ─── Backgrounds ─────────────────────────────────────────────────────────────
 
-function BackgroundsSection() {
+function BackgroundsSubsection() {
   return (
     <Box flexDirection="column">
       <SectionHeading title="Backgrounds" />
@@ -208,7 +209,7 @@ function BackgroundsSection() {
   )
 }
 
-// ─── Layout ───────────────────────────────────────────────────────────────────
+// ─── UI Primitives (select-input + table) ────────────────────────────────────
 
 function LayoutSection() {
   return (
@@ -708,8 +709,7 @@ function IncrementalSection({ active }: { active: boolean }) {
   )
 }
 
-// ─── UI Primitives ────────────────────────────────────────────────────────────
-// select-input + table — two foundational UI patterns side by side
+// ─── UI (combined: Borders · Colors · Text · Backgrounds · Primitives) ───────
 
 const SELECT_COLORS = [
   { name: 'Red',     color: 'red'     },
@@ -723,23 +723,23 @@ const SELECT_COLORS = [
 ]
 
 const TABLE_USERS = [
-  { id: 1,  name: 'ada_lovelace',    role: 'Engineer',  status: 'active'   },
-  { id: 2,  name: 'grace_hopper',    role: 'Architect',  status: 'active'   },
-  { id: 3,  name: 'alan_turing',     role: 'Researcher', status: 'idle'     },
-  { id: 4,  name: 'margaret_hamilton',role: 'Lead',      status: 'active'   },
-  { id: 5,  name: 'linus_torvalds',  role: 'Maintainer', status: 'active'   },
-  { id: 6,  name: 'barbara_liskov',  role: 'Architect',  status: 'idle'     },
-  { id: 7,  name: 'donald_knuth',    role: 'Researcher', status: 'inactive' },
-  { id: 8,  name: 'john_mccarthy',   role: 'Engineer',   status: 'inactive' },
-  { id: 9,  name: 'ken_thompson',    role: 'Engineer',   status: 'active'   },
-  { id: 10, name: 'dennis_ritchie',  role: 'Engineer',   status: 'idle'     },
+  { id: 1,  name: 'ada_lovelace',     role: 'Engineer',   status: 'active'   },
+  { id: 2,  name: 'grace_hopper',     role: 'Architect',  status: 'active'   },
+  { id: 3,  name: 'alan_turing',      role: 'Researcher', status: 'idle'     },
+  { id: 4,  name: 'margaret_hamilton',role: 'Lead',       status: 'active'   },
+  { id: 5,  name: 'linus_torvalds',   role: 'Maintainer', status: 'active'   },
+  { id: 6,  name: 'barbara_liskov',   role: 'Architect',  status: 'idle'     },
+  { id: 7,  name: 'donald_knuth',     role: 'Researcher', status: 'inactive' },
+  { id: 8,  name: 'john_mccarthy',    role: 'Engineer',   status: 'inactive' },
+  { id: 9,  name: 'ken_thompson',     role: 'Engineer',   status: 'active'   },
+  { id: 10, name: 'dennis_ritchie',   role: 'Engineer',   status: 'idle'     },
 ]
 
 function statusColor(s: string) {
   return s === 'active' ? 'green' : s === 'idle' ? 'yellow' : 'gray'
 }
 
-function UiSection({ active }: { active: boolean }) {
+function PrimitivesSubsection({ active }: { active: boolean }) {
   const [selectedIndex, setSelectedIndex] = useState(0)
 
   useInput((_input, key) => {
@@ -752,14 +752,11 @@ function UiSection({ active }: { active: boolean }) {
 
   return (
     <Box flexDirection="column" gap={1}>
-      <SectionHeading title="UI Primitives" />
-      <Text dim>Ports of Ink's select-input and table examples</Text>
-
+      <SectionHeading title="Primitives" />
+      <Text dim>select-input and table  <Text>↑↓</Text><Text dim> to navigate list</Text></Text>
       <Box flexDirection="row" gap={3}>
-
-        {/* ── Select input ── */}
         <Box flexDirection="column" gap={1} width={26}>
-          <Text bold>Color picker <Text dim>↑↓ to select</Text></Text>
+          <Text bold>Color picker</Text>
           <Box flexDirection="column" borderStyle="round" borderColor={selected.color} paddingX={1} paddingY={1}>
             {SELECT_COLORS.map((item, i) => {
               const isSelected = i === selectedIndex
@@ -779,21 +776,16 @@ function UiSection({ active }: { active: boolean }) {
             <Text>Selected: <Text color={selected.color} bold>{selected.name}</Text></Text>
           </Box>
         </Box>
-
-        {/* ── Table ── */}
         <Box flexDirection="column" gap={1} flexGrow={1}>
-          <Text bold>User table <Text dim>percentage-width columns</Text></Text>
+          <Text bold>User table</Text>
           <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1} paddingY={1}>
-            {/* Header */}
             <Box flexDirection="row" marginBottom={1}>
               <Box width="6%"><Text bold dim>ID</Text></Box>
               <Box width="35%"><Text bold dim>Username</Text></Box>
               <Box width="25%"><Text bold dim>Role</Text></Box>
               <Box width="20%"><Text bold dim>Status</Text></Box>
             </Box>
-            {/* Divider */}
             <Box marginBottom={1}><Text dim>{'─'.repeat(58)}</Text></Box>
-            {/* Rows */}
             {TABLE_USERS.map(user => (
               <Box key={user.id} flexDirection="row">
                 <Box width="6%"><Text dim>{user.id}</Text></Box>
@@ -809,8 +801,43 @@ function UiSection({ active }: { active: boolean }) {
             ))}
           </Box>
         </Box>
-
       </Box>
+    </Box>
+  )
+}
+
+const UI_SUBSECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Primitives'] as const
+type UiSubsection = typeof UI_SUBSECTIONS[number]
+
+function UiSection({ active }: { active: boolean }) {
+  const [subIdx, setSubIdx] = useState(0)
+
+  useInput((_input, key) => {
+    if (!active) return
+    if (key.leftArrow)  setSubIdx(i => (i === 0 ? UI_SUBSECTIONS.length - 1 : i - 1))
+    if (key.rightArrow) setSubIdx(i => (i === UI_SUBSECTIONS.length - 1 ? 0 : i + 1))
+  })
+
+  const current: UiSubsection = UI_SUBSECTIONS[subIdx]
+
+  return (
+    <Box flexDirection="column" height="100%">
+      {/* Sub-nav */}
+      <Box flexDirection="row" gap={2} marginBottom={1}>
+        <Text dim>◀ ▶</Text>
+        {UI_SUBSECTIONS.map((name, i) => (
+          <Box key={name} paddingX={1} backgroundColor={i === subIdx ? 'cyan' : undefined}>
+            <Text color={i === subIdx ? 'black' : 'gray'} bold={i === subIdx}>{name}</Text>
+          </Box>
+        ))}
+      </Box>
+
+      {/* Active subsection */}
+      {current === 'Borders'     && <BordersSubsection />}
+      {current === 'Colors'      && <ColorsSubsection />}
+      {current === 'Text'        && <TextSubsection />}
+      {current === 'Backgrounds' && <BackgroundsSubsection />}
+      {current === 'Primitives'  && <PrimitivesSubsection active={active} />}
     </Box>
   )
 }
@@ -1191,11 +1218,7 @@ function KitchenSink() {
       <TabBar current={sectionIdx} />
 
       {/* Section content fills remaining space */}
-      <Box flexDirection="column" flexGrow={1} paddingX={2} paddingTop={1}>
-        {currentSection === 'Borders'     && <BordersSection />}
-        {currentSection === 'Colors'      && <ColorsSection />}
-        {currentSection === 'Text'        && <TextSection />}
-        {currentSection === 'Backgrounds' && <BackgroundsSection />}
+        <Box flexDirection="column" flexGrow={1} paddingX={2} paddingTop={1}>
         {currentSection === 'Layout'      && <LayoutSection />}
         {currentSection === 'Focus'       && <FocusSection />}
         {currentSection === 'Graph'       && <GraphSection active={isGraphActive} />}

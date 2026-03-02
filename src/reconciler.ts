@@ -51,7 +51,7 @@ function resolveNodeColors(props: Props): { fg: number; bg: number; styles: numb
   } else {
     styles = 0;
     if (props.bold)          styles |= 1;
-    if (props.dim)           styles |= 2;
+    if (props.dim || props.dimColor) styles |= 2;
     if (props.italic)        styles |= 4;
     if (props.underline)     styles |= 8;
     if (props.blink)         styles |= 16;

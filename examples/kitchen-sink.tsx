@@ -1,5 +1,5 @@
 /**
- * kitchen-sink.tsx — ratatat interactive kitchen sink
+ * kitchen-sink.tsx — Ratatat interactive kitchen sink
  *
  * Navigate sections with ← → arrow keys. Each section fills the viewport.
  * Sections: Layout · Focus · Graph · Live · Incremental · UI · Htop · Static
@@ -534,13 +534,13 @@ function LiveSection() {
       {/* Benchmark table */}
       <Box flexDirection="column" borderStyle="round" borderColor="yellow" paddingX={2} paddingY={1}>
         <Box flexDirection="row" marginBottom={1}>
-          <Text bold color="yellow">ratatat vs Ink — benchmark  </Text>
+          <Text bold color="yellow">Ratatat vs Ink — benchmark  </Text>
           <Text dim>ops/sec, higher is better</Text>
         </Box>
         {/* Header */}
         <Box flexDirection="row">
           <Text dim bold>{'Suite'.padEnd(28)}</Text>
-          <Text dim bold>{'ratatat'.padEnd(14)}</Text>
+          <Text dim bold>{'Ratatat'.padEnd(14)}</Text>
           <Text dim bold>{'Ink'.padEnd(14)}</Text>
           <Text dim bold>{'Speedup'.padEnd(10)}</Text>
           <Text dim bold>Notes</Text>

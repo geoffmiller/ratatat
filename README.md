@@ -1,4 +1,4 @@
-# ratatat
+# Ratatat
 
 A React reconciler for the terminal — write TUI apps with React components, powered by a native Rust diff engine and Yoga Flexbox.
 
@@ -24,9 +24,9 @@ function Counter() {
 render(<Counter />)
 ```
 
-## Why ratatat?
+## Why Ratatat?
 
-| | ratatat | Ink |
+| | Ratatat | Ink |
 |---|---|---|
 | Initial mount (simple) | 67,630 ops/s | 8,215 ops/s | **8.2×** |
 | Initial mount (complex) | 41,253 ops/s | 1,421 ops/s | **29×** |
@@ -239,7 +239,7 @@ Cell at `(x, y)`: index `= (y × cols + x) × 2`
 npm run build      # Rust native add-on (napi-rs)
 npm run build:ts   # TypeScript
 npm test           # 89 tests
-node benchmark/bench.js  # ratatat vs Ink benchmark
+node benchmark/bench.js  # Ratatat vs Ink benchmark
 ```
 
 ## Benchmark
@@ -250,13 +250,13 @@ node benchmark/bench.js
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
-║              ratatat vs Ink — render benchmark                  ║
+║              Ratatat vs Ink — render benchmark                  ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-  initial mount (simple)    🚀  ratatat is 8.2x faster than Ink
-  initial mount (complex)   🚀  ratatat is 29.0x faster than Ink
-  rerender (simple)         🚀  ratatat is 11.8x faster than Ink
-  rerender (complex)        🚀  ratatat is 36.0x faster than Ink
+  initial mount (simple)    🚀  Ratatat is 8.2x faster than Ink
+  initial mount (complex)   🚀  Ratatat is 29.0x faster than Ink
+  rerender (simple)         🚀  Ratatat is 11.8x faster than Ink
+  rerender (complex)        🚀  Ratatat is 36.0x faster than Ink
 ```
 
 Stress test (`examples/stress-test.tsx`): **303 FPS** on a 188×50 terminal.  

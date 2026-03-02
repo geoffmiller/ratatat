@@ -1,5 +1,5 @@
 /**
- * stress-test.tsx — ratatat stress test
+ * stress-test.tsx — Ratatat stress test
  *
  * Renders a full-terminal color-cycling grid as fast as possible.
  * The stats bar uses React components normally.
@@ -91,7 +91,7 @@ function StatsBar({
   return (
     <Box borderStyle="round" borderColor="cyan" paddingX={2} marginBottom={1} flexShrink={0}>
       <Text bold color="cyan">
-        ratatat stress test{'  '}
+        Ratatat stress test{'  '}
       </Text>
       <Text>
         {String(fps).padStart(3)} updates/sec
@@ -143,7 +143,7 @@ function StressTest() {
   }, [tick])
 
   // Paint the grid directly into the buffer on every frame.
-  // We get the buffer via the ratatat render context by using a side-channel:
+  // We get the buffer via the Ratatat render context by using a side-channel:
   // render() exposes the app, and the app exposes getBuffer().
   // We hook into the 'render' event to intercept the buffer before it goes to Rust.
   useEffect(() => {

@@ -1,5 +1,5 @@
 /**
- * DevTools — optional development overlay for ratatat apps.
+ * DevTools — optional development overlay for Ratatat apps.
  *
  * Wraps your app and renders a HUD in the bottom-right corner.
  * Render rate is measured from actual render events (not a timer guess).

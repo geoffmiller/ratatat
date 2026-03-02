@@ -2,7 +2,7 @@
  * kitchen-sink.tsx — ratatat interactive kitchen sink
  *
  * Navigate sections with ← → arrow keys. Each section fills the viewport.
- * Sections: Borders · Colors · Text · Backgrounds · Layout · Focus · Graph · Live · Incremental · UI
+ * Sections: Borders · Colors · Text · Backgrounds · Layout · Focus · Graph · Live · Incremental · UI · Htop
  *
  * The Graph section renders an animated bar chart directly to the Uint32Array
  * buffer (bypassing React reconciliation for individual bars) — same technique
@@ -26,7 +26,7 @@ import {
 
 // ─── Section list ─────────────────────────────────────────────────────────────
 
-const SECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Layout', 'Focus', 'Graph', 'Live', 'Incremental', 'UI'] as const
+const SECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Layout', 'Focus', 'Graph', 'Live', 'Incremental', 'UI', 'Htop'] as const
 type SectionName = typeof SECTIONS[number]
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -813,6 +813,213 @@ function UiSection({ active }: { active: boolean }) {
   )
 }
 
+// ─── Htop ─────────────────────────────────────────────────────────────────────
+
+import os from 'os'
+import { execSync } from 'child_process'
+
+// CPU utilization: diff two os.cpus() snapshots
+type CpuSnapshot = ReturnType<typeof os.cpus>
+function cpuPercents(prev: CpuSnapshot, curr: CpuSnapshot): number[] {
+  return curr.map((cpu, i) => {
+    const p = prev[i].times
+    const c = cpu.times
+    const prevTotal = p.user + p.nice + p.sys + p.idle + p.irq
+    const currTotal = c.user + c.nice + c.sys + c.idle + c.irq
+    const totalDiff = currTotal - prevTotal
+    const idleDiff  = c.idle - p.idle
+    if (totalDiff === 0) return 0
+    return Math.round(((totalDiff - idleDiff) / totalDiff) * 100)
+  })
+}
+
+interface ProcInfo {
+  pid: string
+  user: string
+  cpu: number
+  mem: number
+  cmd: string
+}
+
+function readProcs(): ProcInfo[] {
+  try {
+    const out = execSync('ps aux', { timeout: 500 }).toString()
+    return out.trim().split('\n').slice(1).map(line => {
+      const parts = line.trim().split(/\s+/)
+      return {
+        user: parts[0] ?? '',
+        pid:  parts[1] ?? '',
+        cpu:  parseFloat(parts[2] ?? '0'),
+        mem:  parseFloat(parts[3] ?? '0'),
+        cmd:  parts.slice(10).join(' '),
+      }
+    })
+  } catch { return [] }
+}
+
+function miniBar(pct: number, width: number, color: string) {
+  const filled = Math.round((Math.min(pct, 100) / 100) * width)
+  const empty  = width - filled
+  return (
+    <Box flexDirection="row">
+      <Text color={color}>{'|'.repeat(filled)}</Text>
+      <Text dim>{'·'.repeat(empty)}</Text>
+    </Box>
+  )
+}
+
+function formatUptime(secs: number) {
+  const d = Math.floor(secs / 86400)
+  const h = Math.floor((secs % 86400) / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  const parts = []
+  if (d > 0) parts.push(`${d}d`)
+  if (h > 0 || d > 0) parts.push(`${h}h`)
+  parts.push(`${m}m`)
+  return parts.join(' ')
+}
+
+function formatMem(bytes: number) {
+  if (bytes >= 1e9) return (bytes / 1e9).toFixed(1) + 'G'
+  return (bytes / 1e6).toFixed(0) + 'M'
+}
+
+type HtopSort = 'cpu' | 'mem'
+
+function HtopSection({ active }: { active: boolean }) {
+  const { columns } = useWindowSize()
+  const [cpuPcts, setCpuPcts]   = useState<number[]>(() => os.cpus().map(() => 0))
+  const [memUsed, setMemUsed]   = useState(os.totalmem() - os.freemem())
+  const [loadAvg, setLoadAvg]   = useState(os.loadavg())
+  const [uptime,  setUptime]    = useState(os.uptime())
+  const [procs,   setProcs]     = useState<ProcInfo[]>([])
+  const [sort,    setSort]      = useState<HtopSort>('cpu')
+  const prevCpus = useRef(os.cpus())
+
+  useEffect(() => {
+    if (!active) return
+    // Initial process list
+    setProcs(readProcs())
+
+    const t = setInterval(() => {
+      const curr = os.cpus()
+      setCpuPcts(cpuPercents(prevCpus.current, curr))
+      prevCpus.current = curr
+      setMemUsed(os.totalmem() - os.freemem())
+      setLoadAvg(os.loadavg())
+      setUptime(os.uptime())
+      setProcs(readProcs())
+    }, 1000)
+    return () => clearInterval(t)
+  }, [active])
+
+  useInput((_input, key) => {
+    if (!active) return
+    if (key === 'c' || (key as any) === 'C') setSort('cpu')
+    if (key === 'm' || (key as any) === 'M') setSort('mem')
+  })
+
+  const totalMem = os.totalmem()
+  const memPct   = Math.round((memUsed / totalMem) * 100)
+  const cpuCount = cpuPcts.length
+  const barW     = Math.max(8, Math.floor((columns - 20) / Math.min(cpuCount, 10)) - 2)
+
+  const sorted = [...procs]
+    .sort((a, b) => sort === 'cpu' ? b.cpu - a.cpu : b.mem - a.mem)
+    .slice(0, 15)
+
+  const hostname = os.hostname().split('.')[0]
+
+  return (
+    <Box flexDirection="column" gap={1}>
+
+      {/* ── Header ── */}
+      <Box flexDirection="row" gap={4} borderStyle="round" borderColor="green" paddingX={2} flexShrink={0}>
+        <Text bold color="green">{hostname}</Text>
+        <Text dim>up <Text color="white">{formatUptime(uptime)}</Text></Text>
+        <Text dim>load <Text color={loadAvg[0] > cpuCount ? 'red' : loadAvg[0] > cpuCount * 0.7 ? 'yellow' : 'green'}>{loadAvg[0].toFixed(2)}</Text> <Text dim>{loadAvg[1].toFixed(2)} {loadAvg[2].toFixed(2)}</Text></Text>
+        <Spacer />
+        <Text dim>{cpuCount} cores · </Text>
+        <Text color="cyan">{formatMem(totalMem)}</Text>
+        <Text dim> RAM</Text>
+      </Box>
+
+      {/* ── CPU meters ── */}
+      <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={2} paddingY={1} flexShrink={0}>
+        <Text bold dim>CPU</Text>
+        <Box flexDirection="row" flexWrap="wrap" gap={1} marginTop={1}>
+          {cpuPcts.map((pct, i) => {
+            const color = pct > 80 ? 'red' : pct > 50 ? 'yellow' : 'green'
+            return (
+              <Box key={i} flexDirection="row" width={barW + 12}>
+                <Text dim>{String(i + 1).padStart(2)} </Text>
+                <Text color={color}>[</Text>
+                {miniBar(pct, barW, color)}
+                <Text color={color}>]</Text>
+                <Text color={color} bold> {String(pct).padStart(3)}%</Text>
+              </Box>
+            )
+          })}
+        </Box>
+      </Box>
+
+      {/* ── Memory bar ── */}
+      <Box flexDirection="row" borderStyle="single" borderColor="gray" paddingX={2} paddingY={1} flexShrink={0} gap={2}>
+        <Text bold dim>Mem</Text>
+        <Text color="cyan">[</Text>
+        {miniBar(memPct, 40, memPct > 80 ? 'red' : memPct > 60 ? 'yellow' : 'cyan')}
+        <Text color="cyan">]</Text>
+        <Text color="cyan" bold>{String(memPct).padStart(3)}%</Text>
+        <Text dim>{formatMem(memUsed)} / {formatMem(totalMem)}</Text>
+      </Box>
+
+      {/* ── Process table ── */}
+      <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={2} paddingY={1} flexGrow={1}>
+        {/* Table header */}
+        <Box flexDirection="row" marginBottom={1}>
+          <Box width={7}><Text bold dim>PID</Text></Box>
+          <Box width={14}><Text bold dim>USER</Text></Box>
+          <Box width={8}>
+            <Text bold color={sort === 'cpu' ? 'yellow' : undefined} dim={sort !== 'cpu'}>
+              %CPU
+            </Text>
+          </Box>
+          <Box width={8}>
+            <Text bold color={sort === 'mem' ? 'yellow' : undefined} dim={sort !== 'mem'}>
+              %MEM
+            </Text>
+          </Box>
+          <Text bold dim>COMMAND</Text>
+          <Spacer />
+          <Text dim>sort: </Text>
+          <Text color={sort === 'cpu' ? 'yellow' : 'gray'} bold={sort === 'cpu'}>C</Text>
+          <Text dim>pu  </Text>
+          <Text color={sort === 'mem' ? 'yellow' : 'gray'} bold={sort === 'mem'}>M</Text>
+          <Text dim>em</Text>
+        </Box>
+
+        {sorted.map((p, i) => {
+          const cpuColor = p.cpu > 50 ? 'red' : p.cpu > 20 ? 'yellow' : 'white'
+          const memColor = p.mem > 10 ? 'red' : p.mem > 5 ? 'yellow' : 'white'
+          const cmd = p.cmd.length > columns - 40 ? p.cmd.slice(0, columns - 43) + '…' : p.cmd
+          // Truncate to basename if it's a long path
+          const cmdDisplay = cmd.startsWith('/') ? cmd.split('/').pop() ?? cmd : cmd
+          return (
+            <Box key={p.pid} flexDirection="row">
+              <Box width={7}><Text dim>{p.pid}</Text></Box>
+              <Box width={14}><Text color="cyan">{p.user.slice(0, 12)}</Text></Box>
+              <Box width={8}><Text color={cpuColor} bold={p.cpu > 20}>{p.cpu.toFixed(1).padStart(5)}</Text></Box>
+              <Box width={8}><Text color={memColor}>{p.mem.toFixed(1).padStart(5)}</Text></Box>
+              <Text color={i === 0 ? 'white' : 'gray'}>{cmdDisplay}</Text>
+            </Box>
+          )
+        })}
+      </Box>
+
+    </Box>
+  )
+}
+
 // ─── Tab bar (top) ───────────────────────────────────────────────────────────
 
 function TabBar({ current }: { current: number }) {
@@ -883,8 +1090,9 @@ function KitchenSink() {
 
   const currentSection = SECTIONS[sectionIdx]
   const isGraphActive = currentSection === 'Graph'
-  const isIncActive = currentSection === 'Incremental'
-  const isUiActive = currentSection === 'UI'
+  const isIncActive   = currentSection === 'Incremental'
+  const isUiActive    = currentSection === 'UI'
+  const isHtopActive  = currentSection === 'Htop'
 
   return (
     <Box flexDirection="column" flexGrow={1}>
@@ -903,6 +1111,7 @@ function KitchenSink() {
         {currentSection === 'Live'        && <LiveSection />}
         {currentSection === 'Incremental' && <IncrementalSection active={isIncActive} />}
         {currentSection === 'UI'          && <UiSection active={isUiActive} />}
+        {currentSection === 'Htop'        && <HtopSection active={isHtopActive} />}
       </Box>
     </Box>
   )

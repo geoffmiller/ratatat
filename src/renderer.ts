@@ -2,6 +2,10 @@ import { LayoutNode } from './layout.js';
 import cliBoxes from 'cli-boxes';
 import { resolveColor } from './styles.js';
 
+// Clip rectangle: cells outside [x0,x1) × [y0,y1) are not painted.
+// Passed down through paintNode so children can never overflow their parent.
+type Clip = { x0: number; y0: number; x1: number; y1: number };
+
 export function renderTreeToBuffer(
   root: LayoutNode,
   buffer: Uint32Array,
@@ -17,13 +21,18 @@ export function renderTreeToBuffer(
   // Two-pass render:
   //   Pass 1: paint backgrounds + text for the whole tree (children can overpaint freely)
   //   Pass 2: repaint borders on top of everything (so no child can overwrite them)
-  const borderJobs: Array<{ node: LayoutNode; absX: number; absY: number; w: number; h: number; fg: number; bg: number; styles: number }> = [];
+  const borderJobs: Array<{
+    node: LayoutNode; absX: number; absY: number; w: number; h: number;
+    fg: number; bg: number; styles: number; clip: Clip;
+  }> = [];
+
+  // Root clip is the full terminal
+  const rootClip: Clip = { x0: 0, y0: 0, x1: cols, y1: rows };
 
   try {
-    paintNode(root, buffer, cols, rows, 0, 0, root.fg, root.bg, root.styles, borderJobs);
-    // Repaint all borders on top, in tree order (parents before children = correct stacking)
+    paintNode(root, buffer, cols, rows, 0, 0, root.fg, root.bg, root.styles, borderJobs, rootClip);
     for (const job of borderJobs) {
-      paintBorder(job.node, buffer, cols, rows, job.absX, job.absY, job.w, job.h, job.fg, job.bg, job.styles);
+      paintBorder(job.node, buffer, cols, rows, job.absX, job.absY, job.w, job.h, job.fg, job.bg, job.styles, job.clip);
     }
   } catch (err) {
     console.error("Renderer Error:", err);
@@ -32,8 +41,11 @@ export function renderTreeToBuffer(
 
 function writeCell(
   buffer: Uint32Array, cols: number, rows: number,
-  sx: number, sy: number, charCode: number, attrCode: number
+  sx: number, sy: number, charCode: number, attrCode: number,
+  clip: Clip,
 ) {
+  // Clip to parent bounds first, then terminal bounds
+  if (sx < clip.x0 || sx >= clip.x1 || sy < clip.y0 || sy >= clip.y1) return;
   if (sx < 0 || sx >= cols || sy < 0 || sy >= rows) return;
   const idx = (sy * cols + sx) * 2;
   buffer[idx] = charCode;
@@ -52,6 +64,7 @@ function paintBorder(
   fg: number,
   bg: number,
   styles: number,
+  clip: Clip,
 ) {
   if (!node._style?.borderStyle) return;
 
@@ -69,7 +82,7 @@ function paintBorder(
       const ch = (x === 0 && showLeft) ? box.topLeft
                : (x === w-1 && showRight) ? box.topRight
                : box.top;
-      writeCell(buffer, cols, rows, absX + x, absY, ch.codePointAt(0)!, borderAttr);
+      writeCell(buffer, cols, rows, absX + x, absY, ch.codePointAt(0)!, borderAttr, clip);
     }
   }
 
@@ -78,15 +91,15 @@ function paintBorder(
       const ch = (x === 0 && showLeft) ? box.bottomLeft
                : (x === w-1 && showRight) ? box.bottomRight
                : box.bottom;
-      writeCell(buffer, cols, rows, absX + x, absY + h - 1, ch.codePointAt(0)!, borderAttr);
+      writeCell(buffer, cols, rows, absX + x, absY + h - 1, ch.codePointAt(0)!, borderAttr, clip);
     }
   }
 
   const yStart = showTop    ? 1 : 0;
   const yEnd   = showBottom ? h - 1 : h;
   for (let y = yStart; y < yEnd; y++) {
-    if (showLeft)  writeCell(buffer, cols, rows, absX,         absY + y, box.left.codePointAt(0)!,  borderAttr);
-    if (showRight) writeCell(buffer, cols, rows, absX + w - 1, absY + y, box.right.codePointAt(0)!, borderAttr);
+    if (showLeft)  writeCell(buffer, cols, rows, absX,         absY + y, box.left.codePointAt(0)!,  borderAttr, clip);
+    if (showRight) writeCell(buffer, cols, rows, absX + w - 1, absY + y, box.right.codePointAt(0)!, borderAttr, clip);
   }
 }
 
@@ -100,7 +113,11 @@ function paintNode(
   parentFg: number,
   parentBg: number,
   parentStyles: number,
-  borderJobs: Array<{ node: LayoutNode; absX: number; absY: number; w: number; h: number; fg: number; bg: number; styles: number }>,
+  borderJobs: Array<{
+    node: LayoutNode; absX: number; absY: number; w: number; h: number;
+    fg: number; bg: number; styles: number; clip: Clip;
+  }>,
+  clip: Clip,
 ) {
   const layout = node.getLayout();
 
@@ -113,18 +130,30 @@ function paintNode(
   const bg     = node.bg     !== 255 ? node.bg     : parentBg;
   const styles = node.styles !== 0   ? node.styles : parentStyles;
 
+  // Intersect this node's bounds with the incoming clip rectangle.
+  // Children inherit this tighter clip — they can never paint outside their parent.
+  const nodeClip: Clip = {
+    x0: Math.max(clip.x0, absX),
+    y0: Math.max(clip.y0, absY),
+    x1: Math.min(clip.x1, absX + w),
+    y1: Math.min(clip.y1, absY + h),
+  };
+
+  // If the node is entirely outside the clip, skip it and its children
+  if (nodeClip.x0 >= nodeClip.x1 || nodeClip.y0 >= nodeClip.y1) return;
+
   if (!node.text) {
     // Fill background
     const attrCode = (styles << 16) | (bg << 8) | fg;
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        writeCell(buffer, cols, rows, absX + x, absY + y, 32, attrCode);
+        writeCell(buffer, cols, rows, absX + x, absY + y, 32, attrCode, nodeClip);
       }
     }
 
     // Queue border repaint for pass 2 (so children can't erase it)
     if (node._style?.borderStyle) {
-      borderJobs.push({ node, absX, absY, w, h, fg, bg, styles });
+      borderJobs.push({ node, absX, absY, w, h, fg, bg, styles, clip: nodeClip });
     }
   } else {
     // Text node: optionally fill background then paint characters
@@ -133,7 +162,7 @@ function paintNode(
     if (node.bg !== 255) {
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
-          writeCell(buffer, cols, rows, absX + x, absY + y, 32, attrCode);
+          writeCell(buffer, cols, rows, absX + x, absY + y, 32, attrCode, nodeClip);
         }
       }
     }
@@ -145,14 +174,14 @@ function paintNode(
       if (cursorX >= w)          { cursorX = 0; cursorY++; }
       if (cursorY >= h) break;
 
-      writeCell(buffer, cols, rows, absX + cursorX, absY + cursorY, node.text.codePointAt(i) || 32, attrCode);
+      writeCell(buffer, cols, rows, absX + cursorX, absY + cursorY, node.text.codePointAt(i) || 32, attrCode, nodeClip);
       if (node.text.codePointAt(i)! > 0xFFFF) i++;
       cursorX++;
     }
   }
 
-  // Recurse into children
+  // Recurse into children — they inherit this node's clip rectangle
   for (const child of node.children) {
-    paintNode(child, buffer, cols, rows, absX, absY, fg, bg, styles, borderJobs);
+    paintNode(child, buffer, cols, rows, absX, absY, fg, bg, styles, borderJobs, nodeClip);
   }
 }

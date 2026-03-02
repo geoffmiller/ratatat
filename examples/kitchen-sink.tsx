@@ -3,7 +3,7 @@
  *
  * Navigate sections with ← → arrow keys. Each section fills the viewport.
  * Sections: Layout · Focus · Graph · Live · Incremental · UI · Htop · Static
- *   UI sub-sections (◀ ▶): Borders · Colors · Text · Backgrounds · Primitives
+ *   UI sub-sections (↑↓ in sidebar): Borders · Colors · Text · Backgrounds · Primitives
  *
  * The Graph section renders an animated bar chart directly to the Uint32Array
  * buffer (bypassing React reconciliation for individual bars) — same technique
@@ -742,10 +742,10 @@ function statusColor(s: string) {
 function PrimitivesSubsection({ active }: { active: boolean }) {
   const [selectedIndex, setSelectedIndex] = useState(0)
 
-  useInput((_input, key) => {
+  useInput((input, key) => {
     if (!active) return
-    if (key.upArrow)   setSelectedIndex(i => (i === 0 ? SELECT_COLORS.length - 1 : i - 1))
-    if (key.downArrow) setSelectedIndex(i => (i === SELECT_COLORS.length - 1 ? 0 : i + 1))
+    if (key.upArrow || input === 'k') setSelectedIndex(i => (i === 0 ? SELECT_COLORS.length - 1 : i - 1))
+    if (key.downArrow || input === 'j') setSelectedIndex(i => (i === SELECT_COLORS.length - 1 ? 0 : i + 1))
   })
 
   const selected = SELECT_COLORS[selectedIndex]
@@ -753,7 +753,7 @@ function PrimitivesSubsection({ active }: { active: boolean }) {
   return (
     <Box flexDirection="column" gap={1}>
       <SectionHeading title="Primitives" />
-      <Text dim>select-input and table  <Text>↑↓</Text><Text dim> to navigate list</Text></Text>
+      <Text dim>select-input and table  <Text>↑↓ / j k</Text><Text dim> to navigate list</Text></Text>
       <Box flexDirection="row" gap={3}>
         <Box flexDirection="column" gap={1} width={26}>
           <Text bold>Color picker</Text>
@@ -814,30 +814,43 @@ function UiSection({ active }: { active: boolean }) {
 
   useInput((_input, key) => {
     if (!active) return
-    if (key.leftArrow)  setSubIdx(i => (i === 0 ? UI_SUBSECTIONS.length - 1 : i - 1))
-    if (key.rightArrow) setSubIdx(i => (i === UI_SUBSECTIONS.length - 1 ? 0 : i + 1))
+    if (key.upArrow)   setSubIdx(i => Math.max(0, i - 1))
+    if (key.downArrow) setSubIdx(i => Math.min(UI_SUBSECTIONS.length - 1, i + 1))
   })
 
   const current: UiSubsection = UI_SUBSECTIONS[subIdx]
 
   return (
-    <Box flexDirection="column" height="100%">
-      {/* Sub-nav */}
-      <Box flexDirection="row" gap={2} marginBottom={1}>
-        <Text dim>◀ ▶</Text>
+    <Box flexDirection="row" height="100%">
+      {/* Left sidebar menu */}
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor="gray"
+        paddingY={1}
+        width={16}
+        flexShrink={0}
+      >
         {UI_SUBSECTIONS.map((name, i) => (
           <Box key={name} paddingX={1} backgroundColor={i === subIdx ? 'cyan' : undefined}>
-            <Text color={i === subIdx ? 'black' : 'gray'} bold={i === subIdx}>{name}</Text>
+            <Text color={i === subIdx ? 'black' : 'gray'} bold={i === subIdx}>
+              {i === subIdx ? '▶ ' : '  '}{name}
+            </Text>
           </Box>
         ))}
+        <Box marginTop={1} paddingX={1}>
+          <Text dim>↑↓ navigate</Text>
+        </Box>
       </Box>
 
-      {/* Active subsection */}
-      {current === 'Borders'     && <BordersSubsection />}
-      {current === 'Colors'      && <ColorsSubsection />}
-      {current === 'Text'        && <TextSubsection />}
-      {current === 'Backgrounds' && <BackgroundsSubsection />}
-      {current === 'Primitives'  && <PrimitivesSubsection active={active} />}
+      {/* Content area */}
+      <Box flexDirection="column" flexGrow={1} paddingX={2}>
+        {current === 'Borders'     && <BordersSubsection />}
+        {current === 'Colors'      && <ColorsSubsection />}
+        {current === 'Text'        && <TextSubsection />}
+        {current === 'Backgrounds' && <BackgroundsSubsection />}
+        {current === 'Primitives'  && <PrimitivesSubsection active={active} />}
+      </Box>
     </Box>
   )
 }

@@ -120,6 +120,40 @@ Inline text with optional styling.
 </Text>
 ```
 
+### `<Newline>`
+
+Inserts a line break inside a `<Text>` node.
+
+```tsx
+<Text>line one<Newline />line two</Text>
+```
+
+### `<Spacer>`
+
+Expands to fill available space in a flex container, pushing siblings apart.
+
+```tsx
+<Box>
+  <Text>left</Text>
+  <Spacer />
+  <Text>right</Text>
+</Box>
+```
+
+### `<Static>`
+
+Append-only list — items are rendered once and never re-rendered. Use for streaming output (build logs, test results) where the history should be frozen and only new items added.
+
+```tsx
+<Static items={completedTasks}>
+  {(task) => (
+    <Box key={task.id}>
+      <Text color={task.ok ? 'green' : 'red'}>{task.name}</Text>
+    </Box>
+  )}
+</Static>
+```
+
 ### Hooks
 
 ```tsx
@@ -139,6 +173,10 @@ const { columns, rows } = useWindowSize()
 // Focus
 const { isFocused } = useFocus({ id: 'my-panel' })
 const { focus } = useFocusManager()
+
+// Stdout / stderr
+const { write } = useStdout()
+const { write } = useStderr()
 ```
 
 ## Examples
@@ -159,6 +197,7 @@ examples/
   concurrent-suspense.tsx — concurrent rendering
   use-focus.tsx        — focus management
   use-focus-with-id.tsx   — named focus groups
+  static.tsx           — <Static> append-only task log
   stress-test.tsx      — 300+ FPS full-terminal color animation
   kitchen-sink.tsx     — all features in one app
 ```

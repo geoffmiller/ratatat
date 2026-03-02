@@ -1,27 +1,31 @@
 {
   "name": "ratatat",
-  "version": "1.0.0",
-  "description": "Template project for writing node package with napi-rs",
+  "version": "0.1.0",
+  "description": "React-based terminal UI library powered by a Rust diff engine — Ink-compatible API, 10–35× faster",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/napi-rs/package-template.git"
+    "url": "https://github.com/geoff-miller/ratatat.git"
   },
   "license": "MIT",
   "browser": "browser.js",
   "keywords": [
-    "napi-rs",
-    "NAPI",
-    "N-API",
-    "Rust",
-    "node-addon",
-    "node-addon-api"
+    "terminal",
+    "tui",
+    "react",
+    "ink",
+    "cli",
+    "rust",
+    "napi"
   ],
   "files": [
-    "index.d.ts",
+    "dist/",
     "index.js",
-    "browser.js"
+    "index.cjs",
+    "index.d.ts",
+    "browser.js",
+    "*.node"
   ],
   "napi": {
     "binaryName": "ratatat",
@@ -126,5 +130,15 @@
     "singleQuote": true,
     "arrowParens": "always"
   },
-  "packageManager": "yarn@4.12.0"
+  "packageManager": "yarn@4.12.0",
+  "homepage": "https://github.com/geoff-miller/ratatat#readme",
+  "bugs": {
+    "url": "https://github.com/geoff-miller/ratatat/issues"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  }
 }

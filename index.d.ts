@@ -12,9 +12,3 @@ export declare class TerminalSetup {
   static leave(): void
   static getSize(): Array<number>
 }
-
-export interface DevToolsProps {
-  children: React.ReactNode
-  enabled?: boolean
-}
-export declare function DevTools(props: DevToolsProps): React.ReactElement

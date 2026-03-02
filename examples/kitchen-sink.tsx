@@ -1052,71 +1052,87 @@ function TabBar({ current }: { current: number }) {
 
 // ─── Static section ──────────────────────────────────────────────────────────
 
-type LogEntry = { id: number; level: 'info' | 'warn' | 'error'; msg: string }
+type Task = { id: number; name: string; ms: number; ok: boolean }
 
-const LOG_MESSAGES = [
-  { level: 'info',  msg: 'Server started on :3000' },
-  { level: 'info',  msg: 'Database connected (pool=10)' },
-  { level: 'info',  msg: 'Cache warmed — 1,240 keys' },
-  { level: 'warn',  msg: 'Slow query detected: 340ms (users.findAll)' },
-  { level: 'info',  msg: 'Request: GET /api/v1/users 200 12ms' },
-  { level: 'info',  msg: 'Request: POST /api/v1/orders 201 8ms' },
-  { level: 'error', msg: 'Unhandled rejection: ECONNRESET (redis)' },
-  { level: 'info',  msg: 'Redis reconnected — retries=3' },
-  { level: 'warn',  msg: 'Memory usage 78% — approaching threshold' },
-  { level: 'info',  msg: 'Request: GET /api/v1/metrics 200 2ms' },
-  { level: 'info',  msg: 'Scheduled job: daily-report started' },
-  { level: 'info',  msg: 'Scheduled job: daily-report completed (1.2s)' },
-] as const
+const TASK_NAMES = [
+  'Compile TypeScript', 'Bundle assets', 'Run unit tests', 'Lint source',
+  'Type check', 'Generate docs', 'Minify CSS', 'Optimize images',
+  'Build WASM', 'Sign artifacts', 'Upload to CDN', 'Notify Slack',
+]
 
 function StaticSection({ active }: { active: boolean }) {
-  const [entries, setEntries] = useState<LogEntry[]>([])
+  const [tasks, setTasks]     = useState<Task[]>([])
+  const [running, setRunning] = useState<string | null>(null)
   const counterRef = useRef(0)
 
   useEffect(() => {
     if (!active) return
-    // Emit one log entry every 500ms, cycling through the message list
-    const interval = setInterval(() => {
-      const i = counterRef.current % LOG_MESSAGES.length
-      const template = LOG_MESSAGES[i]
-      setEntries(prev => [
-        ...prev,
-        { id: counterRef.current, level: template.level as LogEntry['level'], msg: template.msg },
-      ])
-      counterRef.current++
-    }, 500)
-    return () => clearInterval(interval)
+    let cancelled = false
+
+    const runNext = () => {
+      if (cancelled) return
+      const i   = counterRef.current % TASK_NAMES.length
+      const name = TASK_NAMES[i]!
+      const ms   = 200 + Math.floor(Math.random() * 600)
+      setRunning(name)
+
+      setTimeout(() => {
+        if (cancelled) return
+        const ok = Math.random() > 0.1
+        setTasks(prev => [
+          ...prev,
+          { id: counterRef.current, name, ms, ok },
+        ])
+        counterRef.current++
+        setRunning(null)
+        setTimeout(runNext, 150)
+      }, ms)
+    }
+
+    setTimeout(runNext, 300)
+    return () => { cancelled = true }
   }, [active])
 
-  const levelColor = (l: LogEntry['level']) =>
-    l === 'error' ? 'red' : l === 'warn' ? 'yellow' : 'green'
-  const levelLabel = (l: LogEntry['level']) =>
-    l === 'error' ? 'ERR' : l === 'warn' ? 'WRN' : 'INF'
+  const passed = tasks.filter(t => t.ok).length
+  const failed  = tasks.filter(t => !t.ok).length
 
   return (
     <Box flexDirection="column" height="100%">
       <Box marginBottom={1}>
-        <Text bold>Static </Text>
-        <Text dim>— append-only log stream</Text>
+        <Text bold>Static</Text>
+        <Text dim> — completed tasks freeze in place, never re-rendered</Text>
       </Box>
-      <Box flexDirection="column" flexGrow={1}>
-        <Static items={entries}>
-          {(entry: LogEntry) => (
-            <Box key={entry.id}>
-              <Box width={6}>
-                <Text color={levelColor(entry.level)}>[{levelLabel(entry.level)}]</Text>
-              </Box>
-              <Text dim>#{String(entry.id).padStart(3, '0')} </Text>
-              <Text>{entry.msg}</Text>
-            </Box>
-          )}
-        </Static>
-      </Box>
-      <Box marginTop={1}>
-        <Text dim>{entries.length} entries logged — </Text>
-        <Text color="green">{entries.filter(e => e.level === 'info').length} info  </Text>
-        <Text color="yellow">{entries.filter(e => e.level === 'warn').length} warn  </Text>
-        <Text color="red">{entries.filter(e => e.level === 'error').length} error</Text>
+
+      {/* Completed tasks — Static means these nodes are frozen in Yoga after first paint */}
+      <Static items={tasks}>
+        {(task: Task) => (
+          <Box key={task.id}>
+            <Text color={task.ok ? 'green' : 'red'}>{task.ok ? ' ✔' : ' ✘'} </Text>
+            <Box width={24}><Text>{task.name}</Text></Box>
+            <Text dim>{task.ms}ms</Text>
+          </Box>
+        )}
+      </Static>
+
+      {/* Live status — this part re-renders; Static items above do not */}
+      <Box marginTop={1} flexDirection="column">
+        {running && (
+          <Box>
+            <Text color="yellow"> ⟳ </Text>
+            <Text>{running}</Text>
+            <Text dim>…</Text>
+          </Box>
+        )}
+        {!running && tasks.length > 0 && (
+          <Box>
+            <Text dim>idle</Text>
+          </Box>
+        )}
+        <Box marginTop={1}>
+          <Text dim>total: {tasks.length}  </Text>
+          <Text color="green">✔ {passed}  </Text>
+          {failed > 0 && <Text color="red">✘ {failed}</Text>}
+        </Box>
       </Box>
     </Box>
   )

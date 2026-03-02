@@ -2,7 +2,7 @@
  * kitchen-sink.tsx — ratatat interactive kitchen sink
  *
  * Navigate sections with ← → arrow keys. Each section fills the viewport.
- * Sections: Borders · Colors · Text · Backgrounds · Layout · Focus · Graph · Live · Incremental · UI · Htop
+ * Sections: Borders · Colors · Text · Backgrounds · Layout · Focus · Graph · Live · Incremental · UI · Htop · Static
  *
  * The Graph section renders an animated bar chart directly to the Uint32Array
  * buffer (bypassing React reconciliation for individual bars) — same technique
@@ -23,12 +23,12 @@ import { exec } from 'child_process'
 import {
   render, Box, Text, Newline, Spacer,
   useApp, useWindowSize, useInput, useFocus, useFocusManager,
-  DevTools,
+  DevTools, Static,
 } from '../dist/index.js'
 
 // ─── Section list ─────────────────────────────────────────────────────────────
 
-const SECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Layout', 'Focus', 'Graph', 'Live', 'Incremental', 'UI', 'Htop'] as const
+const SECTIONS = ['Borders', 'Colors', 'Text', 'Backgrounds', 'Layout', 'Focus', 'Graph', 'Live', 'Incremental', 'UI', 'Htop', 'Static'] as const
 type SectionName = typeof SECTIONS[number]
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -1050,6 +1050,78 @@ function TabBar({ current }: { current: number }) {
   )
 }
 
+// ─── Static section ──────────────────────────────────────────────────────────
+
+type LogEntry = { id: number; level: 'info' | 'warn' | 'error'; msg: string }
+
+const LOG_MESSAGES = [
+  { level: 'info',  msg: 'Server started on :3000' },
+  { level: 'info',  msg: 'Database connected (pool=10)' },
+  { level: 'info',  msg: 'Cache warmed — 1,240 keys' },
+  { level: 'warn',  msg: 'Slow query detected: 340ms (users.findAll)' },
+  { level: 'info',  msg: 'Request: GET /api/v1/users 200 12ms' },
+  { level: 'info',  msg: 'Request: POST /api/v1/orders 201 8ms' },
+  { level: 'error', msg: 'Unhandled rejection: ECONNRESET (redis)' },
+  { level: 'info',  msg: 'Redis reconnected — retries=3' },
+  { level: 'warn',  msg: 'Memory usage 78% — approaching threshold' },
+  { level: 'info',  msg: 'Request: GET /api/v1/metrics 200 2ms' },
+  { level: 'info',  msg: 'Scheduled job: daily-report started' },
+  { level: 'info',  msg: 'Scheduled job: daily-report completed (1.2s)' },
+] as const
+
+function StaticSection({ active }: { active: boolean }) {
+  const [entries, setEntries] = useState<LogEntry[]>([])
+  const counterRef = useRef(0)
+
+  useEffect(() => {
+    if (!active) return
+    // Emit one log entry every 500ms, cycling through the message list
+    const interval = setInterval(() => {
+      const i = counterRef.current % LOG_MESSAGES.length
+      const template = LOG_MESSAGES[i]
+      setEntries(prev => [
+        ...prev,
+        { id: counterRef.current, level: template.level as LogEntry['level'], msg: template.msg },
+      ])
+      counterRef.current++
+    }, 500)
+    return () => clearInterval(interval)
+  }, [active])
+
+  const levelColor = (l: LogEntry['level']) =>
+    l === 'error' ? 'red' : l === 'warn' ? 'yellow' : 'green'
+  const levelLabel = (l: LogEntry['level']) =>
+    l === 'error' ? 'ERR' : l === 'warn' ? 'WRN' : 'INF'
+
+  return (
+    <Box flexDirection="column" height="100%">
+      <Box marginBottom={1}>
+        <Text bold>Static </Text>
+        <Text dim>— append-only log stream</Text>
+      </Box>
+      <Box flexDirection="column" flexGrow={1}>
+        <Static items={entries}>
+          {(entry: LogEntry) => (
+            <Box key={entry.id}>
+              <Box width={6}>
+                <Text color={levelColor(entry.level)}>[{levelLabel(entry.level)}]</Text>
+              </Box>
+              <Text dim>#{String(entry.id).padStart(3, '0')} </Text>
+              <Text>{entry.msg}</Text>
+            </Box>
+          )}
+        </Static>
+      </Box>
+      <Box marginTop={1}>
+        <Text dim>{entries.length} entries logged — </Text>
+        <Text color="green">{entries.filter(e => e.level === 'info').length} info  </Text>
+        <Text color="yellow">{entries.filter(e => e.level === 'warn').length} warn  </Text>
+        <Text color="red">{entries.filter(e => e.level === 'error').length} error</Text>
+      </Box>
+    </Box>
+  )
+}
+
 // ─── Animated sections drive their own tick loop ─────────────────────────────
 // Static sections (Borders, Colors, etc.) produce no renders when idle — the
 // FPS HUD will show the true rate, not a forced 10 FPS from an unnecessary timer.
@@ -1093,6 +1165,7 @@ function KitchenSink() {
   const isIncActive   = currentSection === 'Incremental'
   const isUiActive    = currentSection === 'UI'
   const isHtopActive  = currentSection === 'Htop'
+  const isStaticActive = currentSection === 'Static'
 
   return (
     <Box flexDirection="column" flexGrow={1}>
@@ -1112,6 +1185,7 @@ function KitchenSink() {
         {currentSection === 'Incremental' && <IncrementalSection active={isIncActive} />}
         {currentSection === 'UI'          && <UiSection active={isUiActive} />}
         {currentSection === 'Htop'        && <HtopSection active={isHtopActive} />}
+        {currentSection === 'Static'      && <StaticSection active={isStaticActive} />}
       </Box>
     </Box>
   )

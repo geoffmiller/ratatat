@@ -119,6 +119,9 @@ function paintNode(
   }>,
   clip: Clip,
 ) {
+  // Suspense hides nodes by setting _hidden — skip the entire subtree
+  if (node._hidden) return;
+
   const layout = node.getLayout();
 
   const absX = Math.round(parentX + layout.left);

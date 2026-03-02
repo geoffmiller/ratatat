@@ -190,6 +190,14 @@ const hostConfig: ReactReconciler.HostConfig<
   shouldSetTextContent(type: any, props: any) { return false; },
   clearContainer(container: any) { },
   finalizeInitialChildren(instance: any, type: any, props: any, rootContainer: any, hostContext: any) { return false; },
+
+  // Suspense visibility — called when a Suspense boundary hides/reveals children.
+  // In a terminal renderer there's no DOM visibility concept; we just mark the node
+  // and let the next render pass skip or include it naturally.
+  hideInstance(instance: LayoutNode) { instance._hidden = true; },
+  unhideInstance(instance: LayoutNode, _props: any) { instance._hidden = false; },
+  hideTextInstance(_instance: any) { },
+  unhideTextInstance(_instance: any, _text: string) { },
   
   scheduleTimeout: setTimeout,
   cancelTimeout: clearTimeout,

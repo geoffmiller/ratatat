@@ -11,6 +11,7 @@ export class LayoutNode {
   public children: LayoutNode[] = [];
   public parent: LayoutNode | null = null;
   private _destroyed = false;
+  _hidden = false;  // set by Suspense hideInstance/unhideInstance
 
   // Custom terminal props
   private _text?: string;

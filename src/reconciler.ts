@@ -76,10 +76,15 @@ const hostConfig: ReactReconciler.HostConfig<
   createInstance(type, props, rootContainer, hostContext, internalHandle) {
     const node = new LayoutNode();
     
-    // Apply Yoga styles — Box defaults to flexDirection:'row' (like CSS, unlike Yoga's column default)
+    // Apply Yoga styles — match CSS defaults (unlike Yoga's defaults):
+    //   flexDirection: 'row'  (Yoga default: 'column')
+    //   flexShrink: 1         (Yoga default: 0 — causes flexGrow boxes to overflow their parent)
     const stylesToApply: Styles = { ...props };
     if (stylesToApply.flexDirection === undefined) {
       stylesToApply.flexDirection = 'row';
+    }
+    if (stylesToApply.flexShrink === undefined) {
+      stylesToApply.flexShrink = 1;
     }
     applyStyles(node.yogaNode, stylesToApply);
     

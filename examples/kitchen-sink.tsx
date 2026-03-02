@@ -1103,18 +1103,20 @@ function StaticSection({ active }: { active: boolean }) {
         <Text dim> — completed tasks freeze in place, never re-rendered</Text>
       </Box>
 
-      {/* Completed tasks — Static means these nodes are frozen in Yoga after first paint */}
-      <Static items={tasks}>
-        {(task: Task) => (
-          <Box key={task.id}>
-            <Text color={task.ok ? 'green' : 'red'}>{task.ok ? ' ✔' : ' ✘'} </Text>
-            <Box width={24}><Text>{task.name}</Text></Box>
-            <Text dim>{task.ms}ms</Text>
-          </Box>
-        )}
-      </Static>
+      {/* Fixed-height log window — Static fills it, clipped at the border */}
+      <Box borderStyle="single" borderColor="gray" flexDirection="column" height={20}>
+        <Static items={tasks}>
+          {(task: Task) => (
+            <Box key={task.id}>
+              <Text color={task.ok ? 'green' : 'red'}>{task.ok ? ' ✔' : ' ✘'} </Text>
+              <Box width={24}><Text>{task.name}</Text></Box>
+              <Text dim>{task.ms}ms</Text>
+            </Box>
+          )}
+        </Static>
+      </Box>
 
-      {/* Live status — this part re-renders; Static items above do not */}
+      {/* Live status — always visible below the log window */}
       <Box marginTop={1} flexDirection="column">
         {running && (
           <Box>

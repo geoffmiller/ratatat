@@ -9,5 +9,5 @@ export * from './hooks.js';
 export * from './focus.js';
 export * from './devtools.js';
 export * from './static.js';
-import { Renderer, TerminalSetup } from '../index.js';
-export { Renderer, TerminalSetup };
+import { Renderer, TerminalGuard, TerminalSize } from '../index.js';
+export { Renderer, TerminalGuard, TerminalSize };

@@ -1,8 +1,9 @@
-import { Renderer, TerminalSetup } from '../index.js';
+import { Renderer, TerminalGuard } from '../index.js';
 import EventEmitter from 'eventemitter3';
 
 export class RatatatApp extends EventEmitter {
   private renderer: Renderer;
+  private terminal: TerminalGuard | null = null;
   private backBuffer: Uint32Array;
   private width: number;
   private height: number;
@@ -11,10 +12,13 @@ export class RatatatApp extends EventEmitter {
 
   constructor() {
     super();
-    // Get terminal size via our N-API binding
-    const size = TerminalSetup.getSize();
-    this.width = size[0];
-    this.height = size[1];
+    // Create a temporary guard just to query terminal size, then leave.
+    // The actual enter happens in start().
+    const probe = new TerminalGuard();
+    const size = probe.getSize();
+    this.width = size.cols;
+    this.height = size.rows;
+    probe.leave();
 
     this.renderer = new Renderer(this.width, this.height);
     this.backBuffer = new Uint32Array(this.width * this.height * 2);
@@ -24,8 +28,8 @@ export class RatatatApp extends EventEmitter {
   start() {
     if (this.isRunning) return;
 
-    // Enter raw mode and alternate screen
-    TerminalSetup.enter();
+    // Enter raw mode and alternate screen (RAII guard)
+    this.terminal = new TerminalGuard();
 
     this.isRunning = true;
   }
@@ -38,7 +42,8 @@ export class RatatatApp extends EventEmitter {
   /** Exits raw mode + alternate screen. */
   stop() {
     this.isRunning = false;
-    TerminalSetup.leave();
+    this.terminal?.leave();
+    this.terminal = null;
   }
 
   /** Returns the shared Uint32Array back-buffer (width * height * 2 u32 cells). */

@@ -75,3 +75,26 @@
 **Context**: The npm package name stays `ratatat` (lowercase, npm requirement). But all human-facing text — README, docs, comments, UI labels, release notes — should use "Ratatat" with a capital R.
 **Decision**: Code identifiers stay as-is (`ratatat`, `render`, etc.). Prose and display text use "Ratatat".
 **Status**: README and kitchen-sink header updated in this session.
+
+## 2026-03-01: Compat test visual testing — in progress
+**Tested and passing:**
+- ✅ counter
+- ✅ borders
+- ✅ justify-content
+- ✅ box-backgrounds
+- ✅ use-input
+- ✅ use-focus
+- ✅ use-focus-with-id
+- ✅ use-transition
+
+**Still to test:**
+```sh
+node --import @oxc-node/core/register compat-test/chat.tsx
+node --import @oxc-node/core/register compat-test/suspense.tsx
+node --import @oxc-node/core/register compat-test/concurrent-suspense.tsx
+node --import @oxc-node/core/register compat-test/static.tsx
+node --import @oxc-node/core/register compat-test/incremental-rendering.tsx
+node --import @oxc-node/core/register compat-test/terminal-resize.tsx
+node --import @oxc-node/core/register compat-test/use-stdout.tsx
+node --import @oxc-node/core/register compat-test/use-stderr.tsx
+```

@@ -6,28 +6,73 @@ use crossterm::{
     execute,
 };
 
+/// Helper trait to convert any `Display`-able error into a `napi::Result`.
+trait IntoNapiResult<T> {
+    fn into_napi(self) -> napi::Result<T>;
+}
+
+impl<T, E: std::fmt::Display> IntoNapiResult<T> for Result<T, E> {
+    fn into_napi(self) -> napi::Result<T> {
+        self.map_err(|e| napi::Error::from_reason(e.to_string()))
+    }
+}
+
+/// Terminal size returned from `TerminalGuard::get_size()`.
+#[napi(object)]
+pub struct TerminalSize {
+    pub cols: u32,
+    pub rows: u32,
+}
+
+/// RAII guard that enters raw mode + alternate screen on construction
+/// and restores the terminal on drop (or explicit `leave()` call).
+///
+/// This prevents the terminal from being left in raw mode if the
+/// Node process crashes or the guard is garbage-collected.
 #[napi]
-pub struct TerminalSetup {}
+pub struct TerminalGuard {
+    active: bool,
+}
 
 #[napi]
-impl TerminalSetup {
+impl TerminalGuard {
+    /// Enter raw mode, switch to the alternate screen, and hide the cursor.
+    #[napi(constructor)]
+    pub fn new() -> napi::Result<Self> {
+        enable_raw_mode().into_napi()?;
+        execute!(stdout(), EnterAlternateScreen, Hide).into_napi()?;
+        Ok(Self { active: true })
+    }
+
+    /// Restore the terminal to its original state.
+    /// Safe to call multiple times — only the first call has any effect.
     #[napi]
-    pub fn enter() -> napi::Result<()> {
-        enable_raw_mode().map_err(|e| napi::Error::from_reason(e.to_string()))?;
-        execute!(stdout(), EnterAlternateScreen, Hide).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    pub fn leave(&mut self) -> napi::Result<()> {
+        if self.active {
+            self.active = false;
+            disable_raw_mode().into_napi()?;
+            execute!(stdout(), LeaveAlternateScreen, Show).into_napi()?;
+        }
         Ok(())
     }
 
+    /// Query the current terminal size.
     #[napi]
-    pub fn leave() -> napi::Result<()> {
-        disable_raw_mode().map_err(|e| napi::Error::from_reason(e.to_string()))?;
-        execute!(stdout(), LeaveAlternateScreen, Show).map_err(|e| napi::Error::from_reason(e.to_string()))?;
-        Ok(())
+    pub fn get_size(&self) -> napi::Result<TerminalSize> {
+        let (cols, rows) = crossterm::terminal::size().into_napi()?;
+        Ok(TerminalSize {
+            cols: cols as u32,
+            rows: rows as u32,
+        })
     }
+}
 
-    #[napi]
-    pub fn get_size() -> napi::Result<Vec<u32>> {
-        let (cols, rows) = crossterm::terminal::size().map_err(|e| napi::Error::from_reason(e.to_string()))?;
-        Ok(vec![cols as u32, rows as u32])
+impl Drop for TerminalGuard {
+    fn drop(&mut self) {
+        if self.active {
+            self.active = false;
+            let _ = disable_raw_mode();
+            let _ = execute!(stdout(), LeaveAlternateScreen, Show);
+        }
     }
 }

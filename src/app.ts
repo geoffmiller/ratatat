@@ -12,13 +12,10 @@ export class RatatatApp extends EventEmitter {
 
   constructor() {
     super();
-    // Create a temporary guard just to query terminal size, then leave.
-    // The actual enter happens in start().
-    const probe = new TerminalGuard();
-    const size = probe.getSize();
-    this.width = size.cols;
-    this.height = size.rows;
-    probe.leave();
+    // Get terminal size from process.stdout — works without a TTY (falls back to 80×24).
+    // The TerminalGuard is only constructed in start() when we actually need raw mode.
+    this.width  = process.stdout.columns || 80;
+    this.height = process.stdout.rows    || 24;
 
     this.renderer = new Renderer(this.width, this.height);
     this.backBuffer = new Uint32Array(this.width * this.height * 2);

@@ -1111,7 +1111,7 @@ function StaticSection({ active }: { active: boolean }) {
       if (cancelled) return
       const i   = counterRef.current % TASK_NAMES.length
       const name = TASK_NAMES[i]!
-      const ms   = 200 + Math.floor(Math.random() * 600)
+      const ms   = 80 + Math.floor(Math.random() * 200)
       setRunning(name)
 
       setTimeout(() => {
@@ -1123,11 +1123,11 @@ function StaticSection({ active }: { active: boolean }) {
         ])
         counterRef.current++
         setRunning(null)
-        setTimeout(runNext, 150)
+        setTimeout(runNext, 50)
       }, ms)
     }
 
-    setTimeout(runNext, 300)
+    setTimeout(runNext, 100)
     return () => { cancelled = true }
   }, [active])
 

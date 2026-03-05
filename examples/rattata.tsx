@@ -550,21 +550,20 @@ function RattataApp() {
       const userMsg: Message = { id: uid(), kind: 'user', text, done: true }
       setSettled((s) => [...s, userMsg])
 
-      // Brief pause, then stream a canned response
       setTimeout(() => {
         setThinking(true)
-        setTimeout(
-          () => {
-            setThinking(false)
-            const response = nextCanned()
-            const aiMsg: Message = { id: uid(), kind: 'ai', text: '', done: false }
-            streamMessage(aiMsg, response, 18, () => {
-              setInputLocked(false)
-            })
-          },
-          800 + Math.random() * 600,
-        )
       }, 200)
+      setTimeout(
+        () => {
+          setThinking(false)
+          const response = nextCanned()
+          const aiMsg: Message = { id: uid(), kind: 'ai', text: '', done: false }
+          streamMessage(aiMsg, response, 18, () => {
+            setInputLocked(false)
+          })
+        },
+        200 + 800 + Math.random() * 600,
+      )
     },
     [streamMessage],
   )

@@ -14,7 +14,7 @@
  *   node --import @oxc-node/core/register examples/logo.tsx --once   # one sweep then exit (for gif recording)
  */
 // @ts-nocheck
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { render, Box, Text, useApp, useInput, useWindowSize } from '../dist/index.js'
 
 // ─── Args ─────────────────────────────────────────────────────────────────────
@@ -49,8 +49,9 @@ const LOGO_CELLS: number[][] = LOGO_LINES.map((line) => [...line].map((c) => c.c
 
 const PALETTE = [51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 165, 129, 93, 57, 27]
 
-// One visual loop = one full palette cycle (wave repeats every PALETTE.length frames)
-const ONE_LOOP_FRAMES = PALETTE.length // 16 frames × 40ms ≈ 640ms
+// One visual loop = wave travels from left edge to right edge of the logo
+// = LOGO_WIDTH frames. Add PALETTE.length so the last column also completes.
+const ONE_LOOP_FRAMES = LOGO_WIDTH + PALETTE.length // 124 frames × 40ms ≈ 5s
 
 // ─── Buffer painter ───────────────────────────────────────────────────────────
 
@@ -79,6 +80,8 @@ function LogoApp() {
   const { columns, rows } = useWindowSize()
   const { exit } = useApp()
   const [frame, setFrame] = useState(0)
+  const exitRef = useRef(exit)
+  exitRef.current = exit
 
   useInput((input, key) => {
     if (input === 'q' || (key.ctrl && input === 'c') || key.escape || key.return) exit()
@@ -93,15 +96,14 @@ function LogoApp() {
       f++
       setFrame(f)
       if (ONCE && f >= ONE_LOOP_FRAMES) {
-        // one palette cycle complete — exit after painting the last frame
-        setTimeout(exit, 80)
+        setTimeout(() => exitRef.current(), 80)
         return
       }
       handle = setTimeout(loop, 40)
     }
     handle = setTimeout(loop, 40)
     return () => clearTimeout(handle)
-  }, [exit])
+  }, []) // empty deps — run once, use exitRef for stable reference
 
   // Logo centered in terminal
   const logoRow = Math.max(0, Math.floor((rows - LOGO_HEIGHT - 6) / 2))

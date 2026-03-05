@@ -49,9 +49,8 @@ const LOGO_CELLS: number[][] = LOGO_LINES.map((line) => [...line].map((c) => c.c
 
 const PALETTE = [51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 165, 129, 93, 57, 27]
 
-// One full sweep = wave travels LOGO_WIDTH + PALETTE.length frames
-// so every column completes a full cycle before we stop.
-const ONE_LOOP_FRAMES = LOGO_WIDTH + PALETTE.length // 124 frames ≈ 5s at 40ms
+// One visual loop = one full palette cycle (wave repeats every PALETTE.length frames)
+const ONE_LOOP_FRAMES = PALETTE.length // 16 frames × 40ms ≈ 640ms
 
 // ─── Buffer painter ───────────────────────────────────────────────────────────
 
@@ -85,27 +84,23 @@ function LogoApp() {
     if (input === 'q' || (key.ctrl && input === 'c') || key.escape || key.return) exit()
   })
 
-  // 40ms per frame (~25fps) — smooth enough, slow enough for a readable gif
+  // 40ms per frame (~25fps)
   useEffect(() => {
-    let running = true
+    let handle: ReturnType<typeof setTimeout>
+    let f = 0
+
     function loop() {
-      if (!running) return
-      setFrame((f) => {
-        const next = f + 1
-        // In --once mode, exit after one full sweep
-        if (ONCE && next >= ONE_LOOP_FRAMES) {
-          setTimeout(exit, 40) // let the last frame paint before exit
-          running = false
-          return next
-        }
-        setTimeout(loop, 40)
-        return next
-      })
+      f++
+      setFrame(f)
+      if (ONCE && f >= ONE_LOOP_FRAMES) {
+        // one palette cycle complete — exit after painting the last frame
+        setTimeout(exit, 80)
+        return
+      }
+      handle = setTimeout(loop, 40)
     }
-    setTimeout(loop, 40)
-    return () => {
-      running = false
-    }
+    handle = setTimeout(loop, 40)
+    return () => clearTimeout(handle)
   }, [exit])
 
   // Logo centered in terminal

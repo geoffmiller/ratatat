@@ -77,21 +77,26 @@ React components
 React Reconciler (src/reconciler.ts)
   prepareUpdate → null if props unchanged (skips commitUpdate)
   commitUpdate  → applyStyles() to Yoga node
+  resetAfterCommit → pendingCommit = true
       │
       ▼
-Yoga layout engine (src/layout.ts)
-  calculateLayout() → computes x/y/width/height for every node
+Render loop (src/react.ts)
+  setInterval at maxFps (default 60fps)
+  polls pendingCommit flag → fires paintNow() when set
       │
       ▼
-Buffer painter (src/renderer.ts)
-  renderTreeToBuffer() → writes (charCode, attrCode) pairs into Uint32Array
-      │  zero-copy buffer pointer passed to Rust
-      ▼
-Rust diff engine (src/lib.rs, src/ansi.rs)
-  compares front/back buffer → emits minimal ANSI escape sequences
-      │
-      ▼
-process.stdout
+app.paintNow() (src/app.ts)
+  ├── Yoga layout engine (src/layout.ts)
+  │     calculateLayout() → x/y/width/height for every node
+  ├── Buffer painter (src/renderer.ts)
+  │     renderTreeToBuffer() → writes (charCode, attrCode) pairs into Uint32Array
+  ├── onBeforeFlush listeners (optional)
+  │     direct buffer painting: animated graphs, overlays, devtools FPS counter
+  └── Rust diff engine (src/lib.rs, src/ansi.rs)
+        compares front/back buffer → emits minimal ANSI escape sequences
+              │
+              ▼
+        process.stdout
 ```
 
 **Buffer format:** `Uint32Array` with `width × height × 2` elements.  
@@ -225,12 +230,26 @@ Ratatat uses `yoga-layout-prebuilt` v1 (native `.node` binding, 574 kB). Ink use
 
 ## API — copied from Ink
 
-### `render(element)`
+### `render(element, options?)`
 
-Mount a React element into the terminal. Returns `{ app, input }`.
+Mount a React element into the terminal. Returns an Ink-compatible instance handle.
 
 ```tsx
-const { app, input } = render(<App />)
+const { rerender, unmount, waitUntilExit } = render(<App />)
+
+// Options
+render(<App />, {
+  maxFps: 30, // target frames per second (default: 60)
+})
+
+// Re-render with new props
+rerender(<App theme="dark" />)
+
+// Programmatic unmount
+unmount()
+
+// Wait for exit (resolves when unmount() is called or app exits)
+await waitUntilExit()
 ```
 
 ### `<Box>`
@@ -333,6 +352,12 @@ const { focus } = useFocusManager()
 // Stdout / stderr
 const { write } = useStdout()
 const { write } = useStderr()
+
+// Scrollable viewport — Ratatat only
+const scroll = useScrollable({ viewportSize: 20, contentSize: items.length })
+// scroll.offset, scroll.atTop, scroll.atBottom
+// scroll.scrollBy(n), scroll.scrollToTop(), scroll.scrollToBottom()
+const visible = items.slice(scroll.offset, scroll.offset + 20)
 ```
 
 ## Development
@@ -340,7 +365,7 @@ const { write } = useStderr()
 ```bash
 npm run build      # Rust native add-on (napi-rs)
 npm run build:ts   # TypeScript
-npm test           # 146 tests
+npm test           # 164 tests
 ```
 
 ## License

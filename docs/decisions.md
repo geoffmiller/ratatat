@@ -4,9 +4,15 @@ Key design decisions made during development, with rationale.
 
 ---
 
-## Render loop: pure event-driven
+## Render loop: game engine style `setInterval` poll
 
-Removed the original 60fps `setInterval` polling loop. `requestRender()` schedules a single tick via `setTimeout(..., 0)` and coalesces multiple calls before the tick fires. Wastes zero CPU when nothing changes — strictly better for a TUI library.
+Ratatat uses a `setInterval`-driven render loop (default 60fps) rather than painting synchronously from `resetAfterCommit`. React 18's concurrent scheduler in Node.js uses `setImmediate` to batch and defer work — timer-driven state updates (`setTimeout`, streaming, async) pile up and don't commit until the next user input event flushes the scheduler. This makes the `resetAfterCommit` hook unreliable as a paint trigger.
+
+The loop decouples painting from React scheduling: `resetAfterCommit` sets a `pendingCommit` flag, the loop polls and paints when set. Worst-case latency is one frame interval (16ms at 60fps). `maxFps` is tunable via `render()` options. See [render-loop.md](render-loop.md) for full detail.
+
+## `onBeforeFlush`: direct buffer painting hook
+
+`app.onBeforeFlush(fn)` registers a callback that fires after React fills the `Uint32Array` buffer but before the Rust diff engine flushes to stdout. Used by examples that paint directly into the buffer (animated graphs, logo, stress-test) and by DevTools for FPS measurement. Supports multiple listeners (array, fires in registration order). Returns an unsubscribe function.
 
 ## Cell buffer: `[charCode, attrCode]` tuple
 
@@ -55,3 +61,7 @@ Calling `free()` during React's per-node batch deletion corrupts adjacent wasm h
 ## `renderToString` uses `updateContainerSync` + `flushSyncWork`
 
 Unlike `render()` which uses async concurrent mode, `renderToString` uses React's synchronous legacy-root APIs. This ensures the output reflects the committed state after a single synchronous render pass, matching what Ink's `renderToString` does.
+
+## Scroll: slice the data, not the DOM
+
+`marginTop={-offset}` inside a Yoga flex column shifts the entire column including siblings (e.g., an input bar). Yoga doesn't clip — it literally moves boxes. For scrollable content in a fixed viewport, walk the data array and build a `visibleItems[]` slice (skipping `offset` rows, filling up to `viewportRows`). Render the slice directly with no margin tricks.

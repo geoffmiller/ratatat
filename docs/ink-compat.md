@@ -33,7 +33,7 @@ These exports exist in Ratatat but have no Ink equivalent. They are safe to use 
 | Export                   | Description                                                                                                                                                                |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `useScrollable(options)` | Built-in virtual scrolling. Returns `{ offset, atTop, atBottom, scrollBy, scrollToTop, scrollToBottom }`. Ink has no equivalent — users must implement scrolling manually. |
-| `useWindowSize()`        | Terminal dimensions. Ink has this too but it's not a hook — Ratatat exposes it as a first-class hook.                                                                      |
+| `useWindowSize()`        | Terminal dimensions. Also in Ink — both expose it as a hook.                                                                                                               |
 | `DevTools`               | Debug overlay (internal)                                                                                                                                                   |
 | `RatatatApp`             | Core app instance — event emitter, paint loop, terminal lifecycle                                                                                                          |
 | `InputParser`            | Raw stdin parser — key events, escape sequences                                                                                                                            |
@@ -86,5 +86,5 @@ The `compat-test/` directory contains verbatim copies of Ink's example apps with
 | table                 | ⏭     | External dep: `@faker-js/faker`                                                                           |
 | router                | ⏭     | External dep: `react-router`                                                                              |
 | subprocess-output     | ⏭     | External deps                                                                                             |
-| render-throttle       | ⏭     | Needs `maxFps` option — Ratatat is event-driven                                                           |
+| render-throttle       | ✅     | `maxFps` option supported — `render(<App />, { maxFps: 4 })` matches Ink's throttle behavior              |
 | jest                  | ⏭     | Test harness example, not a runtime example                                                               |

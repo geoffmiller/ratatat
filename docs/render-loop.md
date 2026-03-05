@@ -68,10 +68,13 @@ setInterval tick (every frameMs)
         ▼
 app.paintNow(calcLayout, renderBuf)
         │
-        ├── rootNode.calculateLayout(width, height)   ← Yoga
-        ├── renderTreeToBuffer(rootNode, buffer, w, h) ← TS painter
-        └── renderer.render(buffer)                   ← Rust diff + write
+        ├── rootNode.calculateLayout(width, height)    ← Yoga layout
+        ├── renderTreeToBuffer(rootNode, buffer, w, h)  ← TS buffer painter
+        ├── onBeforeFlush listeners (optional)          ← direct buffer painting
+        └── renderer.render(buffer)                    ← Rust diff + stdout write
 ```
+
+`onBeforeFlush` listeners fire after React fills the buffer but before Rust sees it — the correct insertion point for animated graphs, overlays, or anything that paints directly into the `Uint32Array`. Register via `app.onBeforeFlush(fn)` which returns an unsubscribe function. Multiple listeners are supported.
 
 Resize is handled outside the loop — `SIGWINCH` calls `paintNow()` directly for immediate response.
 

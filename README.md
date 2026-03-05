@@ -4,6 +4,8 @@
 
 An Ink compatible React reconciler for the terminal — write TUI apps with React components, powered by a native Rust diff engine and Yoga Flexbox.
 
+![Ratatat stress test](docs/ratatat-stress-test.png)
+
 ```tsx
 import { render, Box, Text, useInput } from 'ratatat'
 import React, { useState } from 'react'

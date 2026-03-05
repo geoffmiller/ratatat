@@ -20,62 +20,81 @@ class TestApp extends RatatatApp {
   }
 }
 
-// ─── T5: app.ts event-driven only ────────────────────────────────────────────
+// ─── T5: app.ts render interface ─────────────────────────────────────────────
 
-test('start() + 100ms wait → "render" event NOT fired (no polling loop)', async (t) => {
+test('start() + stop() lifecycle works', (t) => {
   const app = new TestApp()
-  let renderCount = 0
-  app.on('render', () => { renderCount++ })
+  app.start()
+  // @ts-ignore
+  t.true(app.isRunning)
+  app.stop()
+  // @ts-ignore
+  t.false(app.isRunning)
+})
 
+test('paintNow() is a no-op before start()', (t) => {
+  const app = new TestApp()
+  let called = false
+  t.notThrows(() => {
+    app.paintNow(
+      () => {
+        called = true
+      },
+      () => {},
+    )
+  })
+  t.false(called, 'calculateLayout not called when not running')
+})
+
+test('paintNow() calls calculateLayout and renderToBuffer when running', (t) => {
+  const app = new TestApp()
   app.start()
 
-  await new Promise(resolve => setTimeout(resolve, 100))
+  let layoutCalled = false
+  let renderCalled = false
 
-  t.is(renderCount, 0, 'no render fired without requestRender()')
+  // paintNow will call renderer.render(backBuffer) — TestApp skips the N-API
+  // terminal but renderer.render is still live. Wrap in notThrows.
+  t.notThrows(() => {
+    app.paintNow(
+      () => {
+        layoutCalled = true
+      },
+      () => {
+        renderCalled = true
+      },
+    )
+  })
+
+  t.true(layoutCalled, 'calculateLayout called')
+  t.true(renderCalled, 'renderToBuffer called')
   app.stop()
 })
 
-test('requestRender() → "render" fires once on next tick', async (t) => {
+test('paintNow() is a no-op after stop()', (t) => {
   const app = new TestApp()
-  let renderCount = 0
-  app.on('render', () => { renderCount++ })
-
   app.start()
-  app.requestRender()
-
-  await new Promise(resolve => setTimeout(resolve, 50))
-
-  t.is(renderCount, 1, 'render fired exactly once')
   app.stop()
+
+  let called = false
+  t.notThrows(() => {
+    app.paintNow(
+      () => {
+        called = true
+      },
+      () => {},
+    )
+  })
+  t.false(called, 'calculateLayout not called after stop()')
 })
 
-test('two requestRender() calls before tick → render fires exactly once', async (t) => {
+test('start() is idempotent — double start() does not throw', (t) => {
   const app = new TestApp()
-  let renderCount = 0
-  app.on('render', () => { renderCount++ })
-
-  app.start()
-  app.requestRender()
-  app.requestRender()
-
-  await new Promise(resolve => setTimeout(resolve, 50))
-
-  t.is(renderCount, 1, 'debounce: only one render despite two requestRender calls')
+  t.notThrows(() => {
+    app.start()
+    app.start()
+  })
   app.stop()
-})
-
-test('requestRender() after stop() → render does NOT fire', async (t) => {
-  const app = new TestApp()
-  let renderCount = 0
-  app.on('render', () => { renderCount++ })
-
-  app.start()
-  app.stop()
-  app.requestRender()
-
-  await new Promise(resolve => setTimeout(resolve, 50))
-
-  t.is(renderCount, 0, 'no render after stop()')
 })
 
 test('getBuffer() returns a Uint32Array', (t) => {
@@ -89,19 +108,4 @@ test('getSize() returns { width, height } with positive numbers', (t) => {
   const size = app.getSize()
   t.true(size.width > 0)
   t.true(size.height > 0)
-})
-
-test('start() is idempotent — double start does not register double loop', async (t) => {
-  const app = new TestApp()
-  let renderCount = 0
-  app.on('render', () => { renderCount++ })
-
-  app.start()
-  app.start()
-  app.requestRender()
-
-  await new Promise(resolve => setTimeout(resolve, 50))
-
-  t.is(renderCount, 1, 'render fires once even after double start()')
-  app.stop()
 })

@@ -89,11 +89,11 @@ const TabHandler: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 }
 
 // Global mount utility
-/** Ink-compat render options — accepted but mostly ignored (Ratatat is always event-driven + concurrent) */
+/** Ink-compat render options */
 export interface RenderOptions {
   /** Ignored — Ratatat is always concurrent */
   concurrent?: boolean
-  /** Ignored — Ratatat is always event-driven, no frame cap */
+  /** Target frames per second for the render loop. Default: 60 */
   maxFps?: number
   /** Ignored — Ratatat always patches console */
   patchConsole?: boolean
@@ -116,7 +116,7 @@ export interface Instance {
   input: InputParser
 }
 
-export function render(element: React.ReactElement, _options?: RenderOptions): Instance {
+export function render(element: React.ReactElement, options?: RenderOptions): Instance {
   const app = new RatatatApp()
   const input = new InputParser(process.stdin)
 
@@ -160,30 +160,24 @@ export function render(element: React.ReactElement, _options?: RenderOptions): I
   const renderBuf = (buf: Uint32Array, w: number, h: number) => renderTreeToBuffer(rootNode, buf, w, h)
   const paintNow = () => app.paintNow(calcLayout, renderBuf)
 
-  // Dirty flag: set by every React commit, cleared by the render loop.
+  // Dirty flag: set on every React commit, cleared by the render loop.
   // Decouples painting from React's scheduler — no dependency on resetAfterCommit
   // firing reliably for timer-driven updates (setTimeout, setInterval, streaming).
-  let dirty = false
+  let pendingCommit = false
   setOnAfterCommit(() => {
-    dirty = true
+    pendingCommit = true
   })
 
-  // Render loop: ~60fps poll. Paints whenever React has committed new state.
-  // setInterval keeps the Node.js event loop alive and ensures timer-driven
-  // state updates (canned responses, streaming text) always reach the screen.
-  const FRAME_MS = 16
+  // Render loop: polls at maxFps and paints whenever React has committed new state.
+  // setInterval keeps the Node.js event loop alive so the React scheduler can
+  // deliver timer-driven updates between user input events.
+  const frameMs = Math.round(1000 / (options?.maxFps ?? 60))
   const renderLoop = setInterval(() => {
-    if (dirty) {
-      dirty = false
+    if (pendingCommit) {
+      pendingCommit = false
       paintNow()
     }
-  }, FRAME_MS)
-
-  // Keep render event for resize and external triggers
-  app.on('render', (buffer, w, h) => {
-    rootNode.calculateLayout(w, h)
-    renderTreeToBuffer(rootNode, buffer, w, h)
-  })
+  }, frameMs)
 
   // exitPromise: resolves when unmount() is called
   let resolveExit!: () => void
@@ -214,7 +208,7 @@ export function render(element: React.ReactElement, _options?: RenderOptions): I
   input.start()
   app.start()
 
-  // Handle terminal resize: update root node dimensions and re-layout
+  // Handle terminal resize: update root node dimensions and repaint immediately
   const onSigwinch = () => {
     const width = process.stdout.columns || 80
     const height = process.stdout.rows || 24
@@ -222,12 +216,12 @@ export function render(element: React.ReactElement, _options?: RenderOptions): I
     rootNode.yogaNode.setWidth(width)
     rootNode.yogaNode.setHeight(height)
     app.emit('resize')
-    app.requestRender()
+    paintNow()
   }
   process.on('SIGWINCH', onSigwinch)
 
   // Paint the initial frame (after start() sets isRunning = true)
-  app.requestRender()
+  paintNow()
 
   return {
     /** Re-render with a new root element */

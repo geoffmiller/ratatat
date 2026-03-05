@@ -8,7 +8,6 @@ export class RatatatApp extends EventEmitter {
   private width: number
   private height: number
   private isRunning: boolean = false
-  private renderQueued: boolean = false
   private stdoutBuffer: string[] = []
   private stderrBuffer: string[] = []
 
@@ -97,9 +96,8 @@ export class RatatatApp extends EventEmitter {
   }
 
   /**
-   * Immediately layout and paint — called synchronously from resetAfterCommit.
-   * Bypasses the requestRender/setTimeout debounce so timer-driven state updates
-   * (streaming text, thinking indicators) paint on every React commit.
+   * Layout + paint synchronously. Called from the render loop on every dirty frame,
+   * and directly on resize for immediate response.
    */
   paintNow(
     calculateLayout: (w: number, h: number) => void,
@@ -108,29 +106,6 @@ export class RatatatApp extends EventEmitter {
     if (!this.isRunning) return
     calculateLayout(this.width, this.height)
     renderToBuffer(this.backBuffer, this.width, this.height)
-    this.renderer.render(this.backBuffer)
-  }
-
-  /**
-   * Schedules a single render on the next Node.js tick.
-   * Debounced: multiple calls before the tick fires result in exactly one render.
-   * Emits: 'render' (buffer: Uint32Array, width: number, height: number)
-   */
-  requestRender() {
-    if (!this.renderQueued && this.isRunning) {
-      this.renderQueued = true
-      setTimeout(() => this.tick(), 0)
-    }
-  }
-
-  private tick() {
-    if (!this.isRunning) return
-    this.renderQueued = false
-
-    // This is where React Reconciler will eventually write to `this.backBuffer`
-    this.emit('render', this.backBuffer, this.width, this.height)
-
-    // Pass the pointer to Rust (Zero-copy)
     this.renderer.render(this.backBuffer)
   }
 }

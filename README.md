@@ -151,6 +151,8 @@ examples/
   kitchen-sink.tsx     — all features in one app
 ```
 
+![Ratatat Sierpinski demo](docs/ratatat-seirpinski-demo.png)
+
 ## API — copied from Ink
 
 ### `render(element)`

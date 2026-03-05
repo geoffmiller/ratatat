@@ -6,6 +6,8 @@ An Ink compatible React reconciler for the terminal — write TUI apps with Reac
 
 ![Ratatat stress test](docs/ratatat-stress-test.png)
 
+![Ratatat Sierpinski demo](docs/ratatat-seirpinski-demo.png)
+
 ```tsx
 import { render, Box, Text, useInput } from 'ratatat'
 import React, { useState } from 'react'
@@ -150,8 +152,6 @@ examples/
   sierpinski.tsx       — React Fiber Sierpinski triangle (243 nodes, pulsing width)
   kitchen-sink.tsx     — all features in one app
 ```
-
-![Ratatat Sierpinski demo](docs/ratatat-seirpinski-demo.png)
 
 ## API — copied from Ink
 

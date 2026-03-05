@@ -5,6 +5,8 @@ import { InputParser } from './input.js';
 export interface RatatatContextProps {
   app: RatatatApp;
   input: InputParser;
+  writeStdout: (text: string) => void;
+  writeStderr: (text: string) => void;
 }
 
 export const RatatatContext = createContext<RatatatContextProps | null>(null);
@@ -187,22 +189,26 @@ const toRawNewlines = (text: string) => text.replace(/\r?\n/g, '\r\n');
 /**
  * Write to stdout without disturbing the TUI.
  * Ink-compatible: const { write, stdout } = useStdout()
+ * Output is buffered while the alternate screen is active and flushed on exit.
  */
 export const useStdout = () => {
+  const context = useContext(RatatatContext);
   return {
     stdout: process.stdout,
-    write: (text: string) => process.stdout.write(toRawNewlines(text)),
+    write: (text: string) => context ? context.writeStdout(text) : process.stdout.write(toRawNewlines(text)),
   };
 };
 
 /**
  * Write to stderr without disturbing the TUI.
  * Ink-compatible: const { write, stderr } = useStderr()
+ * Output is buffered while the alternate screen is active and flushed on exit.
  */
 export const useStderr = () => {
+  const context = useContext(RatatatContext);
   return {
     stderr: process.stderr,
-    write: (text: string) => process.stderr.write(toRawNewlines(text)),
+    write: (text: string) => context ? context.writeStderr(text) : process.stderr.write(toRawNewlines(text)),
   };
 };
 

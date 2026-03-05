@@ -112,7 +112,7 @@ export function render(element: React.ReactElement, _options?: RenderOptions) {
 
   const wrappedElement = React.createElement(
     RatatatContext.Provider,
-    { value: { app, input } },
+    { value: { app, input, writeStdout: (t: string) => app.writeStdout(t), writeStderr: (t: string) => app.writeStderr(t) } },
     React.createElement(
       FocusProvider,
       null,

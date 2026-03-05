@@ -9,6 +9,8 @@ export class RatatatApp extends EventEmitter {
   private height: number;
   private isRunning: boolean = false;
   private renderQueued: boolean = false;
+  private stdoutBuffer: string[] = [];
+  private stderrBuffer: string[] = [];
 
   constructor() {
     super();
@@ -36,11 +38,44 @@ export class RatatatApp extends EventEmitter {
     this.emit('quit');
   }
 
-  /** Exits raw mode + alternate screen. */
+  /** Exits raw mode + alternate screen, then flushes any buffered stdout/stderr. */
   stop() {
     this.isRunning = false;
     this.terminal?.leave();
     this.terminal = null;
+    // Flush buffered output now that the alternate screen is gone
+    if (this.stdoutBuffer.length > 0) {
+      process.stdout.write(this.stdoutBuffer.join(''));
+      this.stdoutBuffer = [];
+    }
+    if (this.stderrBuffer.length > 0) {
+      process.stderr.write(this.stderrBuffer.join(''));
+      this.stderrBuffer = [];
+    }
+  }
+
+  /**
+   * Buffer a write to stdout. While the alternate screen is active, writing
+   * directly would corrupt the TUI. Buffered output is flushed on stop().
+   */
+  writeStdout(text: string) {
+    if (this.isRunning) {
+      this.stdoutBuffer.push(text);
+    } else {
+      process.stdout.write(text);
+    }
+  }
+
+  /**
+   * Buffer a write to stderr. While the alternate screen is active, writing
+   * directly would corrupt the TUI. Buffered output is flushed on stop().
+   */
+  writeStderr(text: string) {
+    if (this.isRunning) {
+      this.stderrBuffer.push(text);
+    } else {
+      process.stderr.write(text);
+    }
   }
 
   /** Returns the shared Uint32Array back-buffer (width * height * 2 u32 cells). */

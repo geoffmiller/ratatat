@@ -147,6 +147,7 @@ examples/
   use-focus-with-id.tsx   — named focus groups
   static.tsx           — <Static> append-only task log
   stress-test.tsx      — 300+ FPS full-terminal color animation
+  sierpinski.tsx       — React Fiber Sierpinski triangle (243 nodes, pulsing width)
   kitchen-sink.tsx     — all features in one app
 ```
 

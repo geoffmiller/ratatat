@@ -155,6 +155,7 @@ examples/
   use-focus-with-id.tsx    — named focus groups
   use-focus.tsx            — focus management
   use-input.tsx            — keyboard input handling
+  use-scrollable.tsx       — useScrollable hook isolation demo
   use-stderr.tsx           — writing to stderr
   use-stdout.tsx           — writing to stdout
   use-transition.tsx       — useTransition for non-blocking updates

@@ -77,7 +77,7 @@ Or in `package.json`:
 }
 ```
 
-Requires Node 18+. Prebuilt native binaries for macOS (arm64, x64), Linux (x64, arm64), and Windows (x64) are bundled in the release tarball.
+Requires Node 20+. Prebuilt native binaries for macOS (arm64, x64), Linux (x64, arm64), and Windows (x64) are bundled in the release tarball.
 
 ## Usage
 

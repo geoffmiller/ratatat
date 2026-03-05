@@ -1,10 +1,10 @@
-import EventEmitter from 'eventemitter3';
+import EventEmitter from 'eventemitter3'
 
 export class InputParser extends EventEmitter {
-  private _boundHandleData: ((data: string) => void) | null = null;
+  private _boundHandleData: ((data: string) => void) | null = null
 
   constructor(private stdin: NodeJS.ReadStream) {
-    super();
+    super()
   }
 
   start() {
@@ -14,69 +14,135 @@ export class InputParser extends EventEmitter {
     // - Node's setRawMode(true) tells Node's stream layer to emit data byte-by-byte
     //   instead of waiting for newlines. Without this, stdin data events never fire.
     if (typeof this.stdin.setRawMode === 'function') {
-      this.stdin.setRawMode(true);
+      this.stdin.setRawMode(true)
     }
-    this.stdin.resume();
-    this.stdin.setEncoding('utf8');
-    this._boundHandleData = this.handleData.bind(this);
-    this.stdin.on('data', this._boundHandleData);
+    this.stdin.resume()
+    this.stdin.setEncoding('utf8')
+    this._boundHandleData = this.handleData.bind(this)
+    this.stdin.on('data', this._boundHandleData)
   }
 
   stop() {
     if (typeof this.stdin.setRawMode === 'function') {
-      this.stdin.setRawMode(false);
+      this.stdin.setRawMode(false)
     }
-    this.stdin.pause();
+    this.stdin.pause()
     if (this._boundHandleData) {
-      this.stdin.removeListener('data', this._boundHandleData);
-      this._boundHandleData = null;
+      this.stdin.removeListener('data', this._boundHandleData)
+      this._boundHandleData = null
     }
   }
 
   private handleData(data: string) {
-    // 1. Check for basic Ctrl+C to exit
+    // 1. Ctrl+C → exit
     if (data === '\u0003') {
-      this.emit('exit');
-      return;
+      this.emit('exit')
+      return
     }
 
-    // 2. Parse Arrow Keys
-    if (data === '\u001b[A') { this.emit('keydown', 'up'); return; }
-    if (data === '\u001b[B') { this.emit('keydown', 'down'); return; }
-    if (data === '\u001b[C') { this.emit('keydown', 'right'); return; }
-    if (data === '\u001b[D') { this.emit('keydown', 'left'); return; }
+    // 2. Ctrl+key combos (except Ctrl+C above and Ctrl+[ which is escape)
+    // Ctrl+A=\u0001 … Ctrl+Z=\u001a, skipping \u0003 (C) and \u001b ([/escape)
+    if (data.length === 1) {
+      const code = data.charCodeAt(0)
+      if (code >= 1 && code <= 26 && code !== 3) {
+        const letter = String.fromCharCode(code + 96) // 1→'a', 2→'b', etc.
+        this.emit('ctrl', letter)
+        this.emit('data', data, { ctrl: true })
+        return
+      }
+    }
 
-    // 3. Parse Tab / Shift+Tab
-    if (data === '\t') { this.emit('keydown', 'tab'); return; }
-    if (data === '\u001b[Z') { this.emit('keydown', 'shift-tab'); return; }
+    // 3. Arrow keys
+    if (data === '\u001b[A') {
+      this.emit('keydown', 'up')
+      return
+    }
+    if (data === '\u001b[B') {
+      this.emit('keydown', 'down')
+      return
+    }
+    if (data === '\u001b[C') {
+      this.emit('keydown', 'right')
+      return
+    }
+    if (data === '\u001b[D') {
+      this.emit('keydown', 'left')
+      return
+    }
 
-    // 4. Parse Escape
-    if (data === '\u001b') { this.emit('keydown', 'escape'); return; }
+    // 4. Tab / Shift+Tab
+    if (data === '\t') {
+      this.emit('keydown', 'tab')
+      return
+    }
+    if (data === '\u001b[Z') {
+      this.emit('keydown', 'shift-tab')
+      return
+    }
 
-    // 5. Parse Enter/Return
-    if (data === '\r' || data === '\n') { this.emit('keydown', 'enter'); return; }
+    // 5. Escape (bare \x1b — not followed by anything)
+    if (data === '\u001b') {
+      this.emit('keydown', 'escape')
+      return
+    }
 
-    // 4. Mouse Tracking (SGR 1006 protocol format: \x1b[<button;x;yM or m)
-    // Example: \x1b[<0;10;10M
+    // 6. Enter/Return
+    if (data === '\r' || data === '\n') {
+      this.emit('keydown', 'enter')
+      return
+    }
+
+    // 7. Backspace / Delete
+    if (data === '\u007f') {
+      this.emit('keydown', 'backspace')
+      return
+    }
+    if (data === '\u001b[3~') {
+      this.emit('keydown', 'delete')
+      return
+    }
+
+    // 8. Page Up / Page Down / Home / End
+    if (data === '\u001b[5~') {
+      this.emit('keydown', 'pageUp')
+      return
+    }
+    if (data === '\u001b[6~') {
+      this.emit('keydown', 'pageDown')
+      return
+    }
+    if (data === '\u001b[H' || data === '\u001b[1~') {
+      this.emit('keydown', 'home')
+      return
+    }
+    if (data === '\u001b[F' || data === '\u001b[4~') {
+      this.emit('keydown', 'end')
+      return
+    }
+
+    // 9. Meta (Alt) key combos: \x1b + single char
+    if (data.length === 2 && data[0] === '\u001b') {
+      this.emit('meta', data[1])
+      this.emit('data', data, { meta: true })
+      return
+    }
+
+    // 10. Mouse tracking (SGR 1006: \x1b[<button;x;yM or m)
     if (data.startsWith('\u001b[<')) {
-      const match = data.match(/\u001b\[<(\d+);(\d+);(\d+)([Mm])/);
+      const match = data.match(/\u001b\[<(\d+);(\d+);(\d+)([Mm])/)
       if (match) {
-        const buttonCode = parseInt(match[1]);
-        const x = parseInt(match[2]) - 1; // 1-indexed to 0-indexed
-        const y = parseInt(match[3]) - 1;
-        const isRelease = match[4] === 'm';
-
-        // Emulate simple Left Click
-        if (buttonCode === 0 || buttonCode === 32) {
-          if (!isRelease) {
-            this.emit('click', { x, y });
-          }
+        const buttonCode = parseInt(match[1])
+        const x = parseInt(match[2]) - 1
+        const y = parseInt(match[3]) - 1
+        const isRelease = match[4] === 'm'
+        if ((buttonCode === 0 || buttonCode === 32) && !isRelease) {
+          this.emit('click', { x, y })
         }
       }
-      return;
+      return
     }
 
-    // Default to emitting the raw data
-    this.emit('data', data);
+    // 11. Printable characters + unknown sequences
+    this.emit('data', data)
   }
 }

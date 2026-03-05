@@ -1,56 +1,56 @@
-import { Renderer, TerminalGuard } from '../index.js';
-import EventEmitter from 'eventemitter3';
+import { Renderer, TerminalGuard } from '../index.js'
+import EventEmitter from 'eventemitter3'
 
 export class RatatatApp extends EventEmitter {
-  private renderer: Renderer;
-  private terminal: TerminalGuard | null = null;
-  private backBuffer: Uint32Array;
-  private width: number;
-  private height: number;
-  private isRunning: boolean = false;
-  private renderQueued: boolean = false;
-  private stdoutBuffer: string[] = [];
-  private stderrBuffer: string[] = [];
+  private renderer: Renderer
+  private terminal: TerminalGuard | null = null
+  private backBuffer: Uint32Array
+  private width: number
+  private height: number
+  private isRunning: boolean = false
+  private renderQueued: boolean = false
+  private stdoutBuffer: string[] = []
+  private stderrBuffer: string[] = []
 
   constructor() {
-    super();
+    super()
     // Get terminal size from process.stdout — works without a TTY (falls back to 80×24).
     // The TerminalGuard is only constructed in start() when we actually need raw mode.
-    this.width  = process.stdout.columns || 80;
-    this.height = process.stdout.rows    || 24;
+    this.width = process.stdout.columns || 80
+    this.height = process.stdout.rows || 24
 
-    this.renderer = new Renderer(this.width, this.height);
-    this.backBuffer = new Uint32Array(this.width * this.height * 2);
+    this.renderer = new Renderer(this.width, this.height)
+    this.backBuffer = new Uint32Array(this.width * this.height * 2)
   }
 
   /** Enters raw mode + alternate screen. Does NOT start any render loop. */
   start() {
-    if (this.isRunning) return;
+    if (this.isRunning) return
 
     // Enter raw mode and alternate screen (RAII guard)
-    this.terminal = new TerminalGuard();
+    this.terminal = new TerminalGuard()
 
-    this.isRunning = true;
+    this.isRunning = true
   }
 
   /** Request a clean exit — restores terminal, stops input, exits the process. */
   quit() {
-    this.emit('quit');
+    this.emit('quit')
   }
 
   /** Exits raw mode + alternate screen, then flushes any buffered stdout/stderr. */
   stop() {
-    this.isRunning = false;
-    this.terminal?.leave();
-    this.terminal = null;
+    this.isRunning = false
+    this.terminal?.leave()
+    this.terminal = null
     // Flush buffered output now that the alternate screen is gone
     if (this.stdoutBuffer.length > 0) {
-      process.stdout.write(this.stdoutBuffer.join(''));
-      this.stdoutBuffer = [];
+      process.stdout.write(this.stdoutBuffer.join(''))
+      this.stdoutBuffer = []
     }
     if (this.stderrBuffer.length > 0) {
-      process.stderr.write(this.stderrBuffer.join(''));
-      this.stderrBuffer = [];
+      process.stderr.write(this.stderrBuffer.join(''))
+      this.stderrBuffer = []
     }
   }
 
@@ -60,9 +60,9 @@ export class RatatatApp extends EventEmitter {
    */
   writeStdout(text: string) {
     if (this.isRunning) {
-      this.stdoutBuffer.push(text);
+      this.stdoutBuffer.push(text)
     } else {
-      process.stdout.write(text);
+      process.stdout.write(text)
     }
   }
 
@@ -72,20 +72,28 @@ export class RatatatApp extends EventEmitter {
    */
   writeStderr(text: string) {
     if (this.isRunning) {
-      this.stderrBuffer.push(text);
+      this.stderrBuffer.push(text)
     } else {
-      process.stderr.write(text);
+      process.stderr.write(text)
     }
   }
 
   /** Returns the shared Uint32Array back-buffer (width * height * 2 u32 cells). */
   getBuffer(): Uint32Array {
-    return this.backBuffer;
+    return this.backBuffer
   }
 
   /** Returns current terminal dimensions. */
   getSize(): { width: number; height: number } {
-    return { width: this.width, height: this.height };
+    return { width: this.width, height: this.height }
+  }
+
+  /** Update terminal dimensions (called on SIGWINCH). */
+  resize(width: number, height: number) {
+    this.width = width
+    this.height = height
+    this.renderer = new Renderer(width, height)
+    this.backBuffer = new Uint32Array(width * height * 2)
   }
 
   /**
@@ -95,19 +103,19 @@ export class RatatatApp extends EventEmitter {
    */
   requestRender() {
     if (!this.renderQueued && this.isRunning) {
-      this.renderQueued = true;
-      setTimeout(() => this.tick(), 0);
+      this.renderQueued = true
+      setTimeout(() => this.tick(), 0)
     }
   }
 
   private tick() {
-    if (!this.isRunning) return;
-    this.renderQueued = false;
+    if (!this.isRunning) return
+    this.renderQueued = false
 
     // This is where React Reconciler will eventually write to `this.backBuffer`
-    this.emit('render', this.backBuffer, this.width, this.height);
+    this.emit('render', this.backBuffer, this.width, this.height)
 
     // Pass the pointer to Rust (Zero-copy)
-    this.renderer.render(this.backBuffer);
+    this.renderer.render(this.backBuffer)
   }
 }

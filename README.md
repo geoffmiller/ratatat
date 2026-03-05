@@ -277,6 +277,67 @@ npm run build:ts   # TypeScript
 npm test           # 118 tests
 ```
 
+## Package Size
+
+Measured against Ink 5.x.
+
+### What you download (tarball)
+
+|                                       | Ratatat | Ink    |
+| ------------------------------------- | ------- | ------ |
+| Packed (single platform)              | 290 kB  | 113 kB |
+| Packed (fat tarball, all 4 platforms) | ~2.4 MB | 113 kB |
+| Unpacked                              | 770 kB  | 482 kB |
+| Files                                 | 36      | 177    |
+| Runtime deps                          | 7       | 25     |
+
+Ratatat's tarball is larger because it includes a prebuilt native `.node` binary (~609 kB). The fat release tarball bundles all 4 platform binaries (macOS arm64/x64, Linux x64/arm64) so `npm install` works without a Rust toolchain.
+
+### What gets installed (`node_modules`)
+
+|                           | Ratatat                       | Ink                  |
+| ------------------------- | ----------------------------- | -------------------- |
+| Total `node_modules` size | **150 MB**                    | 438 MB               |
+| Runtime dep count         | **7**                         | 25                   |
+| Heaviest runtime dep      | `react-reconciler` 1.6 MB     | `es-toolkit` 12 MB   |
+| Yoga                      | `yoga-layout-prebuilt` 664 kB | `yoga-layout` 296 kB |
+
+Ratatat's installed footprint is **3× smaller** than Ink's. Ink pulls in a large ANSI string manipulation stack (`es-toolkit`, `chalk`, `slice-ansi`, `wrap-ansi`, `ansi-escapes`, etc.) because it does all terminal rendering in JS. Ratatat offloads that to the Rust layer, so none of those deps are needed.
+
+### Why Ratatat's Yoga is larger
+
+Ratatat uses `yoga-layout-prebuilt` v1 (native `.node` binding, 574 kB). Ink uses `yoga-layout` v3 (WASM binary, 118 kB). The v3 WASM build is smaller, but it requires ESM and top-level `await` — incompatible with Ratatat's CJS build output. Not worth migrating for a 370 kB difference when the Rust binary is already in the tarball.
+
+### Runtime deps
+
+| Ratatat                | Ink                        |
+| ---------------------- | -------------------------- |
+| `cli-boxes`            | `@alcalzone/ansi-tokenize` |
+| `eventemitter3`        | `ansi-escapes`             |
+| `events`               | `ansi-styles`              |
+| `react`                | `auto-bind`                |
+| `react-reconciler`     | `chalk`                    |
+| `scheduler`            | `cli-boxes`                |
+| `yoga-layout-prebuilt` | `cli-cursor`               |
+|                        | `cli-truncate`             |
+|                        | `code-excerpt`             |
+|                        | `es-toolkit`               |
+|                        | `indent-string`            |
+|                        | `is-in-ci`                 |
+|                        | `patch-console`            |
+|                        | `react-reconciler`         |
+|                        | `scheduler`                |
+|                        | `signal-exit`              |
+|                        | `slice-ansi`               |
+|                        | `stack-utils`              |
+|                        | `string-width`             |
+|                        | `terminal-size`            |
+|                        | `type-fest`                |
+|                        | `widest-line`              |
+|                        | `wrap-ansi`                |
+|                        | `ws`                       |
+|                        | `yoga-layout`              |
+
 ## License
 
 MIT

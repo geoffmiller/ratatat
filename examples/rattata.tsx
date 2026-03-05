@@ -15,7 +15,7 @@
  */
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { render, Box, Text, Static, useInput, useApp, useWindowSize, useScrollable } from '../dist/index.js'
+import { render, Box, Text, useInput, useApp, useWindowSize, useScrollable } from '../dist/index.js'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -373,14 +373,19 @@ function RattataApp() {
   const [inputValue, setInputValue] = useState('')
   const [inputLocked, setInputLocked] = useState(true) // locked until script finishes
 
-  // ── Scroll state — viewport height calculated from terminal rows
-  // header(3) + statusBar(3) + inputBar(3) + borders = ~9 rows of chrome
-  const CHROME_ROWS = 9
+  // ── Scroll — viewport is the chat box height minus borders/padding (2 rows)
+  // header=3, statusBar=3, inputBar=3, chatBorder=2 → 11 rows chrome
+  const CHROME_ROWS = 11
   const chatViewport = Math.max(1, rows - CHROME_ROWS)
-  const contentHeight =
-    settled.reduce((sum, m) => sum + messageRows(m), 0) +
-    (active ? messageRows(active) : 0) +
-    (thinking && !active ? 2 : 0)
+
+  // All displayable rows: settled messages + active streaming message + thinking indicator
+  const allMessages: Message[] = active
+    ? [...settled, active]
+    : thinking
+      ? [...settled, { id: -1, kind: 'tool' as MessageKind, text: `${spinner} running…`, done: false }]
+      : settled
+
+  const contentHeight = allMessages.reduce((sum, m) => sum + messageRows(m), 0)
   const scroll = useScrollable({ viewportHeight: chatViewport, contentHeight })
 
   // ── Script playback refs
@@ -563,13 +568,35 @@ function RattataApp() {
 
   const sidebarW = 22
 
+  // Build the visible slice: walk allMessages accumulating rows until we
+  // pass scroll.offset (skip), then fill up to chatViewport rows (show).
+  const visibleMessages: Message[] = []
+  let rowsSkipped = 0
+  let rowsShown = 0
+  for (const msg of allMessages) {
+    const h = messageRows(msg)
+    if (rowsSkipped < scroll.offset) {
+      // still in the skipped zone — consume partially if needed
+      const remaining = scroll.offset - rowsSkipped
+      if (h <= remaining) {
+        rowsSkipped += h
+        continue
+      }
+      // this message straddles the scroll boundary — show it (clip handles top trim)
+      rowsSkipped = scroll.offset
+    }
+    if (rowsShown >= chatViewport) break
+    visibleMessages.push(msg)
+    rowsShown += h
+  }
+
   return (
     <Box flexDirection="column" width={columns} height={rows}>
       <Header tokens={tokens} time={time} focus={focus} />
       <Box flexGrow={1} flexDirection="row">
         <Sidebar width={sidebarW} focused={focus === 'sidebar'} selectedIdx={selectedFileIdx} />
         <Box flexGrow={1} flexDirection="column">
-          {/* Chat viewport: fixed height, clips overflowing content */}
+          {/* Chat viewport: fixed height box, items sliced to fit exactly */}
           <Box
             flexGrow={1}
             flexDirection="column"
@@ -577,23 +604,14 @@ function RattataApp() {
             borderColor={focus === 'chat' ? 'cyan' : 'blackBright'}
             paddingX={1}
           >
-            {/* Scroll indicator — only shown when not at bottom */}
             {!scroll.atTop && (
               <Box justifyContent="center">
                 <Text color="blackBright">↑ {scroll.offset} rows above</Text>
               </Box>
             )}
-            {/* Content shifted up by scroll offset — clip rect handles masking */}
-            <Box flexDirection="column" marginTop={-scroll.offset}>
-              <Static items={settled}>{(msg) => <MessageBlock key={msg.id} msg={msg} />}</Static>
-              {active && <MessageBlock msg={active} />}
-              {thinking && !active && (
-                <Box paddingLeft={4} marginTop={1}>
-                  <Text color="magenta">{spinner} </Text>
-                  <Text color="blackBright">running…</Text>
-                </Box>
-              )}
-            </Box>
+            {visibleMessages.map((msg) => (
+              <MessageBlock key={msg.id} msg={msg} />
+            ))}
             {!scroll.atBottom && (
               <Box justifyContent="center">
                 <Text color="blackBright">↓ scroll for more</Text>

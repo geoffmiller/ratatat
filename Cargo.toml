@@ -1,15 +1,15 @@
 [package]
-authors = ["geoffmiller <godsendgeoff@gmail.com>"]
+authors = ["geoffmiller"]
 edition = "2021"
-name = "ratatat"
+name    = "ratatat"
 version = "0.1.0"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-crossterm = "0.29.0"
-napi = "3.0.0"
+crossterm   = "0.29.0"
+napi        = "3.0.0"
 napi-derive = "3.0.0"
 
 [build-dependencies]

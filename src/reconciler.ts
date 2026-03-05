@@ -26,6 +26,8 @@ type TransitionStatus = any;
 export let onAfterCommit: (() => void) | null = null;
 export function setOnAfterCommit(fn: (() => void) | null) { onAfterCommit = fn; }
 
+let currentUpdatePriority = NoEventPriority;
+
 /**
  * Resolve Ink-compatible color/style props into ratatat's numeric fg/bg/styles values.
  * Ink uses: color="green", backgroundColor="red", bold, italic, dim, underline, etc.
@@ -203,13 +205,14 @@ const hostConfig: ReactReconciler.HostConfig<
   cancelTimeout: clearTimeout,
   noTimeout: -1,
   
-  scheduleMicrotask: typeof queueMicrotask === 'function' ? queueMicrotask : setTimeout,
+  scheduleMicrotask: queueMicrotask,
   scheduleCallback: Scheduler.unstable_scheduleCallback,
   cancelCallback: Scheduler.unstable_cancelCallback,
   shouldYield: Scheduler.unstable_shouldYield,
   now: Scheduler.unstable_now,
 
   warnsIfNotActing: true,
+  supportsMicrotasks: true,
   
   getInstanceFromNode: () => null,
   beforeActiveInstanceBlur: () => {},
@@ -217,10 +220,13 @@ const hostConfig: ReactReconciler.HostConfig<
   preparePortalMount: () => {},
   prepareScopeUpdate: () => {},
   getCurrentEventPriority: () => DefaultEventPriority,
-  setCurrentUpdatePriority: (p: any) => {},
-  getCurrentUpdatePriority: () => DefaultEventPriority,
+  setCurrentUpdatePriority(newPriority: any) { currentUpdatePriority = newPriority; },
+  getCurrentUpdatePriority: () => currentUpdatePriority,
   detachDeletedInstance: (instance: LayoutNode) => { instance.destroy(); },
-  resolveUpdatePriority: () => DefaultEventPriority,
+  resolveUpdatePriority() {
+    if (currentUpdatePriority !== NoEventPriority) return currentUpdatePriority;
+    return DefaultEventPriority;
+  },
   trackSchedulerEvent: () => {},
   resolveEventType: () => null,
   resolveEventTimeStamp: () => -1.1,

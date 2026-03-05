@@ -4,17 +4,12 @@
  * Renders the Ratatui logo glyphs with an animated color sweep across
  * the cells, demonstrating direct buffer painting alongside a React shell.
  *
- * The glyph shapes are the same hardcoded block-character strings used by
- * the official Ratatui logo widget. The animation (color cycling per column)
- * is painted directly into the Uint32Array back-buffer — React handles
- * the surrounding chrome, the logo pixels bypass React entirely.
- *
  * Run:
  *   node --import @oxc-node/core/register examples/logo.tsx          # loop forever
- *   node --import @oxc-node/core/register examples/logo.tsx --once   # one sweep then exit (for gif recording)
+ *   node --import @oxc-node/core/register examples/logo.tsx --once   # one 3s sweep then exit
  */
 // @ts-nocheck
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { render, Box, Text, useApp, useInput, useWindowSize } from '../dist/index.js'
 
 // ─── Args ─────────────────────────────────────────────────────────────────────
@@ -25,7 +20,6 @@ const ONCE = process.argv.includes('--once')
 
 const LOGO_SMALL = ['█▀▀▄ ▄▀▀▄▝▜▛▘▄▀▀▄▝▜▛▘█  █ █', '█▀▀▄ █▀▀█ ▐▌ █▀▀█ ▐▌ ▀▄▄▀ █']
 
-// Scale up: each char repeated SCALE times wide, each row SCALE times tall.
 const SCALE = 4
 
 function scaleLogo(lines: string[], scale: number): string[] {
@@ -39,19 +33,18 @@ function scaleLogo(lines: string[], scale: number): string[] {
 }
 
 const LOGO_LINES = scaleLogo(LOGO_SMALL, SCALE)
-const LOGO_HEIGHT = LOGO_LINES.length // 2 * SCALE  = 8
-const LOGO_WIDTH = [...LOGO_LINES[0]].length // 27 * SCALE = 108
+const LOGO_HEIGHT = LOGO_LINES.length // 8
+const LOGO_WIDTH = [...LOGO_LINES[0]].length // 108
 
-// Precompute codepoints — zero string work in the hot paint path
 const LOGO_CELLS: number[][] = LOGO_LINES.map((line) => [...line].map((c) => c.codePointAt(0)!))
 
 // ─── Color palette — cyan → blue → magenta sweep ─────────────────────────────
 
 const PALETTE = [51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 165, 129, 93, 57, 27]
 
-// One visual loop = wave travels from left edge to right edge of the logo
-// = LOGO_WIDTH frames. Add PALETTE.length so the last column also completes.
-const ONE_LOOP_FRAMES = LOGO_WIDTH + PALETTE.length // 124 frames × 40ms ≈ 5s
+// 3 seconds across LOGO_WIDTH columns
+const MS_PER_FRAME = Math.round(3000 / LOGO_WIDTH) // ~28ms
+const ONE_LOOP_FRAMES = LOGO_WIDTH + PALETTE.length // full sweep + tail
 
 // ─── Buffer painter ───────────────────────────────────────────────────────────
 
@@ -64,12 +57,11 @@ function paintLogo(buffer: Uint32Array, cols: number, rows: number, logoRow: num
       const termX = logoCol + x
       if (termX < 0 || termX >= cols) continue
       const cp = cells[x]
-      if (cp === 32) continue // spaces: let background show through
+      if (cp === 32) continue
       const idx = (termY * cols + termX) * 2
       const paletteIdx = (x + frame) % PALETTE.length
-      const fg = PALETTE[paletteIdx]
       buffer[idx] = cp
-      buffer[idx + 1] = (0 << 16) | (255 << 8) | fg
+      buffer[idx + 1] = (0 << 16) | (255 << 8) | PALETTE[paletteIdx]
     }
   }
 }
@@ -79,46 +71,54 @@ function paintLogo(buffer: Uint32Array, cols: number, rows: number, logoRow: num
 function LogoApp() {
   const { columns, rows } = useWindowSize()
   const { exit } = useApp()
-  const [frame, setFrame] = useState(0)
+
+  // Use a ref for frame — paint callback reads it directly, no stale closure
+  const frameRef = useRef(0)
   const exitRef = useRef(exit)
   exitRef.current = exit
+
+  const logoRow = Math.max(0, Math.floor((rows - LOGO_HEIGHT - 6) / 2))
+  const logoCol = Math.max(0, Math.floor((columns - LOGO_WIDTH) / 2))
+  const logoRowRef = useRef(logoRow)
+  const logoColRef = useRef(logoCol)
+  logoRowRef.current = logoRow
+  logoColRef.current = logoCol
 
   useInput((input, key) => {
     if (input === 'q' || (key.ctrl && input === 'c') || key.escape || key.return) exit()
   })
 
-  // 40ms per frame (~25fps)
+  // Animation loop — runs once, advances frameRef, triggers re-render via forceUpdate
+  const forceUpdate = useRef<() => void>(null)
+  const [, setTick] = React.useState(0)
+  forceUpdate.current = () => setTick((t) => t + 1)
+
   useEffect(() => {
     let handle: ReturnType<typeof setTimeout>
-    let f = 0
 
     function loop() {
-      f++
-      setFrame(f)
-      if (ONCE && f >= ONE_LOOP_FRAMES) {
-        setTimeout(() => exitRef.current(), 80)
+      frameRef.current++
+      forceUpdate.current?.()
+      if (ONCE && frameRef.current >= ONE_LOOP_FRAMES) {
+        setTimeout(() => exitRef.current(), 100)
         return
       }
-      handle = setTimeout(loop, 40)
+      handle = setTimeout(loop, MS_PER_FRAME)
     }
-    handle = setTimeout(loop, 40)
+    handle = setTimeout(loop, MS_PER_FRAME)
     return () => clearTimeout(handle)
-  }, []) // empty deps — run once, use exitRef for stable reference
+  }, []) // runs exactly once
 
-  // Logo centered in terminal
-  const logoRow = Math.max(0, Math.floor((rows - LOGO_HEIGHT - 6) / 2))
-  const logoCol = Math.max(0, Math.floor((columns - LOGO_WIDTH) / 2))
-
-  // Paint into buffer each frame
+  // Paint listener — registered once, reads frameRef/logoRowRef directly
   useEffect(() => {
     const app = (globalThis as any).__ratatatApp
     if (!app) return
     const onRender = (buffer: Uint32Array, w: number, h: number) => {
-      paintLogo(buffer, w, h, logoRow, logoCol, frame)
+      paintLogo(buffer, w, h, logoRowRef.current, logoColRef.current, frameRef.current)
     }
     app.on('render', onRender)
     return () => app.off('render', onRender)
-  })
+  }, []) // runs exactly once
 
   const subtitleRow = logoRow + LOGO_HEIGHT + 1
 
@@ -133,7 +133,7 @@ function LogoApp() {
       </Box>
       <Box height={1} flexShrink={0} />
       <Box justifyContent="center">
-        <Text dim>{ONCE ? 'recording one loop…' : 'q · enter · esc to exit'}</Text>
+        <Text dim>{ONCE ? 'recording…' : 'q · enter · esc to exit'}</Text>
       </Box>
     </Box>
   )

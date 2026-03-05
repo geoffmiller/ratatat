@@ -386,6 +386,13 @@ function RattataApp() {
       : settled
 
   const contentHeight = allMessages.reduce((sum, m) => sum + messageRows(m), 0)
+
+  // pinned = user has manually scrolled up; when false, always follow the bottom
+  const [pinned, setPinned] = useState(false)
+  const effectiveOffset = pinned
+    ? undefined // useScrollable controls offset
+    : Math.max(0, contentHeight - chatViewport) // always show bottom
+
   const scroll = useScrollable({ viewportHeight: chatViewport, contentHeight })
 
   // ── Script playback refs
@@ -406,7 +413,8 @@ function RattataApp() {
 
   // ── Input handling
   useInput((char, key) => {
-    if (key.escape) {
+    // Escape and Ctrl+C always quit regardless of focus
+    if (key.escape || (key.ctrl && char === 'c')) {
       exit()
       return
     }
@@ -436,19 +444,26 @@ function RattataApp() {
 
     if (focus === 'chat') {
       if (key.upArrow) {
+        setPinned(true)
         scroll.scrollUp()
         return
       }
       if (key.downArrow) {
-        scroll.scrollDown()
+        if (scroll.atBottom) setPinned(false)
+        else scroll.scrollDown()
         return
       }
       if (key.pageUp) {
+        setPinned(true)
         scroll.scrollBy(-5)
         return
       }
       if (key.pageDown) {
-        scroll.scrollBy(5)
+        if (scroll.atBottom) setPinned(false)
+        else {
+          scroll.scrollBy(5)
+          if (scroll.atBottom) setPinned(false)
+        }
         return
       }
     }
@@ -472,7 +487,7 @@ function RattataApp() {
       }
     }
 
-    // 'q' quits from anywhere except when typing in the input
+    // 'q' quits from sidebar and chat; not from input (user may want to type 'q')
     if (char === 'q' && focus !== 'input') exit()
   })
 
@@ -515,7 +530,6 @@ function RattataApp() {
     if (step.kind === 'system' || step.kind === 'tool' || step.kind === 'diff') {
       setSettled((s) => [...s, { id: uid(), kind: step.kind, text: step.text, done: true }])
       setThinking(step.kind === 'tool')
-      scroll.scrollToBottom()
       stepTimer.current = setTimeout(advanceScript, SCRIPT[scriptIdx.current]?.delay ?? 0)
       return
     }
@@ -525,10 +539,9 @@ function RattataApp() {
     setThinking(false)
     streamMessage(msg, step.text, speed, () => {
       setThinking(false)
-      scroll.scrollToBottom()
       stepTimer.current = setTimeout(advanceScript, SCRIPT[scriptIdx.current]?.delay ?? 0)
     })
-  }, [streamMessage, scroll])
+  }, [streamMessage])
 
   // ── Submit a user-typed message → stream canned AI response
   const submitUserMessage = useCallback(
@@ -536,7 +549,6 @@ function RattataApp() {
       setInputLocked(true)
       const userMsg: Message = { id: uid(), kind: 'user', text, done: true }
       setSettled((s) => [...s, userMsg])
-      scroll.scrollToBottom()
 
       // Brief pause, then stream a canned response
       setTimeout(() => {
@@ -548,14 +560,13 @@ function RattataApp() {
             const aiMsg: Message = { id: uid(), kind: 'ai', text: '', done: false }
             streamMessage(aiMsg, response, 18, () => {
               setInputLocked(false)
-              scroll.scrollToBottom()
             })
           },
           800 + Math.random() * 600,
         )
       }, 200)
     },
-    [streamMessage, scroll],
+    [streamMessage],
   )
 
   useEffect(() => {
@@ -569,21 +580,23 @@ function RattataApp() {
   const sidebarW = 22
 
   // Build the visible slice: walk allMessages accumulating rows until we
-  // pass scroll.offset (skip), then fill up to chatViewport rows (show).
+  // Build visible slice using effectiveOffset (pinned uses scroll.offset, unpinned uses bottom)
+  const displayOffset = effectiveOffset ?? scroll.offset
+  const atTop = displayOffset === 0
+  const atBottom = !pinned // when following bottom, we're always "at bottom"
+
   const visibleMessages: Message[] = []
   let rowsSkipped = 0
   let rowsShown = 0
   for (const msg of allMessages) {
     const h = messageRows(msg)
-    if (rowsSkipped < scroll.offset) {
-      // still in the skipped zone — consume partially if needed
-      const remaining = scroll.offset - rowsSkipped
+    if (rowsSkipped < displayOffset) {
+      const remaining = displayOffset - rowsSkipped
       if (h <= remaining) {
         rowsSkipped += h
         continue
       }
-      // this message straddles the scroll boundary — show it (clip handles top trim)
-      rowsSkipped = scroll.offset
+      rowsSkipped = displayOffset
     }
     if (rowsShown >= chatViewport) break
     visibleMessages.push(msg)
@@ -596,7 +609,6 @@ function RattataApp() {
       <Box flexGrow={1} flexDirection="row">
         <Sidebar width={sidebarW} focused={focus === 'sidebar'} selectedIdx={selectedFileIdx} />
         <Box flexGrow={1} flexDirection="column">
-          {/* Chat viewport: fixed height box, items sliced to fit exactly */}
           <Box
             flexGrow={1}
             flexDirection="column"
@@ -604,15 +616,15 @@ function RattataApp() {
             borderColor={focus === 'chat' ? 'cyan' : 'blackBright'}
             paddingX={1}
           >
-            {!scroll.atTop && (
+            {!atTop && (
               <Box justifyContent="center">
-                <Text color="blackBright">↑ {scroll.offset} rows above</Text>
+                <Text color="blackBright">↑ {displayOffset} rows above</Text>
               </Box>
             )}
             {visibleMessages.map((msg) => (
               <MessageBlock key={msg.id} msg={msg} />
             ))}
-            {!scroll.atBottom && (
+            {!atBottom && (
               <Box justifyContent="center">
                 <Text color="blackBright">↓ scroll for more</Text>
               </Box>

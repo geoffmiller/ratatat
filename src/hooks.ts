@@ -178,13 +178,20 @@ export const useWindowSize = () => {
 };
 
 /**
+ * In raw mode, \n moves the cursor down but does not return to column 0.
+ * Must use \r\n to get a proper newline. Apply this to any text written
+ * outside the TUI render path (useStdout/useStderr write calls).
+ */
+const toRawNewlines = (text: string) => text.replace(/\r?\n/g, '\r\n');
+
+/**
  * Write to stdout without disturbing the TUI.
  * Ink-compatible: const { write, stdout } = useStdout()
  */
 export const useStdout = () => {
   return {
     stdout: process.stdout,
-    write: (text: string) => process.stdout.write(text),
+    write: (text: string) => process.stdout.write(toRawNewlines(text)),
   };
 };
 
@@ -195,7 +202,7 @@ export const useStdout = () => {
 export const useStderr = () => {
   return {
     stderr: process.stderr,
-    write: (text: string) => process.stderr.write(text),
+    write: (text: string) => process.stderr.write(toRawNewlines(text)),
   };
 };
 

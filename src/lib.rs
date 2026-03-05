@@ -141,6 +141,7 @@ impl Renderer {
         let stdout = std::io::stdout();
         let mut lock = stdout.lock();
         let _ = lock.write_all(data);
+        let _ = lock.flush();
     }
 }
 

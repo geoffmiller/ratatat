@@ -130,7 +130,7 @@
     "singleQuote": true,
     "arrowParens": "always"
   },
-  "packageManager": "yarn@4.12.0",
+  "packageManager": "npm",
   "homepage": "https://github.com/geoffmiller/ratatat#readme",
   "bugs": {
     "url": "https://github.com/geoffmiller/ratatat/issues"

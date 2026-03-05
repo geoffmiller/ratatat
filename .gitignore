@@ -121,13 +121,9 @@ Cargo.lock
 
 *.node
 .pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
-/npm
+.yarn/
+yarn.lock
+wasi-worker-browser.mjs
 
 # Build output
 dist/

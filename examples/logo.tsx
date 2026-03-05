@@ -43,7 +43,7 @@ const LOGO_CELLS: number[][] = LOGO_LINES.map((line) => [...line].map((c) => c.c
 const PALETTE = [51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 165, 129, 93, 57, 27]
 
 // 3 seconds across LOGO_WIDTH columns
-const MS_PER_FRAME = Math.round(3000 / LOGO_WIDTH) // ~28ms
+const MS_PER_FRAME = Math.round(6000 / LOGO_WIDTH) // ~56ms — 6s sweep
 const ONE_LOOP_FRAMES = LOGO_WIDTH + PALETTE.length // full sweep + tail
 
 // ─── Buffer painter ───────────────────────────────────────────────────────────

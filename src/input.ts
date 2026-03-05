@@ -41,10 +41,10 @@ export class InputParser extends EventEmitter {
     }
 
     // 2. Ctrl+key combos (except Ctrl+C above and Ctrl+[ which is escape)
-    // Ctrl+A=\u0001 … Ctrl+Z=\u001a, skipping \u0003 (C) and \u001b ([/escape)
+    // Excludes \t (9), \n (10), \r (13) which are handled as named keys below
     if (data.length === 1) {
       const code = data.charCodeAt(0)
-      if (code >= 1 && code <= 26 && code !== 3) {
+      if (code >= 1 && code <= 26 && code !== 3 && code !== 9 && code !== 10 && code !== 13) {
         const letter = String.fromCharCode(code + 96) // 1→'a', 2→'b', etc.
         this.emit('ctrl', letter)
         this.emit('data', data, { ctrl: true })

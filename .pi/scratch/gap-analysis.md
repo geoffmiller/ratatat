@@ -16,10 +16,10 @@ _Last updated: 2026-03-04_
 | `render()` return value (`rerender`, `unmount`, `waitUntilExit`) | Ink returns `{ rerender, unmount, waitUntilExit }` — ratatat returns `{ app, input }`. Hard break for any programmatic usage. | Medium | ✅ |
 | `Transform` component | Applies a string transform function to rendered children (used by gradients, links, text effects in ecosystem packages) | Medium | ✅ |
 | `renderToString()` | Renders to a string synchronously, no TTY needed. Used for testing and doc generation. | Medium | ✅ |
-| `measureElement()` | Returns `{width, height}` of a Box ref after layout | Small | ❌ |
-| `useBoxMetrics()` | Like measureElement but as a hook with live updates | Small | ❌ |
-| `useIsScreenReaderEnabled()` | Returns `false` stub is sufficient | Trivial | ❌ |
-| `useCursor()` | Screen cursor positioning — stub returning no-ops is probably fine | Small | ❌ |
+| `measureElement()` | Returns `{width, height}` of a Box ref after layout | Small | ✅ |
+| `useBoxMetrics()` | Like measureElement but as a hook with live updates | Small | ✅ |
+| `useIsScreenReaderEnabled()` | Returns `false` stub is sufficient | Trivial | ✅ |
+| `useCursor()` | Screen cursor positioning — stub returning no-ops is probably fine | Small | ✅ |
 
 ---
 
@@ -44,8 +44,8 @@ _Last updated: 2026-03-04_
 | use-stderr | ✅ | |
 | use-stdout | ✅ | |
 | use-transition | ✅ | |
-| aria | ❌ | Needs `useIsScreenReaderEnabled` stub |
-| cursor-ime | ❌ | Needs `useCursor` stub |
+| aria | ✅ | `useIsScreenReaderEnabled` returns false stub |
+| cursor-ime | ✅ | `useCursor` no-op stub added |
 | select-input | ⏭ | External dep: `ink-select-input` |
 | table | ⏭ | External dep: `@faker-js/faker` |
 | router | ⏭ | External dep: `react-router` |

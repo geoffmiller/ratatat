@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo, type RefObject } from 'react';
 import { RatatatApp } from './app.js';
 import { InputParser } from './input.js';
+import { LayoutNode } from './layout.js';
 
 export interface RatatatContextProps {
   app: RatatatApp;
@@ -228,3 +229,88 @@ export const useStdin = () => {
     },
   };
 };
+
+/**
+ * Measure the dimensions of a Box element.
+ * Returns { width, height } after layout has been calculated.
+ * Returns { width: 0, height: 0 } when called during render (before layout).
+ * Ink-compatible: measureElement(ref.current)
+ */
+export const measureElement = (node: LayoutNode | null): { width: number; height: number } => {
+  if (!node || !node.yogaNode) return { width: 0, height: 0 };
+  return {
+    width: node.yogaNode.getComputedWidth() ?? 0,
+    height: node.yogaNode.getComputedHeight() ?? 0,
+  };
+};
+
+export interface BoxMetrics {
+  readonly width: number;
+  readonly height: number;
+  readonly left: number;
+  readonly top: number;
+}
+
+export interface UseBoxMetricsResult extends BoxMetrics {
+  readonly hasMeasured: boolean;
+}
+
+const emptyMetrics: BoxMetrics = { width: 0, height: 0, left: 0, top: 0 };
+
+/**
+ * Returns the current layout metrics for a Box ref, updating on every render
+ * and on terminal resize.
+ * Ink-compatible: const { width, height, left, top, hasMeasured } = useBoxMetrics(ref)
+ */
+export const useBoxMetrics = (ref: RefObject<LayoutNode | null>): UseBoxMetricsResult => {
+  const context = useContext(RatatatContext);
+  const [metrics, setMetrics] = useState<BoxMetrics>(emptyMetrics);
+  const [hasMeasured, setHasMeasured] = useState(false);
+
+  const updateMetrics = useCallback(() => {
+    if (!ref.current?.yogaNode) {
+      setHasMeasured(false);
+      return;
+    }
+    const layout = ref.current.getLayout();
+    setMetrics(prev => {
+      if (
+        prev.width === layout.width &&
+        prev.height === layout.height &&
+        prev.left === layout.left &&
+        prev.top === layout.top
+      ) return prev;
+      return { width: layout.width, height: layout.height, left: layout.left, top: layout.top };
+    });
+    setHasMeasured(true);
+  }, [ref]);
+
+  // Update after every render (catches local state/prop changes)
+  useEffect(updateMetrics);
+
+  // Update on terminal resize
+  useEffect(() => {
+    if (!context?.app) return;
+    context.app.on('resize', updateMetrics);
+    return () => { context.app.off('resize', updateMetrics); };
+  }, [context, updateMetrics]);
+
+  return useMemo(() => ({ ...metrics, hasMeasured }), [metrics, hasMeasured]);
+};
+
+/**
+ * Returns whether a screen reader is enabled.
+ * Ratatat stub: always returns false — no screen reader support.
+ * Ink-compatible: const isEnabled = useIsScreenReaderEnabled()
+ */
+export const useIsScreenReaderEnabled = (): boolean => false;
+
+/**
+ * Returns cursor positioning controls.
+ * Ratatat stub: ratatat hides the cursor during rendering (alternate screen).
+ * setCursorPosition is a no-op — provided for Ink API compatibility only.
+ * Ink-compatible: const { setCursorPosition } = useCursor()
+ */
+export const useCursor = () => ({
+  setCursorPosition: (_position: { x: number; y: number } | undefined) => {},
+});

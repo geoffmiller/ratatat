@@ -40,6 +40,7 @@ node --import @oxc-node/core/register compat-test/chat.tsx
 | incremental-rendering | ✅ | `{incrementalRendering:true}` option ignored |
 | justify-content | ✅ | |
 | static | ✅ | |
+| stress-test | ✅ | |
 | suspense | ✅ | |
 | terminal-resize | ✅ | `{patchConsole,exitOnCtrlC}` options ignored |
 | use-focus | ✅ | Fixed implicit `any` on `{label}` prop (Ink example bug) |
@@ -48,9 +49,9 @@ node --import @oxc-node/core/register compat-test/chat.tsx
 | use-stderr | ✅ | |
 | use-stdout | ✅ | |
 | use-transition | ✅ | `{concurrent:true}` option ignored |
+| aria | ✅ | `aria-role`/`aria-state`/`aria-hidden` props ignored (no a11y layer); `useIsScreenReaderEnabled` returns false |
+| cursor-ime | ✅ | `useCursor` is a no-op stub; cursor positioning not supported |
 | table | ⏭ | Requires `@faker-js/faker` — external dep not in ratatat |
-| cursor-ime | ⏭ | Requires `useCursor` — no screen cursor API |
 | render-throttle | ⏭ | Requires `maxFps` option — Ratatat is event-driven |
 | router | ⏭ | Requires `react-router` |
-| aria | ⏭ | Requires `useIsScreenReaderEnabled` |
 | subprocess-output | ⏭ | Fragile external deps |

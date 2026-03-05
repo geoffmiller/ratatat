@@ -155,15 +155,29 @@ export function render(element: React.ReactElement, _options?: RenderOptions): I
 
   RatatatReconciler.updateContainer(wrap(element) as any, container, null, () => {})
 
-  // Paint: layout + render to buffer + Rust diff/write, called synchronously from onAfterCommit
+  // Paint function: layout + render to buffer + Rust diff/write
   const calcLayout = (w: number, h: number) => rootNode.calculateLayout(w, h)
   const renderBuf = (buf: Uint32Array, w: number, h: number) => renderTreeToBuffer(rootNode, buf, w, h)
+  const paintNow = () => app.paintNow(calcLayout, renderBuf)
 
-  // Wire reconciler commits → immediate synchronous paint (mirrors Ink's onRender pattern).
-  // No setTimeout hop — commit → layout → paint in one stack.
-  // This ensures setTimeout-triggered state updates paint immediately rather than
-  // waiting for the next user input event to flush the React scheduler queue.
-  setOnAfterCommit(() => app.paintNow(calcLayout, renderBuf))
+  // Dirty flag: set by every React commit, cleared by the render loop.
+  // Decouples painting from React's scheduler — no dependency on resetAfterCommit
+  // firing reliably for timer-driven updates (setTimeout, setInterval, streaming).
+  let dirty = false
+  setOnAfterCommit(() => {
+    dirty = true
+  })
+
+  // Render loop: ~60fps poll. Paints whenever React has committed new state.
+  // setInterval keeps the Node.js event loop alive and ensures timer-driven
+  // state updates (canned responses, streaming text) always reach the screen.
+  const FRAME_MS = 16
+  const renderLoop = setInterval(() => {
+    if (dirty) {
+      dirty = false
+      paintNow()
+    }
+  }, FRAME_MS)
 
   // Keep render event for resize and external triggers
   app.on('render', (buffer, w, h) => {
@@ -178,6 +192,7 @@ export function render(element: React.ReactElement, _options?: RenderOptions): I
   })
 
   const cleanup = () => {
+    clearInterval(renderLoop)
     app.stop()
     input.stop()
     process.off('SIGWINCH', onSigwinch)

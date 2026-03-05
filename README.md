@@ -6,6 +6,8 @@ An Ink compatible React reconciler for the terminal — write TUI apps with Reac
 
 **[Ink API Compatibility](docs/ink-compat.md)** · **[Architecture Decisions](docs/decisions.md)**
 
+![Ratatat logo](docs/ratatat-logo.png)
+
 ![Ratatat stress test](docs/ratatat-stress-test.png)
 
 ![Ratatat Sierpinski demo](docs/ratatat-seirpinski-demo.png)

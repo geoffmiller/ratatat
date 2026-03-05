@@ -33,43 +33,55 @@ function renderToString(buffer: Uint32Array): string {
 // Returns root node + mutable text nodes so we can simulate state changes
 function buildChatTree(messageLines: string[], inputText: string) {
   const outer = new LayoutNode()
-  outer.fg = 255; outer.bg = 255
-  outer._style = { flexDirection: 'column', padding: 1, width: COLS, height: ROWS,
-                   borderStyle: 'round', borderColor: 2 }
+  outer.fg = 255
+  outer.bg = 255
+  outer._style = {
+    flexDirection: 'column',
+    padding: 1,
+    width: COLS,
+    height: ROWS,
+    borderStyle: 'round',
+    borderColor: 2,
+  }
   applyStyles(outer.yogaNode, outer._style)
 
   const inner = new LayoutNode()
-  inner.fg = 255; inner.bg = 255
-  inner._style = { flexDirection: 'column', height: 18, borderStyle: 'single',
-                   borderColor: 4, padding: 1 }
+  inner.fg = 255
+  inner.bg = 255
+  inner._style = { flexDirection: 'column', height: 18, borderStyle: 'single', borderColor: 4, padding: 1 }
   applyStyles(inner.yogaNode, inner._style)
 
   // Message text nodes inside inner box
   for (const line of messageLines) {
     const msgBox = new LayoutNode()
-    msgBox.fg = 255; msgBox.bg = 255
+    msgBox.fg = 255
+    msgBox.bg = 255
     msgBox._style = { fg: 255, bg: 0 }
     applyStyles(msgBox.yogaNode, { flexDirection: 'row' })
 
     const msgText = new LayoutNode()
-    msgText.fg = 255; msgText.bg = 255
+    msgText.fg = 255
+    msgText.bg = 255
     msgText.text = line
     msgBox.insertChild(msgText, 0)
     inner.insertChild(msgBox, inner.children.length)
   }
 
   const bottom = new LayoutNode()
-  bottom.fg = 255; bottom.bg = 255
+  bottom.fg = 255
+  bottom.bg = 255
   bottom._style = { marginTop: 1 }
   applyStyles(bottom.yogaNode, bottom._style)
 
   const textBox = new LayoutNode()
-  textBox.fg = 3; textBox.bg = 255
+  textBox.fg = 3
+  textBox.bg = 255
   textBox._style = { fg: 3 }
   applyStyles(textBox.yogaNode, { flexDirection: 'row' })
 
   const textContent = new LayoutNode()
-  textContent.fg = 255; textContent.bg = 255
+  textContent.fg = 255
+  textContent.bg = 255
   textContent.text = `Enter your message: ${inputText}█`
 
   textBox.insertChild(textContent, 0)
@@ -91,7 +103,7 @@ function render(messageLines: string[], inputText: string) {
 // ─── Border character sets ────────────────────────────────────────────────────
 
 // cli-boxes 'round': ╭─╮╰─╯│
-const ROUND  = { tl: '╭', tr: '╮', bl: '╰', br: '╯', h: '─', v: '│' }
+const ROUND = { tl: '╭', tr: '╮', bl: '╰', br: '╯', h: '─', v: '│' }
 // cli-boxes 'single': ┌─┐└─┘│
 const SINGLE = { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│' }
 
@@ -99,26 +111,26 @@ const SINGLE = { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│' 
 
 function assertOuterBorder(t: any, buffer: Uint32Array, label: string) {
   // Outer box: col 0..79, row 0..23
-  t.is(charAt(buffer, 0, 0),        ROUND.tl, `${label}: outer top-left`)
-  t.is(charAt(buffer, COLS-1, 0),   ROUND.tr, `${label}: outer top-right`)
-  t.is(charAt(buffer, 0, ROWS-1),   ROUND.bl, `${label}: outer bottom-left`)
-  t.is(charAt(buffer, COLS-1, ROWS-1), ROUND.br, `${label}: outer bottom-right`)
-  t.is(charAt(buffer, 1, 0),        ROUND.h,  `${label}: outer top edge`)
-  t.is(charAt(buffer, 0, 1),        ROUND.v,  `${label}: outer left edge`)
-  t.is(charAt(buffer, COLS-1, 1),   ROUND.v,  `${label}: outer right edge`)
-  t.is(charAt(buffer, 0, ROWS-2),   ROUND.v,  `${label}: outer left edge bottom`)
-  t.is(charAt(buffer, COLS-1, ROWS-2), ROUND.v, `${label}: outer right edge bottom`)
+  t.is(charAt(buffer, 0, 0), ROUND.tl, `${label}: outer top-left`)
+  t.is(charAt(buffer, COLS - 1, 0), ROUND.tr, `${label}: outer top-right`)
+  t.is(charAt(buffer, 0, ROWS - 1), ROUND.bl, `${label}: outer bottom-left`)
+  t.is(charAt(buffer, COLS - 1, ROWS - 1), ROUND.br, `${label}: outer bottom-right`)
+  t.is(charAt(buffer, 1, 0), ROUND.h, `${label}: outer top edge`)
+  t.is(charAt(buffer, 0, 1), ROUND.v, `${label}: outer left edge`)
+  t.is(charAt(buffer, COLS - 1, 1), ROUND.v, `${label}: outer right edge`)
+  t.is(charAt(buffer, 0, ROWS - 2), ROUND.v, `${label}: outer left edge bottom`)
+  t.is(charAt(buffer, COLS - 1, ROWS - 2), ROUND.v, `${label}: outer right edge bottom`)
 }
 
 // Inner box: top=2, height=18 → bottom=19. left=2, width=76 → right=77.
 function assertInnerBorder(t: any, buffer: Uint32Array, label: string) {
-  t.is(charAt(buffer, 2, 2),   SINGLE.tl, `${label}: inner top-left`)
-  t.is(charAt(buffer, 77, 2),  SINGLE.tr, `${label}: inner top-right`)
-  t.is(charAt(buffer, 2, 19),  SINGLE.bl, `${label}: inner bottom-left`)
+  t.is(charAt(buffer, 2, 2), SINGLE.tl, `${label}: inner top-left`)
+  t.is(charAt(buffer, 77, 2), SINGLE.tr, `${label}: inner top-right`)
+  t.is(charAt(buffer, 2, 19), SINGLE.bl, `${label}: inner bottom-left`)
   t.is(charAt(buffer, 77, 19), SINGLE.br, `${label}: inner bottom-right`)
-  t.is(charAt(buffer, 3, 2),   SINGLE.h,  `${label}: inner top edge`)
-  t.is(charAt(buffer, 2, 3),   SINGLE.v,  `${label}: inner left edge`)
-  t.is(charAt(buffer, 77, 3),  SINGLE.v,  `${label}: inner right edge`)
+  t.is(charAt(buffer, 3, 2), SINGLE.h, `${label}: inner top edge`)
+  t.is(charAt(buffer, 2, 3), SINGLE.v, `${label}: inner left edge`)
+  t.is(charAt(buffer, 77, 3), SINGLE.v, `${label}: inner right edge`)
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -177,17 +189,17 @@ test('renderer: outer bottom border NOT overwritten after messages + input', (t)
   // This is the specific regression: bottom border row (23) must stay intact
   const buf = render(['User: this is a message', 'User: and another'], 'typing something')
   // Entire bottom border row should be border characters, not spaces
-  t.is(charAt(buf, 0, ROWS-1),    ROUND.bl, 'outer bottom-left corner')
-  t.is(charAt(buf, COLS-1, ROWS-1), ROUND.br, 'outer bottom-right corner')
+  t.is(charAt(buf, 0, ROWS - 1), ROUND.bl, 'outer bottom-left corner')
+  t.is(charAt(buf, COLS - 1, ROWS - 1), ROUND.br, 'outer bottom-right corner')
   for (let col = 1; col < COLS - 1; col++) {
-    const ch = charAt(buf, col, ROWS-1)
+    const ch = charAt(buf, col, ROWS - 1)
     t.is(ch, ROUND.h, `outer bottom edge col ${col}`)
   }
 })
 
 // ─── Yoga node lifecycle ──────────────────────────────────────────────────────
 
-test('LayoutNode.destroy() frees yogaNode and sets _destroyed guard', t => {
+test('LayoutNode.destroy() frees yogaNode and sets _destroyed guard', (t) => {
   const node = new LayoutNode()
   // @ts-ignore — accessing private
   t.false(node._destroyed, 'not destroyed initially')
@@ -198,7 +210,7 @@ test('LayoutNode.destroy() frees yogaNode and sets _destroyed guard', t => {
   t.notThrows(() => node.destroy(), 'double destroy is safe')
 })
 
-test.serial('detachDeletedInstance frees Yoga nodes when React removes children', async t => {
+test.serial('detachDeletedInstance frees Yoga nodes when React removes children', async (t) => {
   const React = (await import('react')).default
   const { act } = await import('react')
   const { create: createTestRenderer } = await import('react-test-renderer')
@@ -209,7 +221,7 @@ test.serial('detachDeletedInstance frees Yoga nodes when React removes children'
 
   let destroyCalls = 0
   const origDestroy = LayoutNode.prototype.destroy
-  LayoutNode.prototype.destroy = function() {
+  LayoutNode.prototype.destroy = function () {
     destroyCalls++
     return origDestroy.call(this)
   }
@@ -220,13 +232,17 @@ test.serial('detachDeletedInstance frees Yoga nodes when React removes children'
   // Mount 4 children
   await act(async () => {
     RatatatReconciler.updateContainer(
-      React.createElement('box', null,
+      React.createElement(
+        'box',
+        null,
         React.createElement('text', null, 'A'),
         React.createElement('text', null, 'B'),
         React.createElement('text', null, 'C'),
         React.createElement('text', null, 'D'),
       ),
-      container, null, () => {}
+      container,
+      null,
+      () => {},
     )
   })
 
@@ -236,10 +252,10 @@ test.serial('detachDeletedInstance frees Yoga nodes when React removes children'
   // Shrink to 1 — removes 3 nodes
   await act(async () => {
     RatatatReconciler.updateContainer(
-      React.createElement('box', null,
-        React.createElement('text', null, 'A'),
-      ),
-      container, null, () => {}
+      React.createElement('box', null, React.createElement('text', null, 'A')),
+      container,
+      null,
+      () => {},
     )
   })
 
@@ -252,7 +268,7 @@ test.serial('detachDeletedInstance frees Yoga nodes when React removes children'
 
 // ─── Transform tests ──────────────────────────────────────────────────────────
 
-test('Transform: uppercase transform is applied to child text', t => {
+test('Transform: uppercase transform is applied to child text', (t) => {
   const root = new LayoutNode()
   root.yogaNode.setWidth(COLS)
   root.yogaNode.setHeight(ROWS)
@@ -284,7 +300,7 @@ test('Transform: uppercase transform is applied to child text', t => {
   t.is(charAt(buf, 4, 0), 'O')
 })
 
-test('Transform: reverse transform works across multiple text children', t => {
+test('Transform: reverse transform works across multiple text children', (t) => {
   const root = new LayoutNode()
   root.yogaNode.setWidth(COLS)
   root.yogaNode.setHeight(ROWS)
@@ -312,14 +328,17 @@ test('Transform: reverse transform works across multiple text children', t => {
   t.is(charAt(buf, 2, 0), 'a')
 })
 
-test('Transform: transform receives index 0', t => {
+test('Transform: transform receives index 0', (t) => {
   const root = new LayoutNode()
   root.yogaNode.setWidth(COLS)
   root.yogaNode.setHeight(ROWS)
 
   const transformNode = new LayoutNode()
   let capturedIndex = -1
-  transformNode.transform = (s: string, index: number) => { capturedIndex = index; return s }
+  transformNode.transform = (s: string, index: number) => {
+    capturedIndex = index
+    return s
+  }
   applyStyles(transformNode.yogaNode, { flexShrink: 1 })
 
   const textNode = new LayoutNode()
@@ -336,4 +355,47 @@ test('Transform: transform receives index 0', t => {
   renderTreeToBuffer(root, buf, COLS, ROWS)
 
   t.is(capturedIndex, 0)
+})
+
+// ─── Unicode / multi-byte ─────────────────────────────────────────────────────
+
+test('renderer: emoji (surrogate pair) renders as single cell', (t) => {
+  const root = new LayoutNode()
+  root.yogaNode.setWidth(COLS)
+  root.yogaNode.setHeight(ROWS)
+
+  const textNode = new LayoutNode()
+  textNode.text = '🐭' // U+1F42D, requires surrogate pair in JS string
+
+  root.yogaNode.insertChild(textNode.yogaNode, 0)
+  root.children.push(textNode)
+  textNode.parent = root
+
+  const buf = makeBuffer()
+  renderTreeToBuffer(root, buf, COLS, ROWS)
+
+  // Cell 0 should be the rat emoji codepoint
+  t.is(buf[0], '🐭'.codePointAt(0))
+  // Cell 1 should be a space (not the low surrogate)
+  t.is(buf[2], 32)
+})
+
+test('renderer: mixed ASCII and emoji string renders correctly', (t) => {
+  const root = new LayoutNode()
+  root.yogaNode.setWidth(COLS)
+  root.yogaNode.setHeight(ROWS)
+
+  const textNode = new LayoutNode()
+  textNode.text = 'A🐭B'
+
+  root.yogaNode.insertChild(textNode.yogaNode, 0)
+  root.children.push(textNode)
+  textNode.parent = root
+
+  const buf = makeBuffer()
+  renderTreeToBuffer(root, buf, COLS, ROWS)
+
+  t.is(charAt(buf, 0, 0), 'A')
+  t.is(buf[2], '🐭'.codePointAt(0)) // cell 1 = emoji codepoint
+  t.is(charAt(buf, 2, 0), 'B') // cell 2 = 'B' (not a surrogate)
 })

@@ -64,6 +64,7 @@ The speed comes from two architectural decisions:
 - **Input handling** — `useInput`, `useStdin`, keyboard + special keys
 - **Focus management** — `useFocus`, `useFocusManager`, Tab cycling
 - **Terminal hooks** — `useWindowSize`, `useStdout`, `useStderr`
+- **`useScrollable`** — built-in scrolling primitive (not in Ink); virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`
 - **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
 - **Ink-compatible API** — most Ink apps work with a one-line import change
 

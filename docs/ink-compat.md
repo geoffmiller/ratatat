@@ -26,6 +26,24 @@ Ratatat implements the full Ink public API. This document tracks coverage.
 | `useIsScreenReaderEnabled()` | ✅     | Stub — always returns `false`                                             |
 | `useCursor()`                | ✅     | Stub — `setCursorPosition` is a no-op                                     |
 
+## Ratatat-Only API
+
+These exports exist in Ratatat but have no Ink equivalent. They are safe to use in Ratatat-only code.
+
+| Export                   | Description                                                                                                                                                                |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useScrollable(options)` | Built-in virtual scrolling. Returns `{ offset, atTop, atBottom, scrollBy, scrollToTop, scrollToBottom }`. Ink has no equivalent — users must implement scrolling manually. |
+| `useWindowSize()`        | Terminal dimensions. Ink has this too but it's not a hook — Ratatat exposes it as a first-class hook.                                                                      |
+| `DevTools`               | Debug overlay (internal)                                                                                                                                                   |
+| `RatatatApp`             | Core app instance — event emitter, paint loop, terminal lifecycle                                                                                                          |
+| `InputParser`            | Raw stdin parser — key events, escape sequences                                                                                                                            |
+| `LayoutNode`             | Yoga node wrapper — the render tree                                                                                                                                        |
+| `RatatatReconciler`      | The React reconciler instance                                                                                                                                              |
+| `RatatatContext`         | Internal context (app, input, stdout/stderr writers)                                                                                                                       |
+| `renderTreeToBuffer`     | Paint a layout tree into a `Uint32Array` buffer                                                                                                                            |
+| `StyleMasks`             | Bitmask constants for text attributes                                                                                                                                      |
+| `TerminalGuard`          | RAII guard — enters/leaves alternate screen and raw mode                                                                                                                   |
+
 ## Architectural Differences
 
 Ratatat is **not** a pure JS reimplementation of Ink. It shares the same React reconciler and Yoga layout engine but replaces Ink's string-based renderer with a Rust diff engine.

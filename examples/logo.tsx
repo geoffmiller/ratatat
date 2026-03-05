@@ -9,26 +9,28 @@
  * is painted directly into the Uint32Array back-buffer — React handles
  * the surrounding chrome, the logo pixels bypass React entirely.
  *
- * Run: node --import @oxc-node/core/register examples/logo.tsx
+ * Run:
+ *   node --import @oxc-node/core/register examples/logo.tsx          # loop forever
+ *   node --import @oxc-node/core/register examples/logo.tsx --once   # one sweep then exit (for gif recording)
  */
 // @ts-nocheck
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { render, Box, Text, useApp, useInput, useWindowSize } from '../dist/index.js'
+
+// ─── Args ─────────────────────────────────────────────────────────────────────
+
+const ONCE = process.argv.includes('--once')
 
 // ─── Logo strings (from ratatui/ratatui-widgets/src/logo.rs) ─────────────────
 
-const LOGO_TINY = ['▛▚▗▀▖▜▘▞▚▝▛▐ ▌▌', '▛▚▐▀▌▐ ▛▜ ▌▝▄▘▌']
-
 const LOGO_SMALL = ['█▀▀▄ ▄▀▀▄▝▜▛▘▄▀▀▄▝▜▛▘█  █ █', '█▀▀▄ █▀▀█ ▐▌ █▀▀█ ▐▌ ▀▄▄▀ █']
 
-// Scale up by repeating each char N times horizontally and each row N times
-// vertically. scale=4 gives a logo that's readable at normal terminal sizes.
+// Scale up: each char repeated SCALE times wide, each row SCALE times tall.
 const SCALE = 4
 
 function scaleLogo(lines: string[], scale: number): string[] {
   const scaled: string[] = []
   for (const line of lines) {
-    // Spread to handle multi-byte Unicode correctly
     const chars = [...line]
     const row = chars.map((c) => c.repeat(scale)).join('')
     for (let r = 0; r < scale; r++) scaled.push(row)
@@ -37,27 +39,23 @@ function scaleLogo(lines: string[], scale: number): string[] {
 }
 
 const LOGO_LINES = scaleLogo(LOGO_SMALL, SCALE)
-const LOGO_HEIGHT = LOGO_LINES.length // 2 * SCALE = 8 rows
-const LOGO_WIDTH = [...LOGO_LINES[0]].length // 27 * SCALE = 108 cols
+const LOGO_HEIGHT = LOGO_LINES.length // 2 * SCALE  = 8
+const LOGO_WIDTH = [...LOGO_LINES[0]].length // 27 * SCALE = 108
 
-// Precompute codepoints for each cell so the paint loop does zero string work
+// Precompute codepoints — zero string work in the hot paint path
 const LOGO_CELLS: number[][] = LOGO_LINES.map((line) => [...line].map((c) => c.codePointAt(0)!))
 
 // ─── Color palette — cyan → blue → magenta sweep ─────────────────────────────
 
-// ANSI 256-color ramp: cyan family columns
 const PALETTE = [51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 165, 129, 93, 57, 27]
+
+// One full sweep = wave travels LOGO_WIDTH + PALETTE.length frames
+// so every column completes a full cycle before we stop.
+const ONE_LOOP_FRAMES = LOGO_WIDTH + PALETTE.length // 124 frames ≈ 5s at 40ms
 
 // ─── Buffer painter ───────────────────────────────────────────────────────────
 
-function paintLogo(
-  buffer: Uint32Array,
-  cols: number,
-  rows: number,
-  logoRow: number, // top row in terminal where logo starts
-  logoCol: number, // left col in terminal where logo starts
-  frame: number,
-) {
+function paintLogo(buffer: Uint32Array, cols: number, rows: number, logoRow: number, logoCol: number, frame: number) {
   for (let y = 0; y < LOGO_HEIGHT; y++) {
     const termY = logoRow + y
     if (termY < 0 || termY >= rows) continue
@@ -66,13 +64,10 @@ function paintLogo(
       const termX = logoCol + x
       if (termX < 0 || termX >= cols) continue
       const cp = cells[x]
-      if (cp === 32) continue // skip spaces — let background show through
+      if (cp === 32) continue // spaces: let background show through
       const idx = (termY * cols + termX) * 2
-      // Color sweeps left-to-right, animated by frame
       const paletteIdx = (x + frame) % PALETTE.length
       const fg = PALETTE[paletteIdx]
-      // attr: (styles<<16) | (bg<<8) | fg
-      // fg > 15: encode as 256-color. Ratatat uses 0-255 for fg/bg.
       buffer[idx] = cp
       buffer[idx + 1] = (0 << 16) | (255 << 8) | fg
     }
@@ -90,19 +85,28 @@ function LogoApp() {
     if (input === 'q' || (key.ctrl && input === 'c') || key.escape || key.return) exit()
   })
 
-  // Animation — ~30fps is plenty for a color sweep
+  // 40ms per frame (~25fps) — smooth enough, slow enough for a readable gif
   useEffect(() => {
     let running = true
     function loop() {
       if (!running) return
-      setFrame((f) => f + 1)
-      setTimeout(loop, 33)
+      setFrame((f) => {
+        const next = f + 1
+        // In --once mode, exit after one full sweep
+        if (ONCE && next >= ONE_LOOP_FRAMES) {
+          setTimeout(exit, 40) // let the last frame paint before exit
+          running = false
+          return next
+        }
+        setTimeout(loop, 40)
+        return next
+      })
     }
-    loop()
+    setTimeout(loop, 40)
     return () => {
       running = false
     }
-  }, [])
+  }, [exit])
 
   // Logo centered in terminal
   const logoRow = Math.max(0, Math.floor((rows - LOGO_HEIGHT - 6) / 2))
@@ -120,11 +124,9 @@ function LogoApp() {
   })
 
   const subtitleRow = logoRow + LOGO_HEIGHT + 1
-  const hintRow = subtitleRow + 2
 
   return (
     <Box flexDirection="column" width={columns} height={rows}>
-      {/* Spacer to push subtitle below logo */}
       <Box height={subtitleRow} flexShrink={0} />
       <Box justifyContent="center">
         <Text bold color="cyan">
@@ -134,7 +136,7 @@ function LogoApp() {
       </Box>
       <Box height={1} flexShrink={0} />
       <Box justifyContent="center">
-        <Text dim>q · enter · esc to exit</Text>
+        <Text dim>{ONCE ? 'recording one loop…' : 'q · enter · esc to exit'}</Text>
       </Box>
     </Box>
   )

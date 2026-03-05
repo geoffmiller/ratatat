@@ -9,13 +9,17 @@ import React, { useState } from 'react'
 function Counter() {
   const [count, setCount] = useState(0)
   useInput((input, key) => {
-    if (key.upArrow) setCount(c => c + 1)
-    if (key.downArrow) setCount(c => c - 1)
+    if (key.upArrow) setCount((c) => c + 1)
+    if (key.downArrow) setCount((c) => c - 1)
   })
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">Counter</Text>
-      <Text>Count: <Text color="green">{count}</Text></Text>
+      <Text bold color="cyan">
+        Counter
+      </Text>
+      <Text>
+        Count: <Text color="green">{count}</Text>
+      </Text>
       <Text dim>↑↓ to change · Ctrl+C to exit</Text>
     </Box>
   )
@@ -26,13 +30,13 @@ render(<Counter />)
 
 ## Why Ratatat?
 
-| | Ratatat | Ink |
-|---|---|---|
-| Initial mount (simple) | 67,630 ops/s | 8,215 ops/s | **8.2×** |
-| Initial mount (complex) | 41,253 ops/s | 1,421 ops/s | **29×** |
-| Rerender (simple) | 95,175 ops/s | 8,095 ops/s | **11.8×** |
-| Rerender (complex) | 49,852 ops/s | 1,384 ops/s | **36×** |
-| p99 latency (complex rerender) | **23µs** | 1,585µs | **68×** |
+|                                | Ratatat      | Ink         |
+| ------------------------------ | ------------ | ----------- | --------- |
+| Initial mount (simple)         | 67,630 ops/s | 8,215 ops/s | **8.2×**  |
+| Initial mount (complex)        | 41,253 ops/s | 1,421 ops/s | **29×**   |
+| Rerender (simple)              | 95,175 ops/s | 8,095 ops/s | **11.8×** |
+| Rerender (complex)             | 49,852 ops/s | 1,384 ops/s | **36×**   |
+| p99 latency (complex rerender) | **23µs**     | 1,585µs     | **68×**   |
 
 Stress test: **303 FPS** sustained on a 188×50 terminal (8,648 cells/frame), running indefinitely.
 
@@ -56,10 +60,24 @@ The speed comes from two architectural decisions:
 ## Installation
 
 ```bash
-npm install ratatat
+npm install https://github.com/geoffmiller/ratatat/releases/latest/download/ratatat.tgz
 ```
 
-Requires Node 18+. Prebuilt native binaries included for macOS (arm64, x64) and Linux (x64).
+Or pin to a specific version:
+
+```bash
+npm install https://github.com/geoffmiller/ratatat/releases/download/v0.1.0/ratatat.tgz
+```
+
+Or in `package.json`:
+
+```json
+"dependencies": {
+  "ratatat": "https://github.com/geoffmiller/ratatat/releases/latest/download/ratatat.tgz"
+}
+```
+
+Requires Node 18+. Prebuilt native binaries for macOS (arm64, x64), Linux (x64, arm64), and Windows (x64) are bundled in the release tarball.
 
 ## Usage
 
@@ -87,7 +105,7 @@ Flexbox container. All Yoga layout props supported.
 
 ```tsx
 <Box
-  flexDirection="row"          // 'row' | 'column' (default: 'row')
+  flexDirection="row" // 'row' | 'column' (default: 'row')
   justifyContent="space-between"
   alignItems="center"
   padding={1}
@@ -96,7 +114,7 @@ Flexbox container. All Yoga layout props supported.
   gap={1}
   width={40}
   height="100%"
-  borderStyle="round"          // 'single'|'double'|'round'|'bold'|'arrow'
+  borderStyle="round" // 'single'|'double'|'round'|'bold'|'arrow'
   borderColor="cyan"
 >
   ...
@@ -109,7 +127,7 @@ Inline text with optional styling.
 
 ```tsx
 <Text
-  color="green"               // named, hex (#ff0000), rgb (rgb(255,0,0))
+  color="green" // named, hex (#ff0000), rgb (rgb(255,0,0))
   backgroundColor="blue"
   bold
   italic
@@ -125,7 +143,11 @@ Inline text with optional styling.
 Inserts a line break inside a `<Text>` node.
 
 ```tsx
-<Text>line one<Newline />line two</Text>
+<Text>
+  line one
+  <Newline />
+  line two
+</Text>
 ```
 
 ### `<Spacer>`
@@ -229,8 +251,9 @@ process.stdout
 ```
 
 **Buffer format:** `Uint32Array` with `width × height × 2` elements.  
-Cell at `(x, y)`: index `= (y × cols + x) × 2`  
-- `buffer[idx]` = Unicode codepoint (u32)  
+Cell at `(x, y)`: index `= (y × cols + x) × 2`
+
+- `buffer[idx]` = Unicode codepoint (u32)
 - `buffer[idx+1]` = `(styles << 16) | (bg << 8) | fg` (all u8)
 
 ## Development

@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/geoff-miller/ratatat.git"
+    "url": "https://github.com/geoffmiller/ratatat.git"
   },
   "license": "MIT",
   "browser": "browser.js",
@@ -24,7 +24,7 @@
     "index.js",
     "index.cjs",
     "index.d.ts",
-    "browser.js",
+    "native.cjs",
     "*.node"
   ],
   "napi": {
@@ -131,9 +131,9 @@
     "arrowParens": "always"
   },
   "packageManager": "yarn@4.12.0",
-  "homepage": "https://github.com/geoff-miller/ratatat#readme",
+  "homepage": "https://github.com/geoffmiller/ratatat#readme",
   "bugs": {
-    "url": "https://github.com/geoff-miller/ratatat/issues"
+    "url": "https://github.com/geoffmiller/ratatat/issues"
   },
   "exports": {
     ".": {

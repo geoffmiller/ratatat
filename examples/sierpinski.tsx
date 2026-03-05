@@ -24,8 +24,12 @@ import { render, Box, Text, useInput, useApp, useWindowSize, useFocus, useFocusM
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const DEPTH = 5 // 3^5 = 243 leaf nodes
-const MIN_DOT_WIDTH = 3 // minimum chars per dot cell
-const PULSE_PERIOD = 3000 // ms for one full pulse cycle
+const MIN_DOT_WIDTH = 3 // chars per dot cell
+const PULSE_PERIOD = 4000 // ms for one full pulse cycle
+
+// At depth N the bottom row is 2^N dots wide.
+// Minimum container width = 2^DEPTH × MIN_DOT_WIDTH
+const MIN_TRIANGLE_WIDTH = Math.pow(2, DEPTH) * MIN_DOT_WIDTH // 96 cols
 
 // ─── FPS counter ──────────────────────────────────────────────────────────────
 
@@ -177,9 +181,19 @@ function SierpinskiApp() {
   useEffect(() => {
     let running = true
     let handle: ReturnType<typeof setTimeout>
+    let loopFrame = 0
 
     function loop() {
       if (!running) return
+      loopFrame++
+      // React internals call performance.measure() on every reconcile.
+      // Clear periodically to prevent the perf_hooks "memory leak" warning.
+      if (loopFrame % 5000 === 0) {
+        try {
+          performance.clearMeasures()
+          performance.clearMarks()
+        } catch {}
+      }
       setFrame((f) => {
         tick()
         return f + 1
@@ -201,11 +215,13 @@ function SierpinskiApp() {
     return () => clearInterval(id)
   }, [])
 
-  // Pulse width: sine wave between 30% and 90% of terminal width
+  // Pulse width: sine wave, clamped so triangle never clips
+  // Range: MIN_TRIANGLE_WIDTH → columns (never narrower than the triangle needs)
   const elapsed = Date.now() - startTime.current
-  const t = (elapsed % PULSE_PERIOD) / PULSE_PERIOD // 0→1
-  const sine = Math.sin(t * Math.PI * 2) // -1→1
-  const pulseWidth = Math.round(columns * (0.6 + sine * 0.3)) // 30%→90%
+  const t = (elapsed % PULSE_PERIOD) / PULSE_PERIOD
+  const sine = (Math.sin(t * Math.PI * 2) + 1) / 2 // 0→1
+  const minW = Math.min(MIN_TRIANGLE_WIDTH, columns)
+  const pulseWidth = Math.round(minW + sine * (columns - minW))
 
   // idIndex is a mutable ref reset each render so IDs are assigned
   // in the same order every render

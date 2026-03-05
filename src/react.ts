@@ -155,14 +155,21 @@ export function render(element: React.ReactElement, _options?: RenderOptions): I
 
   RatatatReconciler.updateContainer(wrap(element) as any, container, null, () => {})
 
-  // On every render event: layout the Yoga tree and paint it to the buffer
+  // Paint: layout + render to buffer + Rust diff/write, called synchronously from onAfterCommit
+  const calcLayout = (w: number, h: number) => rootNode.calculateLayout(w, h)
+  const renderBuf = (buf: Uint32Array, w: number, h: number) => renderTreeToBuffer(rootNode, buf, w, h)
+
+  // Wire reconciler commits → immediate synchronous paint (mirrors Ink's onRender pattern).
+  // No setTimeout hop — commit → layout → paint in one stack.
+  // This ensures setTimeout-triggered state updates paint immediately rather than
+  // waiting for the next user input event to flush the React scheduler queue.
+  setOnAfterCommit(() => app.paintNow(calcLayout, renderBuf))
+
+  // Keep render event for resize and external triggers
   app.on('render', (buffer, w, h) => {
     rootNode.calculateLayout(w, h)
     renderTreeToBuffer(rootNode, buffer, w, h)
   })
-
-  // Wire reconciler commits → requestRender (every React state update triggers a repaint)
-  setOnAfterCommit(() => app.requestRender())
 
   // exitPromise: resolves when unmount() is called
   let resolveExit!: () => void

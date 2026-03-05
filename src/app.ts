@@ -97,6 +97,21 @@ export class RatatatApp extends EventEmitter {
   }
 
   /**
+   * Immediately layout and paint — called synchronously from resetAfterCommit.
+   * Bypasses the requestRender/setTimeout debounce so timer-driven state updates
+   * (streaming text, thinking indicators) paint on every React commit.
+   */
+  paintNow(
+    calculateLayout: (w: number, h: number) => void,
+    renderToBuffer: (buf: Uint32Array, w: number, h: number) => void,
+  ) {
+    if (!this.isRunning) return
+    calculateLayout(this.width, this.height)
+    renderToBuffer(this.backBuffer, this.width, this.height)
+    this.renderer.render(this.backBuffer)
+  }
+
+  /**
    * Schedules a single render on the next Node.js tick.
    * Debounced: multiple calls before the tick fires result in exactly one render.
    * Emits: 'render' (buffer: Uint32Array, width: number, height: number)

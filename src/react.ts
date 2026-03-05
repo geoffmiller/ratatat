@@ -55,6 +55,21 @@ export const Spacer: React.FC = () => {
 };
 
 /**
+ * Applies a string transformation to its children's text content.
+ * The transform function receives the concatenated text of all children
+ * and must return the transformed string.
+ * Ink-compatible: <Transform transform={s => s.toUpperCase()}>{children}</Transform>
+ */
+export interface TransformProps {
+  transform: (s: string, index: number) => string;
+  children?: React.ReactNode;
+}
+export const Transform: React.FC<TransformProps> = ({ transform, children }) => {
+  if (children === undefined || children === null) return null;
+  return React.createElement('box', { transform, flexShrink: 1 }, children);
+};
+
+/**
  * Internal component that handles Tab/Shift+Tab for focus cycling.
  * Must live inside FocusProvider to access FocusContext.
  */

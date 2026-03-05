@@ -12,6 +12,7 @@ export class LayoutNode {
   public parent: LayoutNode | null = null;
   private _destroyed = false;
   _hidden = false;  // set by Suspense hideInstance/unhideInstance
+  transform?: (s: string, index: number) => string;  // set by <Transform>
 
   // Custom terminal props
   private _text?: string;

@@ -103,6 +103,37 @@ function paintBorder(
   }
 }
 
+/** Recursively collect all text content from a node's descendants. */
+function collectText(node: LayoutNode): string {
+  if (node.text !== undefined) return node.text;
+  return node.children.map(collectText).join('');
+}
+
+/** Paint a plain string at (absX, absY) into the buffer, wrapping at width w. */
+function paintText(
+  text: string,
+  buffer: Uint32Array,
+  cols: number,
+  rows: number,
+  absX: number,
+  absY: number,
+  w: number,
+  h: number,
+  attrCode: number,
+  clip: Clip,
+) {
+  let cursorX = 0;
+  let cursorY = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\n') { cursorX = 0; cursorY++; continue; }
+    if (cursorX >= w)     { cursorX = 0; cursorY++; }
+    if (cursorY >= h) break;
+    writeCell(buffer, cols, rows, absX + cursorX, absY + cursorY, text.codePointAt(i) || 32, attrCode, clip);
+    if (text.codePointAt(i)! > 0xFFFF) i++;
+    cursorX++;
+  }
+}
+
 function paintNode(
   node: LayoutNode,
   buffer: Uint32Array,
@@ -145,6 +176,15 @@ function paintNode(
   // If the node is entirely outside the clip, skip it and its children
   if (nodeClip.x0 >= nodeClip.x1 || nodeClip.y0 >= nodeClip.y1) return;
 
+  // <Transform> node: collect all descendant text, apply transform fn, paint result
+  if (typeof node.transform === 'function') {
+    const raw = collectText(node);
+    const transformed = node.transform(raw, 0);
+    const attrCode = (styles << 16) | (bg << 8) | fg;
+    paintText(transformed, buffer, cols, rows, absX, absY, w, h, attrCode, nodeClip);
+    return;
+  }
+
   if (!node.text) {
     // Fill background
     const attrCode = (styles << 16) | (bg << 8) | fg;
@@ -170,17 +210,7 @@ function paintNode(
       }
     }
 
-    let cursorX = 0;
-    let cursorY = 0;
-    for (let i = 0; i < node.text.length; i++) {
-      if (node.text[i] === '\n') { cursorX = 0; cursorY++; continue; }
-      if (cursorX >= w)          { cursorX = 0; cursorY++; }
-      if (cursorY >= h) break;
-
-      writeCell(buffer, cols, rows, absX + cursorX, absY + cursorY, node.text.codePointAt(i) || 32, attrCode, nodeClip);
-      if (node.text.codePointAt(i)! > 0xFFFF) i++;
-      cursorX++;
-    }
+    paintText(node.text, buffer, cols, rows, absX, absY, w, h, attrCode, nodeClip);
   }
 
   // Recurse into children — they inherit this node's clip rectangle

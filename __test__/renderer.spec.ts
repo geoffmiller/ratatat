@@ -249,3 +249,91 @@ test.serial('detachDeletedInstance frees Yoga nodes when React removes children'
   // Restore
   LayoutNode.prototype.destroy = origDestroy
 })
+
+// ─── Transform tests ──────────────────────────────────────────────────────────
+
+test('Transform: uppercase transform is applied to child text', t => {
+  const root = new LayoutNode()
+  root.yogaNode.setWidth(COLS)
+  root.yogaNode.setHeight(ROWS)
+
+  // Box node with transform
+  const transformNode = new LayoutNode()
+  transformNode.transform = (s: string) => s.toUpperCase()
+  applyStyles(transformNode.yogaNode, { flexShrink: 1 })
+
+  // Text child
+  const textNode = new LayoutNode()
+  textNode.text = 'hello'
+
+  transformNode.yogaNode.insertChild(textNode.yogaNode, 0)
+  transformNode.children.push(textNode)
+  textNode.parent = transformNode
+
+  root.yogaNode.insertChild(transformNode.yogaNode, 0)
+  root.children.push(transformNode)
+  transformNode.parent = root
+
+  const buf = makeBuffer()
+  renderTreeToBuffer(root, buf, COLS, ROWS)
+
+  t.is(charAt(buf, 0, 0), 'H')
+  t.is(charAt(buf, 1, 0), 'E')
+  t.is(charAt(buf, 2, 0), 'L')
+  t.is(charAt(buf, 3, 0), 'L')
+  t.is(charAt(buf, 4, 0), 'O')
+})
+
+test('Transform: reverse transform works across multiple text children', t => {
+  const root = new LayoutNode()
+  root.yogaNode.setWidth(COLS)
+  root.yogaNode.setHeight(ROWS)
+
+  const transformNode = new LayoutNode()
+  transformNode.transform = (s: string) => s.split('').reverse().join('')
+  applyStyles(transformNode.yogaNode, { flexShrink: 1 })
+
+  const textNode = new LayoutNode()
+  textNode.text = 'abc'
+
+  transformNode.yogaNode.insertChild(textNode.yogaNode, 0)
+  transformNode.children.push(textNode)
+  textNode.parent = transformNode
+
+  root.yogaNode.insertChild(transformNode.yogaNode, 0)
+  root.children.push(transformNode)
+  transformNode.parent = root
+
+  const buf = makeBuffer()
+  renderTreeToBuffer(root, buf, COLS, ROWS)
+
+  t.is(charAt(buf, 0, 0), 'c')
+  t.is(charAt(buf, 1, 0), 'b')
+  t.is(charAt(buf, 2, 0), 'a')
+})
+
+test('Transform: transform receives index 0', t => {
+  const root = new LayoutNode()
+  root.yogaNode.setWidth(COLS)
+  root.yogaNode.setHeight(ROWS)
+
+  const transformNode = new LayoutNode()
+  let capturedIndex = -1
+  transformNode.transform = (s: string, index: number) => { capturedIndex = index; return s }
+  applyStyles(transformNode.yogaNode, { flexShrink: 1 })
+
+  const textNode = new LayoutNode()
+  textNode.text = 'x'
+
+  transformNode.yogaNode.insertChild(textNode.yogaNode, 0)
+  transformNode.children.push(textNode)
+  textNode.parent = transformNode
+  root.yogaNode.insertChild(transformNode.yogaNode, 0)
+  root.children.push(transformNode)
+  transformNode.parent = root
+
+  const buf = makeBuffer()
+  renderTreeToBuffer(root, buf, COLS, ROWS)
+
+  t.is(capturedIndex, 0)
+})

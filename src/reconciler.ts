@@ -97,6 +97,11 @@ const hostConfig: ReactReconciler.HostConfig<
     node.styles = styles;
     node._style = props;
 
+    // Transform prop — used by <Transform> component
+    if (typeof props.transform === 'function') {
+      node.transform = props.transform;
+    }
+
     return node;
   },
 
@@ -163,6 +168,9 @@ const hostConfig: ReactReconciler.HostConfig<
     instance.bg = bg;
     instance.styles = styles;
     instance._style = nextProps;
+
+    // Update transform prop
+    instance.transform = typeof nextProps.transform === 'function' ? nextProps.transform : undefined;
   },
 
   commitTextUpdate(textInstance, oldText, newText) {

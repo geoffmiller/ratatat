@@ -21,6 +21,18 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { render, Box, Text, useInput, useApp, useWindowSize, useFocus, useFocusManager } from '../dist/index.js'
 
+// React internals call performance.measure() on every reconcile.
+// At 300fps this fills Node's default 1M entry buffer in ~3 seconds.
+// Drain entries immediately via a PerformanceObserver so they never accumulate.
+try {
+  const obs = new PerformanceObserver((list) => {
+    list.getEntries()
+  })
+  obs.observe({ entryTypes: ['measure', 'mark'] })
+} catch {}
+performance.clearMeasures()
+performance.clearMarks()
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const DEPTH = 5 // 3^5 = 243 leaf nodes
@@ -186,9 +198,8 @@ function SierpinskiApp() {
     function loop() {
       if (!running) return
       loopFrame++
-      // React internals call performance.measure() on every reconcile.
-      // Clear periodically to prevent the perf_hooks "memory leak" warning.
-      if (loopFrame % 5000 === 0) {
+      // Belt-and-suspenders: also clear periodically in case the observer misses anything
+      if (loopFrame % 500 === 0) {
         try {
           performance.clearMeasures()
           performance.clearMarks()

@@ -88,7 +88,18 @@ export interface RenderOptions {
   debug?: boolean;
 }
 
-export function render(element: React.ReactElement, _options?: RenderOptions) {
+/** Return value of render() — Ink-compatible instance handle */
+export interface Instance {
+  rerender: (element: React.ReactElement) => void;
+  unmount: () => void;
+  waitUntilExit: () => Promise<void>;
+  /** ratatat-internal: direct app access */
+  app: RatatatApp;
+  /** ratatat-internal: input parser */
+  input: InputParser;
+}
+
+export function render(element: React.ReactElement, _options?: RenderOptions): Instance {
   const app = new RatatatApp();
   const input = new InputParser(process.stdin);
   
@@ -110,17 +121,18 @@ export function render(element: React.ReactElement, _options?: RenderOptions) {
     null
   );
 
-  const wrappedElement = React.createElement(
+  // Wrap element — reused on rerender()
+  const wrap = (el: React.ReactElement) => React.createElement(
     RatatatContext.Provider,
     { value: { app, input, writeStdout: (t: string) => app.writeStdout(t), writeStderr: (t: string) => app.writeStderr(t) } },
     React.createElement(
       FocusProvider,
       null,
-      React.createElement(TabHandler, null, element)
+      React.createElement(TabHandler, null, el)
     )
   );
 
-  RatatatReconciler.updateContainer(wrappedElement as any, container, null, () => {});
+  RatatatReconciler.updateContainer(wrap(element) as any, container, null, () => {});
 
   // On every render event: layout the Yoga tree and paint it to the buffer
   app.on('render', (buffer, w, h) => {
@@ -131,17 +143,26 @@ export function render(element: React.ReactElement, _options?: RenderOptions) {
   // Wire reconciler commits → requestRender (every React state update triggers a repaint)
   setOnAfterCommit(() => app.requestRender());
 
-  // Ctrl+C: clean shutdown — restore terminal, stop stdin, exit
-  input.on('exit', () => {
+  // exitPromise: resolves when unmount() is called
+  let resolveExit!: () => void;
+  const exitPromise = new Promise<void>(resolve => { resolveExit = resolve; });
+
+  const cleanup = () => {
     app.stop();
     input.stop();
+    process.off('SIGWINCH', onSigwinch);
+    resolveExit();
+  };
+
+  // Ctrl+C: clean shutdown — restore terminal, stop stdin, exit
+  input.on('exit', () => {
+    cleanup();
     process.exit(0);
   });
 
   // app.quit(): programmatic clean exit from useApp()
   app.on('quit', () => {
-    app.stop();
-    input.stop();
+    cleanup();
     process.exit(0);
   });
 
@@ -162,7 +183,20 @@ export function render(element: React.ReactElement, _options?: RenderOptions) {
   app.requestRender();
   
   return {
+    /** Re-render with a new root element */
+    rerender(newElement: React.ReactElement) {
+      RatatatReconciler.updateContainer(wrap(newElement) as any, container, null, () => {});
+    },
+    /** Unmount the app and restore the terminal */
+    unmount() {
+      cleanup();
+    },
+    /** Resolves when unmount() is called or the app exits */
+    waitUntilExit() {
+      return exitPromise;
+    },
+    // Internal access — not part of Ink's public API but useful for ratatat-native code
     app,
-    input
+    input,
   };
 }

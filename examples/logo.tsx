@@ -5,8 +5,10 @@
  * the cells, demonstrating direct buffer painting alongside a React shell.
  *
  * Run:
- *   node --import @oxc-node/core/register examples/logo.tsx          # loop forever
- *   node --import @oxc-node/core/register examples/logo.tsx --once   # one 3s sweep then exit
+ *   node --import @oxc-node/core/register examples/logo.tsx                    # 6s sweep, loop
+ *   node --import @oxc-node/core/register examples/logo.tsx --once             # one sweep, exit
+ *   node --import @oxc-node/core/register examples/logo.tsx --speed 3          # 3s sweep
+ *   node --import @oxc-node/core/register examples/logo.tsx --speed 3 --once   # 3s, one pass
  */
 // @ts-nocheck
 import React, { useEffect, useRef } from 'react'
@@ -15,6 +17,8 @@ import { render, Box, Text, useApp, useInput, useWindowSize } from '../dist/inde
 // ─── Args ─────────────────────────────────────────────────────────────────────
 
 const ONCE = process.argv.includes('--once')
+const speedIdx = process.argv.indexOf('--speed')
+const SWEEP_SECONDS = speedIdx !== -1 ? parseFloat(process.argv[speedIdx + 1]) || 6 : 6
 
 // ─── Logo strings (from ratatui/ratatui-widgets/src/logo.rs) ─────────────────
 
@@ -43,7 +47,7 @@ const LOGO_CELLS: number[][] = LOGO_LINES.map((line) => [...line].map((c) => c.c
 const PALETTE = [51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 165, 129, 93, 57, 27]
 
 // 3 seconds across LOGO_WIDTH columns
-const MS_PER_FRAME = Math.round(6000 / LOGO_WIDTH) // ~56ms — 6s sweep
+const MS_PER_FRAME = Math.round((SWEEP_SECONDS * 1000) / LOGO_WIDTH)
 const ONE_LOOP_FRAMES = LOGO_WIDTH + PALETTE.length // full sweep + tail
 
 // ─── Buffer painter ───────────────────────────────────────────────────────────

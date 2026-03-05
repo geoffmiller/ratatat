@@ -33,16 +33,18 @@ These exports exist in Ratatat but have no Ink equivalent. They are safe to use 
 | Export                   | Description                                                                                                                                                                |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `useScrollable(options)` | Built-in virtual scrolling. Returns `{ offset, atTop, atBottom, scrollBy, scrollToTop, scrollToBottom }`. Ink has no equivalent — users must implement scrolling manually. |
+| `useMouse(handler)`      | Subscribe to mouse events: click, right-click, middle, scrollUp, scrollDown, with modifier flags (shift/ctrl/meta). Ink has no mouse support at all.                       |
+| `useTextInput(options)`  | Managed text input with cursor, backspace/delete, home/end, Ctrl+U/K/W kill shortcuts, and bracketed paste. Returns `{ value, cursor, setValue, clear }`.                  |
 | `useWindowSize()`        | Terminal dimensions. Also in Ink — both expose it as a hook.                                                                                                               |
 | `DevTools`               | Debug overlay (internal)                                                                                                                                                   |
 | `RatatatApp`             | Core app instance — event emitter, paint loop, terminal lifecycle                                                                                                          |
-| `InputParser`            | Raw stdin parser — key events, escape sequences                                                                                                                            |
+| `InputParser`            | Raw stdin parser — key events, mouse events, bracketed paste, escape sequences                                                                                             |
 | `LayoutNode`             | Yoga node wrapper — the render tree                                                                                                                                        |
 | `RatatatReconciler`      | The React reconciler instance                                                                                                                                              |
 | `RatatatContext`         | Internal context (app, input, stdout/stderr writers)                                                                                                                       |
 | `renderTreeToBuffer`     | Paint a layout tree into a `Uint32Array` buffer                                                                                                                            |
 | `StyleMasks`             | Bitmask constants for text attributes                                                                                                                                      |
-| `TerminalGuard`          | RAII guard — enters/leaves alternate screen and raw mode                                                                                                                   |
+| `TerminalGuard`          | RAII guard — enters/leaves alternate screen, raw mode, mouse tracking, and bracketed paste                                                                                 |
 
 ## Architectural Differences
 

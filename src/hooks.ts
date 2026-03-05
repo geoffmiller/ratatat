@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo, type RefObject } from 'react'
 import { RatatatApp } from './app.js'
-import { InputParser } from './input.js'
+import { InputParser, type MouseEvent } from './input.js'
 import { LayoutNode } from './layout.js'
 
 export interface RatatatContextProps {
@@ -403,4 +403,227 @@ export const useScrollable = ({ viewportHeight, contentHeight }: UseScrollableOp
     }),
     [offset, max, clamp],
   )
+}
+
+// ─── useMouse ─────────────────────────────────────────────────────────────────
+
+export type MouseHandler = (event: MouseEvent) => void
+
+/**
+ * Subscribe to mouse events. Requires mouse tracking to be enabled (it is by
+ * default — TerminalGuard enables SGR 1006 mouse tracking on start).
+ *
+ * Usage:
+ *   useMouse((event) => {
+ *     if (event.button === 'left') { ... }
+ *     if (event.button === 'scrollUp') { ... }
+ *     // event: { x, y, button, shift, ctrl, meta }
+ *   })
+ *
+ * button values: 'left' | 'right' | 'middle' | 'scrollUp' | 'scrollDown'
+ */
+export const useMouse = (handler: MouseHandler) => {
+  const context = useContext(RatatatContext)
+  if (!context) throw new Error('useMouse must be used within a Ratatat App environment')
+
+  const handlerRef = useRef<MouseHandler>(handler)
+  useEffect(() => {
+    handlerRef.current = handler
+  })
+
+  useEffect(() => {
+    const onMouse = (event: MouseEvent) => handlerRef.current(event)
+    context.input.on('mouse', onMouse)
+    return () => {
+      context.input.off('mouse', onMouse)
+    }
+  }, [context])
+}
+
+// ─── useTextInput ─────────────────────────────────────────────────────────────
+
+export interface UseTextInputOptions {
+  /** Initial value (default: '') */
+  initialValue?: string
+  /** Called when the user presses Enter */
+  onSubmit?: (value: string) => void
+  /** Called on every keystroke with the new value */
+  onChange?: (value: string) => void
+  /** When false, the hook ignores all input (default: true) */
+  isActive?: boolean
+}
+
+export interface UseTextInputResult {
+  /** Current text value */
+  value: string
+  /** Cursor position (0 = before first char, value.length = after last char) */
+  cursor: number
+  /** Set value programmatically */
+  setValue: (value: string) => void
+  /** Clear the input */
+  clear: () => void
+}
+
+/**
+ * Managed text input with cursor, backspace, delete, left/right navigation,
+ * home/end, bracketed paste, and submit on Enter.
+ *
+ * Usage:
+ *   const { value, cursor } = useTextInput({ onSubmit: (v) => console.log(v) })
+ *   <Text>{value.slice(0, cursor)}<Text inverse> </Text>{value.slice(cursor)}</Text>
+ *
+ * Renders a block cursor by inverting the character at cursor position.
+ * When cursor is at end, renders a trailing space as the cursor block.
+ */
+export const useTextInput = ({
+  initialValue = '',
+  onSubmit,
+  onChange,
+  isActive = true,
+}: UseTextInputOptions = {}): UseTextInputResult => {
+  const [value, setValueRaw] = useState(initialValue)
+  const [cursor, setCursor] = useState(initialValue.length)
+
+  // Refs that are always current — safe to read inside useInput's stable closure
+  const valueRef = useRef(value)
+  const cursorRef = useRef(cursor)
+  useEffect(() => {
+    valueRef.current = value
+  })
+  useEffect(() => {
+    cursorRef.current = cursor
+  })
+
+  // Keep callbacks stable
+  const onChangeRef = useRef(onChange)
+  useEffect(() => {
+    onChangeRef.current = onChange
+  })
+  const onSubmitRef = useRef(onSubmit)
+  useEffect(() => {
+    onSubmitRef.current = onSubmit
+  })
+
+  const setValue = useCallback((newValue: string) => {
+    setValueRaw(newValue)
+    setCursor(newValue.length)
+  }, [])
+
+  const clear = useCallback(() => {
+    setValueRaw('')
+    setCursor(0)
+    onChangeRef.current?.('')
+  }, [])
+
+  useInput((input, key) => {
+    if (!isActive) return
+
+    const cur = cursorRef.current
+    const val = valueRef.current
+
+    if (key.return) {
+      onSubmitRef.current?.(val)
+      return
+    }
+
+    if (key.escape) return
+
+    if (key.leftArrow) {
+      setCursor(Math.max(0, cur - 1))
+      return
+    }
+
+    if (key.rightArrow) {
+      setCursor(Math.min(val.length, cur + 1))
+      return
+    }
+
+    if (key.home || (key.ctrl && input === 'a')) {
+      setCursor(0)
+      return
+    }
+
+    if (key.end || (key.ctrl && input === 'e')) {
+      setCursor(val.length)
+      return
+    }
+
+    if (key.backspace) {
+      if (cur === 0) return
+      const next = val.slice(0, cur - 1) + val.slice(cur)
+      setValueRaw(next)
+      setCursor(cur - 1)
+      onChangeRef.current?.(next)
+      return
+    }
+
+    if (key.delete) {
+      if (cur >= val.length) return
+      const next = val.slice(0, cur) + val.slice(cur + 1)
+      setValueRaw(next)
+      onChangeRef.current?.(next)
+      return
+    }
+
+    // Ctrl+U — kill to start of line
+    if (key.ctrl && input === 'u') {
+      const next = val.slice(cur)
+      setValueRaw(next)
+      setCursor(0)
+      onChangeRef.current?.(next)
+      return
+    }
+
+    // Ctrl+K — kill to end of line
+    if (key.ctrl && input === 'k') {
+      const next = val.slice(0, cur)
+      setValueRaw(next)
+      onChangeRef.current?.(next)
+      return
+    }
+
+    // Ctrl+W — kill word before cursor
+    if (key.ctrl && input === 'w') {
+      const before = val.slice(0, cur)
+      const trimmed = before.replace(/\S+\s*$/, '')
+      const next = trimmed + val.slice(cur)
+      setValueRaw(next)
+      setCursor(trimmed.length)
+      onChangeRef.current?.(next)
+      return
+    }
+
+    // Ignore other ctrl/meta combos
+    if (key.ctrl || key.meta) return
+
+    // Printable character — insert at cursor
+    if (input && input.length > 0) {
+      const next = val.slice(0, cur) + input + val.slice(cur)
+      setValueRaw(next)
+      setCursor(cur + input.length)
+      onChangeRef.current?.(next)
+    }
+  })
+
+  // Bracketed paste — insert full paste text at cursor
+  const context = useContext(RatatatContext)
+  useEffect(() => {
+    if (!context || !isActive) return
+    const onPaste = (text: string) => {
+      // Strip control characters; convert CR/CRLF → space
+      const safe = text.replace(/[\x00-\x08\x0b-\x1f\x7f]/g, '').replace(/\r\n?/g, ' ')
+      const cur = cursorRef.current
+      const val = valueRef.current
+      const next = val.slice(0, cur) + safe + val.slice(cur)
+      setValueRaw(next)
+      setCursor(cur + safe.length)
+      onChangeRef.current?.(next)
+    }
+    context.input.on('paste', onPaste)
+    return () => {
+      context.input.off('paste', onPaste)
+    }
+  }, [context, isActive])
+
+  return { value, cursor, setValue, clear }
 }

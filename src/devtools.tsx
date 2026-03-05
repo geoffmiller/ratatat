@@ -18,14 +18,14 @@
  *
  * Future slots: render count, memory usage, custom metrics via props.
  */
-import React, { useEffect, useRef, useState } from 'react';
-import { Box, Spacer, Text } from './react.js';
-import { useRatatatContext, useWindowSize } from './hooks.js';
+import React, { useEffect, useRef, useState } from 'react'
+import { Box, Spacer, Text } from './react.js'
+import { useRatatatContext, useWindowSize } from './hooks.js'
 
 export interface DevToolsProps {
-  children: React.ReactNode;
+  children: React.ReactNode
   /** Show/hide the HUD without unmounting (default: true) */
-  enabled?: boolean;
+  enabled?: boolean
 }
 
 /**
@@ -33,62 +33,62 @@ export interface DevToolsProps {
  * Returns FPS averaged over the last 500ms window.
  */
 function useFpsCounter() {
-  const { app } = useRatatatContext();
-  const [fps, setFps] = useState(0);
-  const frames = useRef(0);
-  const windowStart = useRef(Date.now());
-  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { app } = useRatatatContext()
+  const [fps, setFps] = useState(0)
+  const frames = useRef(0)
+  const windowStart = useRef(Date.now())
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const onRender = () => {
       // Reset the idle timeout — 2s of no renders → show '--'
-      if (idleTimer.current) clearTimeout(idleTimer.current);
+      if (idleTimer.current) clearTimeout(idleTimer.current)
       idleTimer.current = setTimeout(() => {
-        setFps(0);
-        frames.current = 0;
-        windowStart.current = Date.now();
-      }, 2000);
+        setFps(0)
+        frames.current = 0
+        windowStart.current = Date.now()
+      }, 2000)
 
-      frames.current++;
-      const now = Date.now();
-      const elapsed = now - windowStart.current;
+      frames.current++
+      const now = Date.now()
+      const elapsed = now - windowStart.current
       if (elapsed >= 500) {
-        setFps(Math.round((frames.current / elapsed) * 1000));
-        frames.current = 0;
-        windowStart.current = now;
+        setFps(Math.round((frames.current / elapsed) * 1000))
+        frames.current = 0
+        windowStart.current = now
       }
-    };
+    }
 
-    app.on('render', onRender);
+    const unsub = app.onBeforeFlush(() => {
+      onRender()
+    })
     return () => {
-      app.off('render', onRender);
-      if (idleTimer.current) clearTimeout(idleTimer.current);
-    };
-  }, [app]);
+      unsub()
+      if (idleTimer.current) clearTimeout(idleTimer.current)
+    }
+  }, [app])
 
-  return fps;
+  return fps
 }
 
 /** Small updates/sec badge */
 function FpsHud({ fps }: { fps: number }) {
-  const label = fps === 0 ? '--' : String(fps);
+  const label = fps === 0 ? '--' : String(fps)
   return (
     <Box borderStyle="round" borderColor="gray" paddingX={1}>
       <Text dim>{label} updates/sec</Text>
     </Box>
-  );
+  )
 }
 
 export function DevTools({ children, enabled = true }: DevToolsProps) {
-  const fps = useFpsCounter();
-  const { columns, rows } = useWindowSize();
+  const fps = useFpsCounter()
+  const { columns, rows } = useWindowSize()
 
   return (
     <Box flexDirection="column" width={columns} height={rows}>
       {/* App content fills all available space */}
-      <Box flexGrow={1}>
-        {children}
-      </Box>
+      <Box flexGrow={1}>{children}</Box>
 
       {/* HUD row — only takes space when enabled */}
       {enabled && (
@@ -98,5 +98,5 @@ export function DevTools({ children, enabled = true }: DevToolsProps) {
         </Box>
       )}
     </Box>
-  );
+  )
 }

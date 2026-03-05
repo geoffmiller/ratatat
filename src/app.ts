@@ -96,6 +96,21 @@ export class RatatatApp extends EventEmitter {
   }
 
   /**
+   * Callbacks fired on every frame after React paints the buffer but before
+   * the Rust diff engine flushes to stdout. Use for direct buffer painting
+   * that needs to overlay React output (animated graphs, overlays, FPS counters).
+   * Multiple listeners are supported — they fire in registration order.
+   */
+  private beforeFlushListeners: Array<(buffer: Uint32Array, width: number, height: number) => void> = []
+
+  onBeforeFlush(fn: (buffer: Uint32Array, width: number, height: number) => void): () => void {
+    this.beforeFlushListeners.push(fn)
+    return () => {
+      this.beforeFlushListeners = this.beforeFlushListeners.filter((f) => f !== fn)
+    }
+  }
+
+  /**
    * Layout + paint synchronously. Called from the render loop on every dirty frame,
    * and directly on resize for immediate response.
    */
@@ -106,6 +121,9 @@ export class RatatatApp extends EventEmitter {
     if (!this.isRunning) return
     calculateLayout(this.width, this.height)
     renderToBuffer(this.backBuffer, this.width, this.height)
+    for (const fn of this.beforeFlushListeners) {
+      fn(this.backBuffer, this.width, this.height)
+    }
     this.renderer.render(this.backBuffer)
   }
 }

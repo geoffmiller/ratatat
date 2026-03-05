@@ -117,11 +117,10 @@ function LogoApp() {
   useEffect(() => {
     const app = (globalThis as any).__ratatatApp
     if (!app) return
-    const onRender = (buffer: Uint32Array, w: number, h: number) => {
+    const unsub = app.onBeforeFlush((buffer: Uint32Array, w: number, h: number) => {
       paintLogo(buffer, w, h, logoRowRef.current, logoColRef.current, frameRef.current)
-    }
-    app.on('render', onRender)
-    return () => app.off('render', onRender)
+    })
+    return unsub
   }, []) // runs exactly once
 
   const subtitleRow = logoRow + LOGO_HEIGHT + 1

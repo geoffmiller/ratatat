@@ -42,20 +42,14 @@ function useFps() {
 const ANSI_INDICES = [1, 2, 3, 4, 5, 6, 7]
 
 const CHARS = '█▓▒░▪▫●○◆◇'
-const CHAR_CODES = Array.from(CHARS).map(c => c.codePointAt(0)!)
+const CHAR_CODES = Array.from(CHARS).map((c) => c.codePointAt(0)!)
 
 // ─── Direct buffer painter ────────────────────────────────────────────────────
 // Writes grid cells directly to the Uint32Array back-buffer, bypassing React.
 // This avoids React allocating fiber update objects for each of the ~4000+
 // grid cells on every frame, which accumulates native memory faster than GC.
 
-function paintGrid(
-  buffer: Uint32Array,
-  cols: number,
-  rows: number,
-  headerRows: number,
-  frame: number,
-) {
+function paintGrid(buffer: Uint32Array, cols: number, rows: number, headerRows: number, frame: number) {
   for (let y = headerRows; y < rows; y++) {
     const gridY = y - headerRows
     for (let x = 0; x < cols; x++) {
@@ -75,17 +69,7 @@ function paintGrid(
 // StatsBar is: 1 (top border) + 1 (content) + 1 (bottom border) + 1 (marginBottom) = 4 rows
 const HEADER_ROWS = 4
 
-function StatsBar({
-  fps,
-  frame,
-  cols,
-  rows,
-}: {
-  fps: number
-  frame: number
-  cols: number
-  rows: number
-}) {
+function StatsBar({ fps, frame, cols, rows }: { fps: number; frame: number; cols: number; rows: number }) {
   const gridRows = Math.max(1, rows - HEADER_ROWS)
   const gridCols = Math.max(1, cols)
   return (
@@ -98,7 +82,10 @@ function StatsBar({
         {'  '}
         Frame: <Text color="white">{String(frame).padStart(7)}</Text>
         {'  '}
-        Terminal: <Text color="white">{cols}×{rows}</Text>
+        Terminal:{' '}
+        <Text color="white">
+          {cols}×{rows}
+        </Text>
         {'  '}
         Cells/frame: <Text color="white">{(gridCols * gridRows).toLocaleString()}</Text>
         {'  '}
@@ -124,13 +111,16 @@ function StressTest() {
     function loop() {
       if (!running) return
       loopFrame++
-      setFrame(f => {
+      setFrame((f) => {
         tick()
         return f + 1
       })
       // Prevent MaxPerformanceEntryBufferExceededWarning
       if (loopFrame % 10000 === 0) {
-        try { performance.clearMeasures(); performance.clearMarks() } catch {}
+        try {
+          performance.clearMeasures()
+          performance.clearMarks()
+        } catch {}
       }
       handle = setTimeout(loop, 0)
     }
@@ -145,17 +135,14 @@ function StressTest() {
   // Paint the grid directly into the buffer on every frame.
   // We get the buffer via the Ratatat render context by using a side-channel:
   // render() exposes the app, and the app exposes getBuffer().
-  // We hook into the 'render' event to intercept the buffer before it goes to Rust.
   useEffect(() => {
-    // Access the app via the module-level ref set during render()
     const app = (globalThis as any).__ratatatApp
     if (!app) return
 
-    const onRender = (buffer: Uint32Array, w: number, h: number) => {
+    const unsub = app.onBeforeFlush((buffer: Uint32Array, w: number, h: number) => {
       paintGrid(buffer, w, h, HEADER_ROWS, (globalThis as any).__ratatatFrame ?? 0)
-    }
-    app.on('render', onRender)
-    return () => app.off('render', onRender)
+    })
+    return unsub
   }, [])
 
   // Keep a global frame ref so the render listener can access latest frame

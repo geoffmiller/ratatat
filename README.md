@@ -137,24 +137,26 @@ npx tsx examples/counter.tsx
 
 ```
 examples/
-  counter.tsx          — increment/decrement with arrow keys
-  borders.tsx          — all border styles
-  justify-content.tsx  — flexbox alignment demo
-  use-input.tsx        — keyboard input handling
-  box-backgrounds.tsx  — background colors
-  chat.tsx             — scrolling message list
-  terminal-resize.tsx  — live window size display
-  use-stderr.tsx       — writing to stderr
-  use-stdout.tsx       — writing to stdout
-  suspense.tsx         — React Suspense with async data
-  use-transition.tsx   — useTransition for non-blocking updates
-  concurrent-suspense.tsx — concurrent rendering
-  use-focus.tsx        — focus management
-  use-focus-with-id.tsx   — named focus groups
-  static.tsx           — <Static> append-only task log
-  stress-test.tsx      — 300+ FPS full-terminal color animation
-  sierpinski.tsx       — React Fiber Sierpinski triangle (243 nodes, pulsing width)
-  kitchen-sink.tsx     — all features in one app
+  borders.tsx              — all border styles
+  box-backgrounds.tsx      — background colors
+  chat.tsx                 — scrolling message list
+  concurrent-suspense.tsx  — concurrent rendering
+  counter.tsx              — increment/decrement with arrow keys
+  incremental-rendering.tsx — high-frequency partial updates (3 progress bars at ~60fps)
+  justify-content.tsx      — flexbox alignment demo
+  kitchen-sink.tsx         — all features in one app
+  logo.tsx                 — animated Ratatat logo with direct buffer painting
+  sierpinski.tsx           — React Fiber Sierpinski triangle (243 nodes, pulsing width)
+  static.tsx               — <Static> append-only task log
+  stress-test.tsx          — 300+ FPS full-terminal color animation
+  suspense.tsx             — React Suspense with async data
+  terminal-resize.tsx      — live window size display
+  use-focus-with-id.tsx    — named focus groups
+  use-focus.tsx            — focus management
+  use-input.tsx            — keyboard input handling
+  use-stderr.tsx           — writing to stderr
+  use-stdout.tsx           — writing to stdout
+  use-transition.tsx       — useTransition for non-blocking updates
 ```
 
 ## Package Size

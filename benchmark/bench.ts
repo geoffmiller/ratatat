@@ -22,7 +22,19 @@ import { renderTreeToBuffer } from '../dist/renderer.js'
 import { Renderer } from '../dist/index.js'
 
 // ─── Ink imports ──────────────────────────────────────────────────────────────
-import { renderToString, Text as InkText, Box as InkBox } from '../../ink/build/index.js'
+// Optional: compare against Ink if available at ../../ink/build/index.js
+// To enable: cd ../ink && npm run build
+let renderToString: ((node: any, opts?: any) => string) | null = null
+let InkText: any = null
+let InkBox: any = null
+try {
+  const ink = await import('../../ink/build/index.js' as any)
+  renderToString = ink.renderToString
+  InkText = ink.Text
+  InkBox = ink.Box
+} catch {
+  // Ink not available — ink comparison benchmarks will be skipped
+}
 
 // ─── Shared config ────────────────────────────────────────────────────────────
 const COLS = 80
@@ -157,18 +169,22 @@ b.add('ratatat · initial mount (simple)', () => {
   ratatatRender(root, container, buffer, simpleTree(0))
 })
 
-b.add('ink     · initial mount (simple)', () => {
-  renderToString(simpleInkTree(0), { columns: COLS })
-})
+if (renderToString && InkText && InkBox) {
+  b.add('ink     · initial mount (simple)', () => {
+    renderToString!(simpleInkTree(0), { columns: COLS })
+  })
+}
 
 b.add('ratatat · initial mount (complex)', () => {
   const { root, container, buffer } = makeRatatatContainer()
   ratatatRender(root, container, buffer, complexTree(0))
 })
 
-b.add('ink     · initial mount (complex)', () => {
-  renderToString(complexInkTree(0), { columns: COLS })
-})
+if (renderToString && InkText && InkBox) {
+  b.add('ink     · initial mount (complex)', () => {
+    renderToString!(complexInkTree(0), { columns: COLS })
+  })
+}
 
 // Suite 2: rerender throughput (warm container, state change each frame)
 b.add('ratatat · rerender (simple, state changes)', () => {
@@ -176,20 +192,24 @@ b.add('ratatat · rerender (simple, state changes)', () => {
   ratatatRender(simpleCtx.root, simpleCtx.container, simpleCtx.buffer, simpleTree(frameN))
 })
 
-b.add('ink     · rerender (simple, state changes)', () => {
-  frameN++
-  renderToString(simpleInkTree(frameN), { columns: COLS })
-})
+if (renderToString && InkText && InkBox) {
+  b.add('ink     · rerender (simple, state changes)', () => {
+    frameN++
+    renderToString!(simpleInkTree(frameN), { columns: COLS })
+  })
+}
 
 b.add('ratatat · rerender (complex, state changes)', () => {
   frameN++
   ratatatRender(complexCtx.root, complexCtx.container, complexCtx.buffer, complexTree(frameN))
 })
 
-b.add('ink     · rerender (complex, state changes)', () => {
-  frameN++
-  renderToString(complexInkTree(frameN), { columns: COLS })
-})
+if (renderToString && InkText && InkBox) {
+  b.add('ink     · rerender (complex, state changes)', () => {
+    frameN++
+    renderToString!(complexInkTree(frameN), { columns: COLS })
+  })
+}
 
 // Suite 3: diff engine (ratatat only — Ink doesn't expose this layer)
 // Suppress stdout so Renderer's ANSI output doesn't pollute terminal during bench
@@ -241,9 +261,7 @@ const rows = b.tasks.map(task => {
 console.log('All results (ops/sec, higher = faster):\n')
 console.table(rows)
 
-// Compute speedup for each paired suite
-console.log('\nSpeedup summary (ratatat ÷ ink):\n')
-
+// Compute speedup for each paired suite (only when Ink is available)
 const pairs: Array<[string, string, string]> = [
   ['initial mount (simple)',  'ratatat · initial mount (simple)',            'ink     · initial mount (simple)'],
   ['initial mount (complex)', 'ratatat · initial mount (complex)',           'ink     · initial mount (complex)'],
@@ -251,18 +269,24 @@ const pairs: Array<[string, string, string]> = [
   ['rerender (complex)',      'ratatat · rerender (complex, state changes)', 'ink     · rerender (complex, state changes)'],
 ]
 
-for (const [label, rName, iName] of pairs) {
-  const rTask = b.tasks.find(t => t.name === rName)
-  const iTask = b.tasks.find(t => t.name === iName)
-  if (rTask?.result && iTask?.result) {
-    const rr = rTask.result as any
-    const ir = iTask.result as any
-    const rHz = rr.throughput?.mean ?? 0
-    const iHz = ir.throughput?.mean ?? 0
+const comparisons = pairs.filter(([, rName, iName]) =>
+  b.tasks.find(t => t.name === rName)?.result &&
+  b.tasks.find(t => t.name === iName)?.result
+)
+
+if (comparisons.length > 0) {
+  console.log('\nSpeedup summary (ratatat ÷ ink):\n')
+  for (const [label, rName, iName] of comparisons) {
+    const rTask = b.tasks.find(t => t.name === rName)!
+    const iTask = b.tasks.find(t => t.name === iName)!
+    const rHz = (rTask.result as any).throughput?.mean ?? 0
+    const iHz = (iTask.result as any).throughput?.mean ?? 0
     const speedup = (rHz / iHz).toFixed(1)
     const arrow = Number(speedup) >= 1 ? '🚀' : '🐢'
     console.log(`  ${label.padEnd(26)}  ${arrow}  ratatat is ${speedup}x faster than Ink`)
   }
+} else {
+  console.log('\n(Ink not available — run `cd ../ink && npm run build` to enable comparison benchmarks)\n')
 }
 
 console.log('')

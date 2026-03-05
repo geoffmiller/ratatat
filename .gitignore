@@ -128,3 +128,27 @@ Cargo.lock
 !.yarn/sdks
 !.yarn/versions
 /npm
+
+# Build output
+dist/
+*.tgz
+
+# Benchmark compiled output
+benchmark/*.js
+benchmark/*.d.ts
+
+# Agent working files
+.pi/
+
+# Stray dev/debug files
+debug-react.log
+debug-input.mjs
+debug-react.tsx
+
+# Root-level scratch/planning files (not project docs)
+PLAN.md
+CODE_REVIEW.md
+build-docs/
+example.ts
+example-*.tsx
+example-*.ts

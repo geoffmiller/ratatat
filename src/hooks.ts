@@ -332,3 +332,75 @@ export const useIsScreenReaderEnabled = (): boolean => false
 export const useCursor = () => ({
   setCursorPosition: (_position: { x: number; y: number } | undefined) => {},
 })
+
+/**
+ * Scroll state for a fixed-height viewport over variable-height content.
+ *
+ * Usage:
+ *   const scroll = useScrollable({ viewportHeight: 20, contentHeight: totalRows })
+ *
+ *   <Box height={20}>
+ *     <Box marginTop={-scroll.offset}>
+ *       {items}
+ *     </Box>
+ *   </Box>
+ *
+ * contentHeight can be updated as content grows. The offset is automatically
+ * clamped so it never scrolls past the end.
+ *
+ * scrollToBottom() is idempotent — safe to call on every new message append.
+ */
+export interface UseScrollableOptions {
+  /** Height of the visible window in rows */
+  viewportHeight: number
+  /** Total height of the content in rows — update as content grows */
+  contentHeight: number
+}
+
+export interface UseScrollableResult {
+  /** Current scroll offset in rows (0 = top) */
+  offset: number
+  /** Scroll down one row */
+  scrollDown: () => void
+  /** Scroll up one row */
+  scrollUp: () => void
+  /** Scroll down N rows */
+  scrollBy: (n: number) => void
+  /** Jump to the very bottom */
+  scrollToBottom: () => void
+  /** Jump to the very top */
+  scrollToTop: () => void
+  /** True when already at the bottom */
+  atBottom: boolean
+  /** True when already at the top */
+  atTop: boolean
+}
+
+export const useScrollable = ({ viewportHeight, contentHeight }: UseScrollableOptions): UseScrollableResult => {
+  const [offset, setOffset] = useState(0)
+
+  // max offset: content taller than viewport → can scroll, else 0
+  const max = Math.max(0, contentHeight - viewportHeight)
+
+  // clamp helper — always stays in [0, max]
+  const clamp = useCallback((n: number) => Math.max(0, Math.min(n, max)), [max])
+
+  // When content grows (new messages), keep offset clamped to new max
+  useEffect(() => {
+    setOffset((o) => clamp(o))
+  }, [max, clamp])
+
+  return useMemo(
+    () => ({
+      offset: clamp(offset),
+      scrollDown: () => setOffset((o) => clamp(o + 1)),
+      scrollUp: () => setOffset((o) => clamp(o - 1)),
+      scrollBy: (n: number) => setOffset((o) => clamp(o + n)),
+      scrollToBottom: () => setOffset(max),
+      scrollToTop: () => setOffset(0),
+      atBottom: clamp(offset) >= max,
+      atTop: clamp(offset) <= 0,
+    }),
+    [offset, max, clamp],
+  )
+}

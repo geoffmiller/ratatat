@@ -7,6 +7,7 @@
  * Keybinds:
  *   Tab / Shift+Tab  — cycle focus (sidebar → chat → input)
  *   ↑ / ↓           — navigate file list (when sidebar focused)
+ *   ↑ / ↓           — scroll chat (when chat focused)
  *   Enter            — send message (when input focused)
  *   q / Escape       — quit
  *
@@ -14,7 +15,7 @@
  */
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { render, Box, Text, Static, useInput, useApp, useWindowSize } from '../dist/index.js'
+import { render, Box, Text, Static, useInput, useApp, useWindowSize, useScrollable } from '../dist/index.js'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,15 @@ const CANNED: string[] = [
 let cannedIdx = 0
 const nextCanned = () => CANNED[cannedIdx++ % CANNED.length]
 
+// How many terminal rows a committed message occupies
+function messageRows(msg: Message): number {
+  if (msg.kind === 'system') return 1
+  if (msg.kind === 'tool') return 1
+  if (msg.kind === 'diff') return msg.text.split('\n').length
+  // user / ai: 1 blank line + 1 per line of text
+  return 1 + msg.text.split('\n').length
+}
+
 // ─── File tree ────────────────────────────────────────────────────────────────
 
 const FILES = [
@@ -154,7 +164,7 @@ function useClock() {
 function Header({ tokens, time, focus }: { tokens: number; time: string; focus: Focus }) {
   const hints: Record<Focus, string> = {
     sidebar: '[↑↓] navigate  [tab] focus chat  [q] quit',
-    chat: '[tab] focus input  [q] quit',
+    chat: '[↑↓] scroll  [tab] focus input  [q] quit',
     input: '[enter] send  [tab] focus sidebar  [q] quit',
   }
   return (
@@ -363,6 +373,16 @@ function RattataApp() {
   const [inputValue, setInputValue] = useState('')
   const [inputLocked, setInputLocked] = useState(true) // locked until script finishes
 
+  // ── Scroll state — viewport height calculated from terminal rows
+  // header(3) + statusBar(3) + inputBar(3) + borders = ~9 rows of chrome
+  const CHROME_ROWS = 9
+  const chatViewport = Math.max(1, rows - CHROME_ROWS)
+  const contentHeight =
+    settled.reduce((sum, m) => sum + messageRows(m), 0) +
+    (active ? messageRows(active) : 0) +
+    (thinking && !active ? 2 : 0)
+  const scroll = useScrollable({ viewportHeight: chatViewport, contentHeight })
+
   // ── Script playback refs
   const scriptIdx = useRef(0)
   const charIdx = useRef(0)
@@ -405,6 +425,25 @@ function RattataApp() {
           const pos = SELECTABLE.findIndex((f) => f.index === idx)
           return SELECTABLE[Math.min(SELECTABLE.length - 1, pos + 1)].index
         })
+        return
+      }
+    }
+
+    if (focus === 'chat') {
+      if (key.upArrow) {
+        scroll.scrollUp()
+        return
+      }
+      if (key.downArrow) {
+        scroll.scrollDown()
+        return
+      }
+      if (key.pageUp) {
+        scroll.scrollBy(-5)
+        return
+      }
+      if (key.pageDown) {
+        scroll.scrollBy(5)
         return
       }
     }
@@ -471,6 +510,7 @@ function RattataApp() {
     if (step.kind === 'system' || step.kind === 'tool' || step.kind === 'diff') {
       setSettled((s) => [...s, { id: uid(), kind: step.kind, text: step.text, done: true }])
       setThinking(step.kind === 'tool')
+      scroll.scrollToBottom()
       stepTimer.current = setTimeout(advanceScript, SCRIPT[scriptIdx.current]?.delay ?? 0)
       return
     }
@@ -480,9 +520,10 @@ function RattataApp() {
     setThinking(false)
     streamMessage(msg, step.text, speed, () => {
       setThinking(false)
+      scroll.scrollToBottom()
       stepTimer.current = setTimeout(advanceScript, SCRIPT[scriptIdx.current]?.delay ?? 0)
     })
-  }, [streamMessage])
+  }, [streamMessage, scroll])
 
   // ── Submit a user-typed message → stream canned AI response
   const submitUserMessage = useCallback(
@@ -490,6 +531,7 @@ function RattataApp() {
       setInputLocked(true)
       const userMsg: Message = { id: uid(), kind: 'user', text, done: true }
       setSettled((s) => [...s, userMsg])
+      scroll.scrollToBottom()
 
       // Brief pause, then stream a canned response
       setTimeout(() => {
@@ -501,13 +543,14 @@ function RattataApp() {
             const aiMsg: Message = { id: uid(), kind: 'ai', text: '', done: false }
             streamMessage(aiMsg, response, 18, () => {
               setInputLocked(false)
+              scroll.scrollToBottom()
             })
           },
           800 + Math.random() * 600,
         )
       }, 200)
     },
-    [streamMessage],
+    [streamMessage, scroll],
   )
 
   useEffect(() => {
@@ -526,6 +569,7 @@ function RattataApp() {
       <Box flexGrow={1} flexDirection="row">
         <Sidebar width={sidebarW} focused={focus === 'sidebar'} selectedIdx={selectedFileIdx} />
         <Box flexGrow={1} flexDirection="column">
+          {/* Chat viewport: fixed height, clips overflowing content */}
           <Box
             flexGrow={1}
             flexDirection="column"
@@ -533,12 +577,26 @@ function RattataApp() {
             borderColor={focus === 'chat' ? 'cyan' : 'blackBright'}
             paddingX={1}
           >
-            <Static items={settled}>{(msg) => <MessageBlock key={msg.id} msg={msg} />}</Static>
-            {active && <MessageBlock msg={active} />}
-            {thinking && !active && (
-              <Box paddingLeft={4} marginTop={1}>
-                <Text color="magenta">{spinner} </Text>
-                <Text color="blackBright">running…</Text>
+            {/* Scroll indicator — only shown when not at bottom */}
+            {!scroll.atTop && (
+              <Box justifyContent="center">
+                <Text color="blackBright">↑ {scroll.offset} rows above</Text>
+              </Box>
+            )}
+            {/* Content shifted up by scroll offset — clip rect handles masking */}
+            <Box flexDirection="column" marginTop={-scroll.offset}>
+              <Static items={settled}>{(msg) => <MessageBlock key={msg.id} msg={msg} />}</Static>
+              {active && <MessageBlock msg={active} />}
+              {thinking && !active && (
+                <Box paddingLeft={4} marginTop={1}>
+                  <Text color="magenta">{spinner} </Text>
+                  <Text color="blackBright">running…</Text>
+                </Box>
+              )}
+            </Box>
+            {!scroll.atBottom && (
+              <Box justifyContent="center">
+                <Text color="blackBright">↓ scroll for more</Text>
               </Box>
             )}
           </Box>

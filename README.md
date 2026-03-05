@@ -123,7 +123,30 @@ node --import @oxc-node/core/register examples/counter.tsx
 npx tsx examples/counter.tsx
 ```
 
-## API
+## Examples
+
+```
+examples/
+  counter.tsx          — increment/decrement with arrow keys
+  borders.tsx          — all border styles
+  justify-content.tsx  — flexbox alignment demo
+  use-input.tsx        — keyboard input handling
+  box-backgrounds.tsx  — background colors
+  chat.tsx             — scrolling message list
+  terminal-resize.tsx  — live window size display
+  use-stderr.tsx       — writing to stderr
+  use-stdout.tsx       — writing to stdout
+  suspense.tsx         — React Suspense with async data
+  use-transition.tsx   — useTransition for non-blocking updates
+  concurrent-suspense.tsx — concurrent rendering
+  use-focus.tsx        — focus management
+  use-focus-with-id.tsx   — named focus groups
+  static.tsx           — <Static> append-only task log
+  stress-test.tsx      — 300+ FPS full-terminal color animation
+  kitchen-sink.tsx     — all features in one app
+```
+
+## API — copied from Ink
 
 ### `render(element)`
 
@@ -235,57 +258,13 @@ const { write } = useStdout()
 const { write } = useStderr()
 ```
 
-## Examples
-
-```
-examples/
-  counter.tsx          — increment/decrement with arrow keys
-  borders.tsx          — all border styles
-  justify-content.tsx  — flexbox alignment demo
-  use-input.tsx        — keyboard input handling
-  box-backgrounds.tsx  — background colors
-  chat.tsx             — scrolling message list
-  terminal-resize.tsx  — live window size display
-  use-stderr.tsx       — writing to stderr
-  use-stdout.tsx       — writing to stdout
-  suspense.tsx         — React Suspense with async data
-  use-transition.tsx   — useTransition for non-blocking updates
-  concurrent-suspense.tsx — concurrent rendering
-  use-focus.tsx        — focus management
-  use-focus-with-id.tsx   — named focus groups
-  static.tsx           — <Static> append-only task log
-  stress-test.tsx      — 300+ FPS full-terminal color animation
-  kitchen-sink.tsx     — all features in one app
-```
-
 ## Development
 
 ```bash
 npm run build      # Rust native add-on (napi-rs)
 npm run build:ts   # TypeScript
 npm test           # 118 tests
-node benchmark/bench.js  # Ratatat vs Ink benchmark
 ```
-
-## Benchmark
-
-```bash
-node benchmark/bench.js
-```
-
-```
-╔══════════════════════════════════════════════════════════════════╗
-║              Ratatat vs Ink — render benchmark                  ║
-╚══════════════════════════════════════════════════════════════════╝
-
-  initial mount (simple)    🚀  Ratatat is 8.2x faster than Ink
-  initial mount (complex)   🚀  Ratatat is 29.0x faster than Ink
-  rerender (simple)         🚀  Ratatat is 11.8x faster than Ink
-  rerender (complex)        🚀  Ratatat is 36.0x faster than Ink
-```
-
-Stress test (`examples/stress-test.tsx`): **303 FPS** on a 188×50 terminal.  
-Frame 8,000+ with zero memory growth.
 
 ## License
 

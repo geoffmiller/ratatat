@@ -1,6 +1,8 @@
-# Ratatat
+# Ratatat (Ratatui + Ink)
 
-A React reconciler for the terminal — write TUI apps with React components, powered by a native Rust diff engine and Yoga Flexbox.
+> 100% Vibe Coded — Fork Only, no PRs
+
+An Ink compatible React reconciler for the terminal — write TUI apps with React components, powered by a native Rust diff engine and Yoga Flexbox.
 
 ```tsx
 import { render, Box, Text, useInput } from 'ratatat'
@@ -30,7 +32,7 @@ render(<Counter />)
 
 ## Why Ratatat?
 
-|                                | Ratatat      | Ink         |
+|                                | Ratatat      | Ink         | Speedup   |
 | ------------------------------ | ------------ | ----------- | --------- |
 | Initial mount (simple)         | 67,630 ops/s | 8,215 ops/s | **8.2×**  |
 | Initial mount (complex)        | 41,253 ops/s | 1,421 ops/s | **29×**   |
@@ -56,6 +58,38 @@ The speed comes from two architectural decisions:
 - **Terminal hooks** — `useWindowSize`, `useStdout`, `useStderr`
 - **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
 - **Ink-compatible API** — most Ink apps work with a one-line import change
+
+## Architecture
+
+```
+React components
+      │  setState / props change
+      ▼
+React Reconciler (src/reconciler.ts)
+  prepareUpdate → null if props unchanged (skips commitUpdate)
+  commitUpdate  → applyStyles() to Yoga node
+      │
+      ▼
+Yoga layout engine (src/layout.ts)
+  calculateLayout() → computes x/y/width/height for every node
+      │
+      ▼
+Buffer painter (src/renderer.ts)
+  renderTreeToBuffer() → writes (charCode, attrCode) pairs into Uint32Array
+      │  zero-copy buffer pointer passed to Rust
+      ▼
+Rust diff engine (src/lib.rs, src/ansi.rs)
+  compares front/back buffer → emits minimal ANSI escape sequences
+      │
+      ▼
+process.stdout
+```
+
+**Buffer format:** `Uint32Array` with `width × height × 2` elements.  
+Cell at `(x, y)`: index `= (y × cols + x) × 2`
+
+- `buffer[idx]` = Unicode codepoint (u32)
+- `buffer[idx+1]` = `(styles << 16) | (bg << 8) | fg` (all u8)
 
 ## Installation
 
@@ -224,44 +258,12 @@ examples/
   kitchen-sink.tsx     — all features in one app
 ```
 
-## Architecture
-
-```
-React components
-      │  setState / props change
-      ▼
-React Reconciler (src/reconciler.ts)
-  prepareUpdate → null if props unchanged (skips commitUpdate)
-  commitUpdate  → applyStyles() to Yoga node
-      │
-      ▼
-Yoga layout engine (src/layout.ts)
-  calculateLayout() → computes x/y/width/height for every node
-      │
-      ▼
-Buffer painter (src/renderer.ts)
-  renderTreeToBuffer() → writes (charCode, attrCode) pairs into Uint32Array
-      │  zero-copy buffer pointer passed to Rust
-      ▼
-Rust diff engine (src/lib.rs, src/ansi.rs)
-  compares front/back buffer → emits minimal ANSI escape sequences
-      │
-      ▼
-process.stdout
-```
-
-**Buffer format:** `Uint32Array` with `width × height × 2` elements.  
-Cell at `(x, y)`: index `= (y × cols + x) × 2`
-
-- `buffer[idx]` = Unicode codepoint (u32)
-- `buffer[idx+1]` = `(styles << 16) | (bg << 8) | fg` (all u8)
-
 ## Development
 
 ```bash
 npm run build      # Rust native add-on (napi-rs)
 npm run build:ts   # TypeScript
-npm test           # 89 tests
+npm test           # 118 tests
 node benchmark/bench.js  # Ratatat vs Ink benchmark
 ```
 

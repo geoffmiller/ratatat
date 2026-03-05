@@ -1,3 +1,5 @@
+![Ratatat logo](docs/ratatat-logo.png)
+
 # Ratatat ([Ratatui](https://ratatui.rs) + [Ink](https://github.com/vadimdemedes/ink))
 
 > 100% Vibe Coded — Fork Only, no PRs
@@ -5,8 +7,6 @@
 An Ink compatible React reconciler for the terminal — write TUI apps with React components, powered by a native Rust diff engine and Yoga Flexbox.
 
 **[Ink API Compatibility](docs/ink-compat.md)** · **[Architecture Decisions](docs/decisions.md)**
-
-![Ratatat logo](docs/ratatat-logo.png)
 
 ![Ratatat stress test](docs/ratatat-stress-test.png)
 

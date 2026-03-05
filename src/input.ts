@@ -8,7 +8,9 @@ export class InputParser extends EventEmitter {
   }
 
   start() {
-    this.stdin.setRawMode(true);
+    // Raw mode is owned by TerminalGuard (crossterm) — do NOT call setRawMode here.
+    // Calling Node's setRawMode after crossterm already set raw mode via the OS
+    // disrupts the terminal state and silences stdin data events.
     this.stdin.resume();
     this.stdin.setEncoding('utf8');
     this._boundHandleData = this.handleData.bind(this);
@@ -16,7 +18,7 @@ export class InputParser extends EventEmitter {
   }
 
   stop() {
-    this.stdin.setRawMode(false);
+    // Raw mode is restored by TerminalGuard.leave() — do NOT call setRawMode here.
     this.stdin.pause();
     if (this._boundHandleData) {
       this.stdin.removeListener('data', this._boundHandleData);

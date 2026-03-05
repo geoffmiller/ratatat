@@ -93,6 +93,8 @@ Cell at `(x, y)`: index `= (y × cols + x) × 2`
 
 ## Installation
 
+> Don't do this — for me only
+
 ```bash
 npm install https://github.com/geoffmiller/ratatat/releases/latest/download/ratatat.tgz
 ```

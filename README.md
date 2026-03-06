@@ -436,6 +436,26 @@ const { value, cursor, setValue, clear } = useTextInput({
 })
 ```
 
+## Benchmarks
+
+Measured on Apple M3 Max, Node.js v23.3.0, 80×24 terminal. React pipeline includes reconciler → Yoga layout → buffer paint. Diff engine measures the Rust ANSI diff independently.
+
+```
+┌────────────────────────────────────────┬──────────┬──────────┬──────────┐
+│ Benchmark                              │ ops/sec  │ avg (µs) │ p99 (µs) │
+├────────────────────────────────────────┼──────────┼──────────┼──────────┤
+│ mount + render (simple)                │  82,124  │   12.2   │   24.1   │
+│ mount + render (complex, 3 panels)     │  44,428  │   22.5   │   29.8   │
+│ rerender (simple, state change)        │  86,639  │   11.5   │   14.8   │
+│ rerender (complex, state change)       │  43,201  │   23.1   │   32.2   │
+│ diff: no changes (hot path)            │   7,701  │  130.4   │  152.9   │
+│ diff: all 1,920 cells dirty            │  10,350  │   97.0   │  117.0   │
+│ diff: 5% cells dirty (typical frame)   │   6,864  │  146.8   │  179.6   │
+└────────────────────────────────────────┴──────────┴──────────┴──────────┘
+```
+
+Run: `npm run bench:ts`
+
 ## Development
 
 ```bash

@@ -1,146 +1,106 @@
 /**
- * ratatat vs Ink benchmark
+ * ratatat benchmark
  *
- * Compares render throughput and initial mount time for equivalent React trees.
- *
- * ratatat path: reconciler → Yoga layout → Uint32Array buffer paint
- * Ink path:     reconciler → Yoga layout → string Output → chalk colorize
- *
- * Both use the same React reconciler machinery and Yoga layout engine.
- * The difference is purely in the render/paint layer.
- *
- * Run: node benchmark/bench.js
+ * Run: node --import @oxc-node/core/register benchmark/bench.ts
  */
 
 import { Bench } from 'tinybench'
 import React from 'react'
 
-// ─── ratatat imports ──────────────────────────────────────────────────────────
 import { LayoutNode } from '../dist/layout.js'
 import { RatatatReconciler } from '../dist/reconciler.js'
 import { renderTreeToBuffer } from '../dist/renderer.js'
 import { Renderer } from '../dist/index.js'
 
-// ─── Ink imports ──────────────────────────────────────────────────────────────
-// Optional: compare against Ink if available at ../../ink/build/index.js
-// To enable: cd ../ink && npm run build
-let renderToString: ((node: any, opts?: any) => string) | null = null
-let InkText: any = null
-let InkBox: any = null
-try {
-  const ink = await import('../../ink/build/index.js' as any)
-  renderToString = ink.renderToString
-  InkText = ink.Text
-  InkBox = ink.Box
-} catch {
-  // Ink not available — ink comparison benchmarks will be skipped
-}
-
-// ─── Shared config ────────────────────────────────────────────────────────────
 const COLS = 80
 const ROWS = 24
 const CELLS = COLS * ROWS
 
-// ─── Suppress stdout during diff engine benchmarks ───────────────────────────
-// The Renderer native module writes ANSI escape codes to stdout.
-// We silence it during benchmarks to keep terminal clean.
-const noop = () => true
-function suppressStdout() { (process.stdout as any).write = noop }
-function restoreStdout()  { delete (process.stdout as any).write }
+// ─── Trees ────────────────────────────────────────────────────────────────────
 
-// ─── Test trees ───────────────────────────────────────────────────────────────
-
-/** Simple: a counter display with one colored text node */
 function simpleTree(n: number) {
-  return React.createElement('box', { flexDirection: 'column', padding: 1 },
+  return React.createElement(
+    'box',
+    { flexDirection: 'column', padding: 1 },
     React.createElement('text', { color: 'green', bold: true }, 'Hello World'),
-    React.createElement('text', {}, `Counter: ${n}`)
+    React.createElement('text', {}, `Counter: ${n}`),
   )
 }
 
-function simpleInkTree(n: number) {
-  return React.createElement(InkBox, { flexDirection: 'column', padding: 1 },
-    React.createElement(InkText, { color: 'green', bold: true }, 'Hello World'),
-    React.createElement(InkText, {}, `Counter: ${n}`)
-  )
-}
-
-/** Complex: nested boxes, borders, multiple colors — closer to real app */
 function complexTree(n: number) {
-  return React.createElement('box', { flexDirection: 'column', width: COLS, height: ROWS },
-    React.createElement('box', { borderStyle: 'round', borderColor: 'green', padding: 1, marginBottom: 1 },
+  return React.createElement(
+    'box',
+    { flexDirection: 'column', width: COLS, height: ROWS },
+    React.createElement(
+      'box',
+      { borderStyle: 'round', borderColor: 'green', padding: 1, marginBottom: 1 },
       React.createElement('text', { bold: true, color: 'cyan' }, 'ratatat benchmark'),
       React.createElement('text', { color: 'white' }, `Frame: ${n}`),
     ),
-    React.createElement('box', { flexDirection: 'row', gap: 2 },
-      React.createElement('box', { borderStyle: 'single', width: 20 },
+    React.createElement(
+      'box',
+      { flexDirection: 'row', gap: 2 },
+      React.createElement(
+        'box',
+        { borderStyle: 'single', width: 20 },
         React.createElement('text', { color: 'yellow' }, 'Panel A'),
         React.createElement('text', {}, `val: ${n % 100}`),
       ),
-      React.createElement('box', { borderStyle: 'single', width: 20 },
+      React.createElement(
+        'box',
+        { borderStyle: 'single', width: 20 },
         React.createElement('text', { color: 'magenta' }, 'Panel B'),
         React.createElement('text', {}, `val: ${(n * 7) % 100}`),
       ),
-      React.createElement('box', { borderStyle: 'single', width: 20 },
+      React.createElement(
+        'box',
+        { borderStyle: 'single', width: 20 },
         React.createElement('text', { color: 'blue' }, 'Panel C'),
         React.createElement('text', {}, `val: ${(n * 13) % 100}`),
       ),
     ),
-    React.createElement('box', { marginTop: 1 },
-      React.createElement('text', { dim: true }, 'Press Ctrl+C to exit'),
-    )
+    React.createElement('box', { marginTop: 1 }, React.createElement('text', { dim: true }, 'Press Ctrl+C to exit')),
   )
 }
 
-function complexInkTree(n: number) {
-  return React.createElement(InkBox, { flexDirection: 'column', width: COLS, height: ROWS },
-    React.createElement(InkBox, { borderStyle: 'round', borderColor: 'green', padding: 1, marginBottom: 1 },
-      React.createElement(InkText, { bold: true, color: 'cyan' }, 'ratatat benchmark'),
-      React.createElement(InkText, { color: 'white' }, `Frame: ${n}`),
-    ),
-    React.createElement(InkBox, { flexDirection: 'row' },
-      React.createElement(InkBox, { borderStyle: 'single', width: 20 },
-        React.createElement(InkText, { color: 'yellow' }, 'Panel A'),
-        React.createElement(InkText, {}, `val: ${n % 100}`),
-      ),
-      React.createElement(InkBox, { borderStyle: 'single', width: 20 },
-        React.createElement(InkText, { color: 'magenta' }, 'Panel B'),
-        React.createElement(InkText, {}, `val: ${(n * 7) % 100}`),
-      ),
-      React.createElement(InkBox, { borderStyle: 'single', width: 20 },
-        React.createElement(InkText, { color: 'blue' }, 'Panel C'),
-        React.createElement(InkText, {}, `val: ${(n * 13) % 100}`),
-      ),
-    ),
-    React.createElement(InkBox, { marginTop: 1 },
-      React.createElement(InkText, { dimColor: true }, 'Press Ctrl+C to exit'),
-    )
-  )
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// ─── ratatat headless render helper ──────────────────────────────────────────
-
-function makeRatatatContainer() {
+function makeContainer() {
   const root = new LayoutNode()
-  const container = (RatatatReconciler as any).createContainer(
-    root, 0, null, false, null, '', () => {}, null
-  )
-  const buffer = new Uint32Array(CELLS * 2)
-  return { root, container, buffer }
+  const container = (RatatatReconciler as any).createContainer(root, 0, null, false, null, '', () => {}, null)
+  return { root, container, buffer: new Uint32Array(CELLS * 2) }
 }
 
-function ratatatRender(root: LayoutNode, container: any, buffer: Uint32Array, element: React.ReactElement) {
-  RatatatReconciler.updateContainer(element, container, null, () => {})
-  root.calculateLayout(COLS, ROWS)
-  renderTreeToBuffer(root, buffer, COLS, ROWS)
+function doRender(ctx: ReturnType<typeof makeContainer>, element: React.ReactElement) {
+  RatatatReconciler.updateContainer(element, ctx.container, null, () => {})
+  ctx.root.calculateLayout(COLS, ROWS)
+  renderTreeToBuffer(ctx.root, ctx.buffer, COLS, ROWS)
 }
 
-// ─── Pre-warmed containers for rerender benchmarks ───────────────────────────
-const simpleCtx = makeRatatatContainer()
-ratatatRender(simpleCtx.root, simpleCtx.container, simpleCtx.buffer, simpleTree(0))
+// ─── Manual bench for React tasks (tinybench + React scheduler = deadlock) ──
 
-const complexCtx = makeRatatatContainer()
-ratatatRender(complexCtx.root, complexCtx.container, complexCtx.buffer, complexTree(0))
+function manualBench(name: string, fn: () => void, durationMs = 2000) {
+  // Warmup
+  for (let i = 0; i < 50; i++) fn()
+
+  const times: number[] = []
+  const deadline = performance.now() + durationMs
+  while (performance.now() < deadline) {
+    const t0 = performance.now()
+    fn()
+    times.push(performance.now() - t0)
+  }
+  times.sort((a, b) => a - b)
+  const avg = times.reduce((a, b) => a + b, 0) / times.length
+  const p99 = times[Math.floor(times.length * 0.99)]!
+  return {
+    name,
+    'ops/sec': Math.round(1000 / avg).toLocaleString(),
+    'avg (µs)': (avg * 1000).toFixed(1),
+    'p99 (µs)': (p99 * 1000).toFixed(1),
+    samples: times.length,
+  }
+}
 
 // ─── Diff engine buffers ──────────────────────────────────────────────────────
 const emptyBuffer = new Uint32Array(CELLS * 2)
@@ -153,141 +113,84 @@ for (let i = 0; i < CELLS; i++) {
 
 const partialBuffer = new Uint32Array(fullBuffer)
 for (let i = 0; i < CELLS * 0.05; i++) {
-  const cell = (i * 37) % CELLS  // deterministic, not random (avoids noise)
+  const cell = (i * 37) % CELLS
   partialBuffer[cell * 2] = 66 + (i % 26)
 }
 
-// ─── Benches ─────────────────────────────────────────────────────────────────
+// ─── Run ──────────────────────────────────────────────────────────────────────
+
+const results: any[] = []
+
+// React pipeline (manual bench to avoid tinybench + React scheduler deadlock)
+// Mount benchmarks reuse a single container to avoid Yoga WASM heap exhaustion.
+// This measures reconciler + layout + paint, not container creation.
+const mountCtx = makeContainer()
+results.push(
+  manualBench('mount + render (simple)', () => {
+    doRender(mountCtx, simpleTree(0))
+  }),
+)
+
+results.push(
+  manualBench('mount + render (complex)', () => {
+    doRender(mountCtx, complexTree(0))
+  }),
+)
 
 let frameN = 0
+const simpleCtx = makeContainer()
+doRender(simpleCtx, simpleTree(0))
+results.push(
+  manualBench('rerender (simple, state change)', () => {
+    doRender(simpleCtx, simpleTree(++frameN))
+  }),
+)
 
-const b = new Bench({ time: 1000, warmupTime: 200 })
+const complexCtx = makeContainer()
+doRender(complexCtx, complexTree(0))
+results.push(
+  manualBench('rerender (complex, state change)', () => {
+    doRender(complexCtx, complexTree(++frameN))
+  }),
+)
 
-// Suite 1: initial mount (cold container each time)
-b.add('ratatat · initial mount (simple)', () => {
-  const { root, container, buffer } = makeRatatatContainer()
-  ratatatRender(root, container, buffer, simpleTree(0))
-})
+// Diff engine (tinybench is fine here — no React involved)
+const diffBench = new Bench({ time: 2000, warmupTime: 500 })
 
-if (renderToString && InkText && InkBox) {
-  b.add('ink     · initial mount (simple)', () => {
-    renderToString!(simpleInkTree(0), { columns: COLS })
-  })
-}
-
-b.add('ratatat · initial mount (complex)', () => {
-  const { root, container, buffer } = makeRatatatContainer()
-  ratatatRender(root, container, buffer, complexTree(0))
-})
-
-if (renderToString && InkText && InkBox) {
-  b.add('ink     · initial mount (complex)', () => {
-    renderToString!(complexInkTree(0), { columns: COLS })
-  })
-}
-
-// Suite 2: rerender throughput (warm container, state change each frame)
-b.add('ratatat · rerender (simple, state changes)', () => {
-  frameN++
-  ratatatRender(simpleCtx.root, simpleCtx.container, simpleCtx.buffer, simpleTree(frameN))
-})
-
-if (renderToString && InkText && InkBox) {
-  b.add('ink     · rerender (simple, state changes)', () => {
-    frameN++
-    renderToString!(simpleInkTree(frameN), { columns: COLS })
-  })
-}
-
-b.add('ratatat · rerender (complex, state changes)', () => {
-  frameN++
-  ratatatRender(complexCtx.root, complexCtx.container, complexCtx.buffer, complexTree(frameN))
-})
-
-if (renderToString && InkText && InkBox) {
-  b.add('ink     · rerender (complex, state changes)', () => {
-    frameN++
-    renderToString!(complexInkTree(frameN), { columns: COLS })
-  })
-}
-
-// Suite 3: diff engine (ratatat only — Ink doesn't expose this layer)
-// Suppress stdout so Renderer's ANSI output doesn't pollute terminal during bench
-b.add('ratatat · diff engine: nothing changed (hot path)', () => {
-  suppressStdout()
+diffBench.add('diff: no changes (hot path)', () => {
   const r = new Renderer(COLS, ROWS)
-  r.render(emptyBuffer)
-  r.render(emptyBuffer)
-  restoreStdout()
+  r.renderDiff(emptyBuffer)
+  r.renderDiff(emptyBuffer)
 })
 
-b.add('ratatat · diff engine: all cells dirty (cold/max-diff)', () => {
-  suppressStdout()
+diffBench.add('diff: all cells dirty (first frame)', () => {
   const r = new Renderer(COLS, ROWS)
-  r.render(fullBuffer)
-  restoreStdout()
+  r.renderDiff(fullBuffer)
 })
 
-b.add('ratatat · diff engine: 5% cells dirty (typical frame)', () => {
-  suppressStdout()
+diffBench.add('diff: 5% cells dirty (typical frame)', () => {
   const r = new Renderer(COLS, ROWS)
-  r.render(fullBuffer)   // prime front-buffer
-  r.render(partialBuffer) // 5% change
-  restoreStdout()
+  r.renderDiff(fullBuffer)
+  r.renderDiff(partialBuffer)
 })
 
-await b.run()
+await diffBench.run()
+for (const t of diffBench.tasks) {
+  const r = t.result as any
+  results.push({
+    name: t.name,
+    'ops/sec': r?.throughput?.mean ? Math.round(r.throughput.mean).toLocaleString() : '-',
+    'avg (µs)': r?.latency?.mean ? (r.latency.mean * 1000).toFixed(1) : '-',
+    'p99 (µs)': r?.latency?.p99 ? (r.latency.p99 * 1000).toFixed(1) : '-',
+    samples: r?.latency?.samplesCount ?? 0,
+  })
+}
 
 // ─── Output ───────────────────────────────────────────────────────────────────
 
 console.log('\n╔══════════════════════════════════════════════════════════════════╗')
-console.log(  '║              ratatat vs Ink — render benchmark                  ║')
-console.log(  '╚══════════════════════════════════════════════════════════════════╝\n')
-
-const rows = b.tasks.map(task => {
-  const r = task.result as any
-  const hz = r?.throughput?.mean ?? 0
-  const latMs = r?.latency?.mean ?? 0
-  return {
-    name: task.name,
-    'ops/sec': hz ? Math.round(hz).toLocaleString() : '-',
-    'avg (µs)': latMs ? (latMs * 1000).toFixed(1) : '-',
-    'p99 (µs)': r?.latency?.p99 ? (r.latency.p99 * 1000).toFixed(1) : '-',
-    samples: r?.latency?.samplesCount ?? 0,
-  }
-})
-
-// Print full table
-console.log('All results (ops/sec, higher = faster):\n')
-console.table(rows)
-
-// Compute speedup for each paired suite (only when Ink is available)
-const pairs: Array<[string, string, string]> = [
-  ['initial mount (simple)',  'ratatat · initial mount (simple)',            'ink     · initial mount (simple)'],
-  ['initial mount (complex)', 'ratatat · initial mount (complex)',           'ink     · initial mount (complex)'],
-  ['rerender (simple)',       'ratatat · rerender (simple, state changes)',  'ink     · rerender (simple, state changes)'],
-  ['rerender (complex)',      'ratatat · rerender (complex, state changes)', 'ink     · rerender (complex, state changes)'],
-]
-
-const comparisons = pairs.filter(([, rName, iName]) =>
-  b.tasks.find(t => t.name === rName)?.result &&
-  b.tasks.find(t => t.name === iName)?.result
-)
-
-if (comparisons.length > 0) {
-  console.log('\nSpeedup summary (ratatat ÷ ink):\n')
-  for (const [label, rName, iName] of comparisons) {
-    const rTask = b.tasks.find(t => t.name === rName)!
-    const iTask = b.tasks.find(t => t.name === iName)!
-    const rHz = (rTask.result as any).throughput?.mean ?? 0
-    const iHz = (iTask.result as any).throughput?.mean ?? 0
-    const speedup = (rHz / iHz).toFixed(1)
-    const arrow = Number(speedup) >= 1 ? '🚀' : '🐢'
-    console.log(`  ${label.padEnd(26)}  ${arrow}  ratatat is ${speedup}x faster than Ink`)
-  }
-} else {
-  console.log('\n(Ink not available — run `cd ../ink && npm run build` to enable comparison benchmarks)\n')
-}
-
+console.log('║                    ratatat — render benchmark                   ║')
+console.log('╚══════════════════════════════════════════════════════════════════╝\n')
+console.table(results)
 console.log('')
 process.exit(0)

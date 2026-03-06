@@ -73,6 +73,13 @@ impl Renderer {
         }
     }
 
+    /// Generate the ANSI diff string without writing to stdout.
+    /// Used by benchmarks to measure diff performance without I/O.
+    #[napi]
+    pub fn render_diff(&mut self, back_buffer: Uint32Array) -> String {
+        self.generate_diff(back_buffer.as_ref())
+    }
+
     /// Write raw bytes to stdout through the same handle the renderer uses.
     /// Use this for cursor rewind sequences in inline mode to avoid
     /// interleaving with Node's process.stdout.write.

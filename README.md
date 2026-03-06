@@ -40,13 +40,24 @@ render(<Counter />)
 
 ## Why Ratatat?
 
-|                                | Ratatat      | Ink         | Speedup   |
-| ------------------------------ | ------------ | ----------- | --------- |
-| Initial mount (simple)         | 67,630 ops/s | 8,215 ops/s | **8.2×**  |
-| Initial mount (complex)        | 41,253 ops/s | 1,421 ops/s | **29×**   |
-| Rerender (simple)              | 95,175 ops/s | 8,095 ops/s | **11.8×** |
-| Rerender (complex)             | 49,852 ops/s | 1,384 ops/s | **36×**   |
-| p99 latency (complex rerender) | **23µs**     | 1,585µs     | **68×**   |
+Measured on Apple M1 Max, Node.js v23.3.0, 80×24 terminal (1,920 cells). Run: `npm run bench:ts`
+
+**React pipeline** (reconciler → Yoga layout → buffer paint):
+
+|                                  | Ratatat      | avg   | p99   |
+| -------------------------------- | ------------ | ----- | ----- |
+| Mount + render (simple)          | 82,124 ops/s | 12 µs | 24 µs |
+| Mount + render (complex)         | 44,428 ops/s | 23 µs | 30 µs |
+| Rerender (simple, state change)  | 86,639 ops/s | 12 µs | 15 µs |
+| Rerender (complex, state change) | 43,201 ops/s | 23 µs | 32 µs |
+
+**Rust diff engine** (ANSI escape generation only):
+
+|                                | Ratatat      | avg    | p99    |
+| ------------------------------ | ------------ | ------ | ------ |
+| No changes (hot path)          | 7,701 ops/s  | 130 µs | 153 µs |
+| All 1,920 cells dirty          | 10,350 ops/s | 97 µs  | 117 µs |
+| 5% cells dirty (typical frame) | 6,864 ops/s  | 147 µs | 180 µs |
 
 Stress test: **303 FPS** sustained on a 188×50 terminal (8,648 cells/frame), running indefinitely.
 
@@ -435,26 +446,6 @@ const { value, cursor, setValue, clear } = useTextInput({
   isActive: true,
 })
 ```
-
-## Benchmarks
-
-Measured on Apple M1 Max, Node.js v23.3.0, 80×24 terminal. React pipeline includes reconciler → Yoga layout → buffer paint. Diff engine measures the Rust ANSI diff independently.
-
-```
-┌────────────────────────────────────────┬──────────┬──────────┬──────────┐
-│ Benchmark                              │ ops/sec  │ avg (µs) │ p99 (µs) │
-├────────────────────────────────────────┼──────────┼──────────┼──────────┤
-│ mount + render (simple)                │  82,124  │   12.2   │   24.1   │
-│ mount + render (complex, 3 panels)     │  44,428  │   22.5   │   29.8   │
-│ rerender (simple, state change)        │  86,639  │   11.5   │   14.8   │
-│ rerender (complex, state change)       │  43,201  │   23.1   │   32.2   │
-│ diff: no changes (hot path)            │   7,701  │  130.4   │  152.9   │
-│ diff: all 1,920 cells dirty            │  10,350  │   97.0   │  117.0   │
-│ diff: 5% cells dirty (typical frame)   │   6,864  │  146.8   │  179.6   │
-└────────────────────────────────────────┴──────────┴──────────┴──────────┘
-```
-
-Run: `npm run bench:ts`
 
 ## Development
 

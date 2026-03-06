@@ -1296,7 +1296,26 @@ function HtopSection({ active }: { active: boolean }) {
 
 // ─── Tab bar (top) ───────────────────────────────────────────────────────────
 
-function TabBar({ current }: { current: number }) {
+function TabBar({ current, onSelect }: { current: number; onSelect: (i: number) => void }) {
+  // Calculate click regions for each tab.
+  // Layout: border(1) + leading-space(1) + for each tab: paddingX(1) + name + paddingX(1) + marginRight(1)
+  const hitRegions = React.useMemo(() => {
+    let x = 2 // border col 0 + leading space col 1
+    return SECTIONS.map((s) => {
+      const start = x
+      const width = s.length + 2 // paddingX(1) each side
+      x += width + 1 // +marginRight(1)
+      return { start, end: start + width - 1 }
+    })
+  }, [])
+
+  useMouse((e) => {
+    if (e.button !== 'left') return
+    if (e.y !== 1) return // tab bar is always row 1 (border on row 0, content row 1)
+    const hit = hitRegions.findIndex((r) => e.x >= r.start && e.x <= r.end)
+    if (hit !== -1) onSelect(hit)
+  })
+
   return (
     <Box borderStyle="single" borderColor="gray" flexShrink={0}>
       <Text> </Text>
@@ -1319,7 +1338,7 @@ function TabBar({ current }: { current: number }) {
         )
       })}
       <Spacer />
-      <Text dim>◀ ▶ navigate </Text>
+      <Text dim>◀ ▶ navigate click tab </Text>
       <Text dim>Q quit </Text>
     </Box>
   )
@@ -1578,7 +1597,7 @@ function KitchenSink() {
   return (
     <Box flexDirection="column" flexGrow={1}>
       {/* Tab bar at top */}
-      <TabBar current={sectionIdx} />
+      <TabBar current={sectionIdx} onSelect={setSectionIdx} />
 
       {/* Section content fills remaining space */}
       <Box flexDirection="column" flexGrow={1} paddingX={2} paddingTop={1}>

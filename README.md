@@ -44,20 +44,21 @@ Measured on Apple M1 Max, Node.js v23.3.0, 80×24 terminal (1,920 cells). Run: `
 
 **React pipeline** (reconciler → Yoga layout → buffer paint):
 
-|                                  | Ratatat      | avg   | p99   |
-| -------------------------------- | ------------ | ----- | ----- |
-| Mount + render (simple)          | 82,124 ops/s | 12 µs | 24 µs |
-| Mount + render (complex)         | 44,428 ops/s | 23 µs | 30 µs |
-| Rerender (simple, state change)  | 86,639 ops/s | 12 µs | 15 µs |
-| Rerender (complex, state change) | 43,201 ops/s | 23 µs | 32 µs |
+|                           | Ratatat      | Ink         | Speedup |
+| ------------------------- | ------------ | ----------- | ------- |
+| Mount (simple)            | 82,124 ops/s | 3,627 ops/s | **23×** |
+| Mount (complex, 3 panels) | 44,428 ops/s | 804 ops/s   | **55×** |
+| Rerender (simple)         | 86,639 ops/s | 1,664 ops/s | **52×** |
+| Rerender (complex)        | 43,201 ops/s | 580 ops/s   | **75×** |
+| p99 latency (complex)     | **32 µs**    | 2,813 µs    | **88×** |
 
-**Rust diff engine** (ANSI escape generation only):
+**Rust diff engine** (ANSI escape generation, no React/Yoga):
 
-|                                | Ratatat      | avg    | p99    |
-| ------------------------------ | ------------ | ------ | ------ |
-| No changes (hot path)          | 7,701 ops/s  | 130 µs | 153 µs |
-| All 1,920 cells dirty          | 10,350 ops/s | 97 µs  | 117 µs |
-| 5% cells dirty (typical frame) | 6,864 ops/s  | 147 µs | 180 µs |
+|                                | ops/sec | avg    | p99    |
+| ------------------------------ | ------- | ------ | ------ |
+| No changes (hot path)          | 7,701   | 130 µs | 153 µs |
+| All 1,920 cells dirty          | 10,350  | 97 µs  | 117 µs |
+| 5% cells dirty (typical frame) | 6,864   | 147 µs | 180 µs |
 
 Stress test: **303 FPS** sustained on a 188×50 terminal (8,648 cells/frame), running indefinitely.
 

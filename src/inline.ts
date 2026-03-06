@@ -1,22 +1,22 @@
 /**
  * src/inline.ts — Inline rendering mode
  *
- * Renders a fixed-height region in the normal terminal flow, without
- * switching to the alternate screen.
+ * Renders a fixed-height region immediately below the current cursor,
+ * without switching to the alternate screen.
  *
  * On exit, behavior is controlled by the `onExit` option:
  *   - 'preserve' (default) — rendered output stays in terminal scrollback
  *   - 'destroy'            — rendered lines are cleared, terminal looks untouched
  *
  * How it works:
- *   1. On first frame, print `rows` blank lines then move cursor back up —
- *      this reserves vertical space in the scrollback without alternate screen.
- *   2. Save the cursor row at that point as the "render origin".
- *   3. Each frame, move cursor back to the render origin and let the Rust
- *      diff engine paint only changed cells using `setRowOffset`.
- *   4. On exit:
- *      - preserve: move cursor below the region so the shell prompt appears after
- *      - destroy:  overwrite each line with spaces then move cursor back to origin
+ *   - First frame: render rows 0..N directly from the current cursor position.
+ *     The terminal scrolls naturally if needed. No blank lines printed upfront.
+ *   - Subsequent frames: move cursor up by the number of rows rendered, then
+ *     let the Rust diff engine repaint only changed cells. The renderer always
+ *     thinks it owns rows 0..N; the TS wrapper handles the cursor rewind.
+ *   - On exit:
+ *     - preserve: leave cursor below the last rendered row (output stays in scrollback)
+ *     - destroy:  move cursor up, clear each line with \x1b[2K, return to start row
  */
 
 import { Renderer } from '../index.js'
@@ -42,8 +42,8 @@ export interface InlineLoop {
 }
 
 /**
- * Create an inline render loop. Renders `rows` lines in the terminal
- * flow (no alternate screen).
+ * Create an inline render loop. Renders `rows` lines immediately below the
+ * current cursor position (no alternate screen, no blank-line gap).
  *
  * @example
  * ```ts
@@ -58,11 +58,8 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
   const fps = options.fps ?? 60
   const onExit = options.onExit ?? 'preserve'
 
-  // Inline mode: raw mode only, no alternate screen
   const guard = new InlineGuard()
   const { cols, rows: termRows } = guard.getSize()
-
-  // Clamp reserved rows to terminal height
   const renderRows = Math.min(reservedRows, termRows)
 
   const renderer = new Renderer(cols, renderRows)
@@ -70,42 +67,20 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
 
   let frame = 0
   let interval: ReturnType<typeof setInterval> | null = null
-  let originRow = 0 // 0-based terminal row of the top of our region
-  let firstFrame = true
+  // How many rows we've actually painted so far (0 on first frame, renderRows after)
+  let paintedRows = 0
 
   function tick() {
-    const { cols: currentCols, rows: currentRows } = guard.getSize()
-    const currentRenderRows = Math.min(reservedRows, currentRows)
-
-    // Handle resize
-    if (currentCols !== cols || currentRenderRows !== renderRows) {
-      renderer.resize(currentCols, currentRenderRows)
-      // Recalculate origin — we can't know where we are after resize, so reset
-      firstFrame = true
-    }
-
-    if (firstFrame) {
-      // Reserve space: print blank lines then move back up.
-      // This anchors our render region at the current cursor position.
-      process.stdout.write('\n'.repeat(renderRows))
-      process.stdout.write(`\x1b[${renderRows}A`)
-
-      // Approximate the origin row. After printing N lines (which may scroll the
-      // terminal) and moving back up, we're sitting at the top of our region.
-      // The heuristic: the region bottom is at terminalRows, so top = termRows - renderRows.
-      // This is correct when the terminal scrolls to fit; if the prompt was mid-screen
-      // the region may be higher — acceptable for v1.
-      originRow = Math.max(0, currentRows - renderRows)
-      renderer.setRowOffset(originRow)
-      firstFrame = false
-    } else {
-      // Move cursor back to top of our region
-      process.stdout.write(`\x1b[${originRow + 1};1H`)
+    // On frames after the first, rewind cursor to the top of our region.
+    // We move up by however many rows we painted last frame, then col 1.
+    if (paintedRows > 0) {
+      process.stdout.write(`\x1b[${paintedRows}A\x1b[1G`)
     }
 
     buf.fill(0)
     paint(buf, cols, renderRows, frame++)
     renderer.render(buf)
+    paintedRows = renderRows
   }
 
   function start() {
@@ -121,19 +96,20 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
     }
 
     if (onExit === 'destroy') {
-      // Overwrite every reserved line with spaces, then move cursor back to origin.
-      // \x1b[2K clears the entire line regardless of cursor column.
-      process.stdout.write(`\x1b[${originRow + 1};1H`)
+      // Rewind to top of region, clear every line
+      if (paintedRows > 0) {
+        process.stdout.write(`\x1b[${paintedRows}A\x1b[1G`)
+      }
       for (let i = 0; i < renderRows; i++) {
         process.stdout.write('\x1b[2K')
         if (i < renderRows - 1) process.stdout.write('\n')
       }
-      // Return cursor to the top of where the region was
-      process.stdout.write(`\x1b[${originRow + 1};1H`)
-    } else {
-      // preserve: move cursor below the region so the shell prompt appears after
-      process.stdout.write(`\x1b[${originRow + renderRows + 1};1H\n`)
+      // Return cursor to the first line of the (now-cleared) region
+      if (renderRows > 1) {
+        process.stdout.write(`\x1b[${renderRows - 1}A\x1b[1G`)
+      }
     }
+    // preserve: cursor is already below the last rendered row — nothing to do
 
     guard.leave()
     process.exit(0)
@@ -149,33 +125,26 @@ class InlineGuard {
   private active = false
 
   getSize(): { cols: number; rows: number } {
-    const [cols, rows] = process.stdout.columns ? [process.stdout.columns, process.stdout.rows] : [80, 24]
+    const cols = process.stdout.columns ?? 80
+    const rows = process.stdout.rows ?? 24
     return { cols, rows }
   }
 
   enter() {
     if (this.active) return
-    // We need raw mode for keyboard input but NOT alternate screen
-    // Use the existing TerminalGuard just to get raw mode, then immediately
-    // leave the alternate screen portion — or better, handle it manually.
-    // crossterm raw mode is set via the Rust TerminalGuard; for inline mode
-    // we use stdin.setRawMode directly (Node's layer) since we don't need
-    // the Rust terminal setup.
     if (process.stdin.isTTY) {
       process.stdin.setRawMode(true)
     }
     process.stdin.resume()
     process.stdin.setEncoding('utf8')
-    // Hide cursor during rendering
-    process.stdout.write('\x1b[?25l')
+    process.stdout.write('\x1b[?25l') // hide cursor
     this.active = true
   }
 
   leave() {
     if (!this.active) return
     this.active = false
-    // Show cursor
-    process.stdout.write('\x1b[?25h')
+    process.stdout.write('\x1b[?25h') // show cursor
     if (process.stdin.isTTY) {
       process.stdin.setRawMode(false)
     }

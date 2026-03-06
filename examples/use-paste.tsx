@@ -89,45 +89,28 @@ function App() {
 
       <Text dim>p toggle paste handler · c clear log · q/Esc quit · paste multiline text to test channel routing</Text>
 
-      <Box flexDirection="row" gap={2}>
-        <Box
-          borderStyle="round"
-          borderColor="cyan"
-          paddingX={1}
-          paddingY={1}
-          width={48}
-          flexShrink={0}
-          flexDirection="column"
-        >
+      <Box flexDirection="column" gap={1}>
+        <Box borderStyle="round" borderColor="cyan" paddingX={1} paddingY={1} flexDirection="column" gap={1}>
           <Text bold>What active/inactive means</Text>
           <Text>
-            • <Text color="green">active</Text>: pasted text is delivered as one chunk to{' '}
-            <Text color="green">usePaste</Text>
+            • <Text color="green">active</Text>: paste is delivered as one chunk to <Text color="green">usePaste</Text>
           </Text>
           <Text>
             • <Text color="yellow">inactive</Text>: no paste listeners, so paste falls back to{' '}
             <Text color="yellow">useInput</Text>
           </Text>
-          <Text>• this keeps old apps working while giving text editors/prompts a clean paste channel</Text>
-          <Text dim>{'─'.repeat(44)}</Text>
-          <Text bold>Current counters</Text>
-          <Text>
-            usePaste events: <Text color="green">{pasteCount}</Text>
-          </Text>
-          <Text>
-            useInput events: <Text color="yellow">{inputCount}</Text>
-          </Text>
+          <Text dim>this keeps old apps working while giving prompts/editors a clean paste channel</Text>
+          <Box flexDirection="row" gap={3}>
+            <Text>
+              usePaste events: <Text color="green">{pasteCount}</Text>
+            </Text>
+            <Text>
+              useInput events: <Text color="yellow">{inputCount}</Text>
+            </Text>
+          </Box>
         </Box>
 
-        <Box
-          borderStyle="round"
-          borderColor="gray"
-          paddingX={1}
-          paddingY={1}
-          flexDirection="column"
-          gap={1}
-          flexGrow={1}
-        >
+        <Box borderStyle="round" borderColor="gray" paddingX={1} paddingY={1} flexDirection="column" gap={1}>
           <Text bold>Events</Text>
 
           {events.length === 0 && <Text dim>(no events yet)</Text>}

@@ -438,7 +438,7 @@ const { value, cursor, setValue, clear } = useTextInput({
 
 ## Benchmarks
 
-Measured on Apple M3 Max, Node.js v23.3.0, 80×24 terminal. React pipeline includes reconciler → Yoga layout → buffer paint. Diff engine measures the Rust ANSI diff independently.
+Measured on Apple M1 Max, Node.js v23.3.0, 80×24 terminal. React pipeline includes reconciler → Yoga layout → buffer paint. Diff engine measures the Rust ANSI diff independently.
 
 ```
 ┌────────────────────────────────────────┬──────────┬──────────┬──────────┐

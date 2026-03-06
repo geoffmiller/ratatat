@@ -200,14 +200,30 @@ test('renderer: outer bottom border NOT overwritten after messages + input', (t)
 // ─── Yoga node lifecycle ──────────────────────────────────────────────────────
 
 test('LayoutNode.destroy() frees yogaNode and sets _destroyed guard', (t) => {
-  const node = new LayoutNode()
+  const parent = new LayoutNode()
+  const child = new LayoutNode()
+  parent.insertChild(child, 0)
+  t.is(parent.yogaNode.getChildCount(), 1, 'child attached before destroy')
+
   // @ts-ignore — accessing private
-  t.false(node._destroyed, 'not destroyed initially')
-  node.destroy()
+  t.false(child._destroyed, 'not destroyed initially')
+
+  // Simulate what React does: removeChild first, then destroy
+  parent.removeChild(child)
+  t.is(parent.yogaNode.getChildCount(), 0, 'child detached after removeChild')
+
+  child.destroy()
+
   // @ts-ignore
-  t.true(node._destroyed, 'destroyed after destroy()')
+  t.true(child._destroyed, 'destroyed after destroy()')
+
   // double-destroy should not throw
-  t.notThrows(() => node.destroy(), 'double destroy is safe')
+  t.notThrows(() => child.destroy(), 'double destroy is safe')
+
+  // Parent should still be fully functional after child is freed
+  t.notThrows(() => parent.calculateLayout(100, 100), 'parent layout works after child freed')
+
+  parent.yogaNode.free()
 })
 
 test.serial('detachDeletedInstance frees Yoga nodes when React removes children', async (t) => {

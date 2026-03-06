@@ -470,6 +470,8 @@ const { value, cursor, setValue, clear } = useTextInput({
 })
 ```
 
+`usePaste` is optional but useful for editors/prompts: when at least one active `usePaste` listener exists, bracketed paste is delivered to `usePaste` and not forwarded to `useInput`. If no paste listeners are active, paste falls back to `useInput` for compatibility.
+
 ## Development
 
 ```bash

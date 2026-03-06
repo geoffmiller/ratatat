@@ -70,6 +70,9 @@ function App() {
     }
   })
 
+  const pasteCount = events.filter((e) => e.source === 'usePaste').length
+  const inputCount = events.filter((e) => e.source === 'useInput').length
+
   return (
     <Box flexDirection="column" gap={1}>
       <Text bold color="cyan">
@@ -81,32 +84,72 @@ function App() {
         <Text color={pasteActive ? 'green' : 'yellow'} bold>
           {pasteActive ? 'active' : 'inactive'}
         </Text>
+        <Text dim> · active routes paste to usePaste; inactive falls back to useInput</Text>
       </Text>
 
       <Text dim>p toggle paste handler · c clear log · q/Esc quit · paste multiline text to test channel routing</Text>
 
-      <Box borderStyle="round" borderColor="gray" paddingX={1} paddingY={1} flexDirection="column" gap={1}>
-        <Text bold>Events</Text>
+      <Box flexDirection="row" gap={2}>
+        <Box
+          borderStyle="round"
+          borderColor="cyan"
+          paddingX={1}
+          paddingY={1}
+          width={48}
+          flexShrink={0}
+          flexDirection="column"
+        >
+          <Text bold>What active/inactive means</Text>
+          <Text>
+            • <Text color="green">active</Text>: pasted text is delivered as one chunk to{' '}
+            <Text color="green">usePaste</Text>
+          </Text>
+          <Text>
+            • <Text color="yellow">inactive</Text>: no paste listeners, so paste falls back to{' '}
+            <Text color="yellow">useInput</Text>
+          </Text>
+          <Text>• this keeps old apps working while giving text editors/prompts a clean paste channel</Text>
+          <Text dim>{'─'.repeat(44)}</Text>
+          <Text bold>Current counters</Text>
+          <Text>
+            usePaste events: <Text color="green">{pasteCount}</Text>
+          </Text>
+          <Text>
+            useInput events: <Text color="yellow">{inputCount}</Text>
+          </Text>
+        </Box>
 
-        {events.length === 0 && <Text dim>(no events yet)</Text>}
+        <Box
+          borderStyle="round"
+          borderColor="gray"
+          paddingX={1}
+          paddingY={1}
+          flexDirection="column"
+          gap={1}
+          flexGrow={1}
+        >
+          <Text bold>Events</Text>
 
-        {events.map((item) => {
-          const lines = item.payload.split('\n')
-          return (
-            <Box key={item.id} flexDirection="column">
-              <Text color={item.source === 'usePaste' ? 'green' : 'yellow'} bold>
-                [{item.source}] len={item.payload.length} lines={lines.length}
-              </Text>
-              {/* Text nodes are single-line in the current renderer; render payload as explicit lines. */}
-              <Box flexDirection="column">
-                {lines.map((line, i) => (
-                  <Text key={i}>{line.length > 0 ? line : ' '}</Text>
-                ))}
+          {events.length === 0 && <Text dim>(no events yet)</Text>}
+
+          {events.map((item) => {
+            const lines = item.payload.split('\n')
+            return (
+              <Box key={item.id} flexDirection="column">
+                <Text color={item.source === 'usePaste' ? 'green' : 'yellow'} bold>
+                  [{item.source}] len={item.payload.length} lines={lines.length}
+                </Text>
+                {/* Text nodes are single-line in the current renderer; render payload as explicit lines. */}
+                <Box flexDirection="column">
+                  {lines.map((line, i) => (
+                    <Text key={i}>{line.length > 0 ? line : ' '}</Text>
+                  ))}
+                </Box>
+                <Text dim>{'─'.repeat(40)}</Text>
               </Box>
-              <Text dim>{'─'.repeat(40)}</Text>
-            </Box>
-          )
-        })}
+            )
+          })}
+        </Box>
       </Box>
     </Box>
   )

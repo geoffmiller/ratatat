@@ -71,13 +71,18 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
   let paintedRows = 0
 
   function tick() {
-    // On frames after the first, rewind cursor to the top of our region.
-    // We move up by however many rows we painted last frame, then col 1.
     if (paintedRows > 0) {
+      // Rewind cursor to top of our region with relative moves
       process.stdout.write(`\x1b[${paintedRows}A\x1b[1G`)
     } else {
-      // First frame: move to a fresh line so we don't overwrite the shell prompt
-      process.stdout.write('\n')
+      // First frame: step past the prompt line onto a fresh line.
+      // Then set rowOffset so the Rust renderer's absolute \x1b[row;colH
+      // sequences land on this line rather than jumping back to row 1.
+      process.stdout.write('\n\x1b[1G')
+      // After the \n, cursor is at the bottom of the terminal (termRows, 1-based).
+      // If the terminal scrolled, that's still termRows. Set offset = termRows - 1
+      // (0-based) so buffer row 0 maps to the current terminal row.
+      renderer.setRowOffset(termRows - 1)
     }
 
     buf.fill(0)

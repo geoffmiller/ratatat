@@ -103,11 +103,9 @@ const FADE_OUT = FADE.length // age >= this → blank (cell disappears)
 // ─── Drop state ───────────────────────────────────────────────────────────────
 
 interface Drop {
-  head: number // current head row (can be negative = above screen)
-  speed: number // rows per `speed` frames
-  tick: number // frame counter
-  active: boolean
-  resetIn: number // frames to wait before restarting
+  head: number
+  speed: number
+  tick: number
 }
 
 let drops: Drop[] = []
@@ -121,8 +119,6 @@ function initDrops(cols: number, rows: number) {
       head: -Math.floor(Math.random() * rows) - 1,
       speed: 1 + Math.floor(Math.random() * 4),
       tick: Math.floor(Math.random() * 4),
-      active: true,
-      resetIn: 0,
     })
   }
   lastCols = cols
@@ -134,8 +130,6 @@ function makeDrop(): Drop {
     head: -1 - Math.floor(Math.random() * 5),
     speed: 1 + Math.floor(Math.random() * 4),
     tick: 0,
-    active: true,
-    resetIn: 0,
   }
 }
 
@@ -163,31 +157,20 @@ function paint(buf: Uint32Array, cols: number, rows: number, _frame: number) {
   for (let x = 0; x < cols; x++) {
     const drop = drops[x]!
 
-    if (!drop.active) {
-      drop.resetIn--
-      if (drop.resetIn <= 0) {
-        drops[x] = makeDrop()
-      }
-      continue
-    }
-
     drop.tick++
     if (drop.tick >= drop.speed) {
       drop.tick = 0
       drop.head++
 
       if (drop.head >= 0 && drop.head < rows) {
-        // Write head character — age 0 = white
         writeCell(x, drop.head, randomChar(), true)
-        // Randomly glitch a cell one row above the head
         if (drop.head > 0 && Math.random() < 0.3) {
           writeCell(x, drop.head - 1, randomChar(), false)
         }
       }
 
       if (drop.head >= rows) {
-        drop.active = false
-        drop.resetIn = Math.floor(Math.random() * 40)
+        drops[x] = makeDrop()
       }
     }
   }

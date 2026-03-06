@@ -79,6 +79,7 @@ The speed comes from two architectural decisions:
 - **Focus management** — `useFocus`, `useFocusManager`, Tab cycling
 - **Terminal hooks** — `useWindowSize`, `useStdout`, `useStderr`
 - **`useScrollable`** — built-in scrolling primitive (not in Ink); virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`
+- **UI components** — `<Spinner>` and `<ProgressBar>` included (Ratatat only)
 - **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
 - **Inline mode** — `renderInline()` renders below the cursor without clearing scrollback; `createInlineLoop` for raw buffer inline rendering
 - **Ink-compatible API** — most Ink apps work with a one-line import change

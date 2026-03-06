@@ -6,7 +6,7 @@
 
 An Ink compatible React reconciler for the terminal — write TUI apps with React components, powered by a native Rust diff engine and Yoga Flexbox.
 
-**[Ink API Compatibility](docs/ink-compat.md)** · **[Architecture Decisions](docs/decisions.md)** · **[Render Loop](docs/render-loop.md)**
+**[Ink API Compatibility](docs/ink-compat.md)** · **[Architecture Decisions](docs/decisions.md)** · **[Render Loop](docs/render-loop.md)** · **[Raw Buffer API](docs/raw-buffer.md)**
 
 ![Ratatat stress test](docs/ratatat-stress-test.png)
 
@@ -69,6 +69,7 @@ The speed comes from two architectural decisions:
 - **`useScrollable`** — built-in scrolling primitive (not in Ink); virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`
 - **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
 - **Ink-compatible API** — most Ink apps work with a one-line import change
+- **React-free mode** — fill the `Uint32Array` buffer directly; no React, no Yoga needed. See [Raw Buffer API](docs/raw-buffer.md)
 
 ## Architecture
 
@@ -165,6 +166,11 @@ examples/
   use-input.tsx            — keyboard input handling
   use-mouse.tsx            — useMouse + useTextInput + bracketed paste demo (Ratatat only)
   use-scrollable.tsx       — useScrollable hook isolation demo (Ratatat only)
+
+examples-raw/              — React-free direct buffer painting (no Yoga, no reconciler)
+  harness.ts               — minimal render loop (TerminalGuard + Renderer + setInterval)
+  conway.ts                — Conway's Game of Life, 20fps, age-colored cells
+  fire.ts                  — Doom-style plasma fire, 30fps, 256-color palette
   use-stderr.tsx           — writing to stderr
   use-stdout.tsx           — writing to stdout
   use-transition.tsx       — useTransition for non-blocking updates

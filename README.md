@@ -68,6 +68,7 @@ The speed comes from two architectural decisions:
 - **Terminal hooks** — `useWindowSize`, `useStdout`, `useStderr`
 - **`useScrollable`** — built-in scrolling primitive (not in Ink); virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`
 - **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
+- **Inline mode** — `renderInline()` renders below the cursor without clearing scrollback; `createInlineLoop` for raw buffer inline rendering
 - **Ink-compatible API** — most Ink apps work with a one-line import change
 - **React-free mode** — fill the `Uint32Array` buffer directly; no React, no Yoga needed. See [Raw Buffer API](docs/raw-buffer.md)
 
@@ -265,6 +266,54 @@ unmount()
 await waitUntilExit()
 ```
 
+### `renderInline(element, options?)`
+
+Render a React element inline — directly below the current cursor position, without switching to the alternate screen. Scrollback is preserved. Use this for pickers, prompts, progress bars, or anything that should coexist with existing terminal output.
+
+```tsx
+import { renderInline } from 'ratatat'
+
+const { unmount, waitUntilExit } = renderInline(<Picker />, {
+  rows: 12, // terminal rows to reserve (default: 10)
+  fps: 30, // target frames per second (default: 60)
+  onExit: 'destroy', // 'preserve' (default) or 'destroy'
+})
+
+// 'destroy' — picker UI vanishes on exit, clean terminal
+// 'preserve' — rendered content stays in scrollback
+
+await waitUntilExit()
+console.log('Done!')
+```
+
+All hooks work in inline mode: `useInput`, `useApp`, `useFocus`, `useMouse`, `useTextInput`, etc.
+
+### `createInlineLoop(paint, options?)`
+
+Raw buffer version of inline rendering — no React, no Yoga. Same scrollback-preserving behavior.
+
+```ts
+import { createInlineLoop } from 'ratatat'
+import { setCell } from './examples-raw/harness.js'
+
+const loop = createInlineLoop(
+  (buf, cols, rows, frame) => {
+    const msg = 'hello inline'
+    for (let i = 0; i < msg.length; i++) {
+      setCell(buf, cols, i, 0, msg[i], 51) // cyan text
+    }
+  },
+  {
+    rows: 3,
+    fps: 30,
+    onExit: 'preserve',
+  },
+)
+
+loop.start()
+// loop.stop() to exit
+```
+
 ### `<Box>`
 
 Flexbox container. All Yoga layout props supported.
@@ -392,7 +441,7 @@ const { value, cursor, setValue, clear } = useTextInput({
 ```bash
 npm run build      # Rust native add-on (napi-rs)
 npm run build:ts   # TypeScript
-npm test           # 205 tests
+npm test           # 209 tests
 ```
 
 ## License

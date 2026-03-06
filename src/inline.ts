@@ -4,20 +4,25 @@
  * Renders a fixed-height region immediately below the current cursor,
  * without switching to the alternate screen.
  *
- * On exit, behavior is controlled by the `onExit` option:
- *   - 'preserve' (default) — rendered output stays in terminal scrollback
- *   - 'destroy'            — rendered lines are cleared, terminal looks untouched
+ * Strategy:
+ *   - Print `renderRows` newlines to scroll the terminal and reserve space.
+ *   - Rewind cursor back up by `renderRows` — cursor is now at the TOP of
+ *     the reserved region, which is guaranteed to fit on screen.
+ *   - rowOffset stays 0 (default). The Rust renderer's absolute moves
+ *     (\x1b[1;1H etc) are wrong — we use only the relative rewind before
+ *     each frame, which puts the cursor at the right place.
  *
- * How it works:
- *   - start() queries the real terminal size via terminalSize() (crossterm,
- *     not Node's stream layer — always correct).
- *   - Sets rowOffset = termRows - 1 so the Rust renderer's absolute cursor
- *     moves land on the correct row after the leading \n.
- *   - First frame fires immediately in start() — cursor sits below the region.
- *   - Subsequent frames: rewind renderRows rows, repaint changed cells.
- *   - On exit:
- *     - preserve: cursor already below region — nothing to do
- *     - destroy:  rewind, clear every line, return cursor to prompt row
+ * Wait — the Rust renderer still emits absolute moves. We can't avoid them.
+ * The fix: don't use absolute moves at all for inline. Use CPR (\x1b[6n)
+ * to query the cursor row after reserving space, then setRowOffset to that.
+ *
+ * Actual strategy (no CPR needed):
+ *   - Print renderRows newlines → terminal scrolls, cursor at bottom of region.
+ *   - Rewind renderRows rows up → cursor at TOP of region.
+ *   - Query that row via the fact that after scroll+rewind, we know exactly
+ *     where the cursor is: termRows - renderRows (1-based).
+ *   - setRowOffset(termRows - renderRows - 1) so buffer row 0 → that terminal row.
+ *   - Subsequent frames: rewind renderRows, render. Correct.
  */
 
 import { Renderer, terminalSize } from '../index.js'
@@ -44,15 +49,7 @@ export interface InlineLoop {
 
 /**
  * Create an inline render loop. Renders `rows` lines immediately below the
- * current cursor position (no alternate screen, no blank-line gap).
- *
- * @example
- * ```ts
- * const loop = createInlineLoop((buf, cols, rows) => {
- *   setCell(buf, cols, 0, 0, 'Hello!', 46)
- * }, { rows: 3, onExit: 'destroy' })
- * loop.start()
- * ```
+ * current cursor position (no alternate screen).
  */
 export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = {}): InlineLoop {
   const reservedRows = options.rows ?? 10
@@ -73,14 +70,11 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
   }
 
   function start() {
-    // terminalSize() calls crossterm::terminal::size() directly —
-    // always correct, no alternate screen, no Node stream layer.
     const size = terminalSize()
     cols = size.cols
     const termRows = size.rows
     renderRows = Math.min(reservedRows, termRows)
 
-    // Raw mode (Node layer only — no alternate screen)
     if (process.stdin.isTTY) process.stdin.setRawMode(true)
     process.stdin.resume()
     process.stdin.setEncoding('utf8')
@@ -91,15 +85,21 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
     renderer = new Renderer(cols, renderRows)
     buf = new Uint32Array(cols * renderRows * 2)
 
-    // rowOffset anchors buffer row 0 to the terminal row the cursor will be
-    // on after the leading \n below. After \n the cursor is at termRows
-    // (1-based) = termRows - 1 in 0-based offset terms.
-    renderer.setRowOffset(termRows - 1)
+    // Reserve space: print renderRows newlines so the terminal scrolls
+    // and the region fits entirely on screen. Then rewind back to the
+    // top of the region.
+    //
+    // After the newlines, cursor is at the bottom of the terminal (row termRows).
+    // After rewinding renderRows rows up, cursor is at row (termRows - renderRows).
+    // That's 0-based offset: termRows - renderRows - 1.
+    //
+    // We don't print renderRows+1 (for the prompt line) because the prompt
+    // line is already above row 1 of our region — it's in the scrollback.
+    process.stdout.write('\n'.repeat(renderRows))
+    process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
+    renderer.setRowOffset(termRows - renderRows - 1)
 
-    // Step past the prompt line, then paint the first frame immediately.
-    // Cursor is now below the rendered region.
-    process.stdout.write('\n')
-    tick()
+    tick() // first frame
 
     interval = setInterval(
       () => {
@@ -117,15 +117,15 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
     }
 
     if (onExit === 'destroy') {
-      // Rewind past rendered rows + the leading \n, clear everything
-      process.stdout.write(`\x1b[${renderRows + 1}A\x1b[1G`)
-      for (let i = 0; i < renderRows + 1; i++) {
-        process.stdout.write('\x1b[2K')
-        if (i < renderRows) process.stdout.write('\n')
-      }
+      // Rewind to top of region, clear every line
       process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
+      for (let i = 0; i < renderRows; i++) {
+        process.stdout.write('\x1b[2K')
+        if (i < renderRows - 1) process.stdout.write('\n')
+      }
+      process.stdout.write(`\x1b[${renderRows - 1}A\x1b[1G`)
     }
-    // preserve: cursor already below last rendered row — nothing to do
+    // preserve: cursor already at bottom of region
 
     process.stdout.write('\x1b[?25h') // show cursor
     if (process.stdin.isTTY) process.stdin.setRawMode(false)

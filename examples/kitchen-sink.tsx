@@ -12,7 +12,6 @@
  * Controls:
  *   ← →     navigate sections
  *   Tab      cycle focus (Focus section)
- *   Q        quit
  *   Ctrl+C   quit
  *
  * Run: node --import @oxc-node/core/register examples/kitchen-sink.tsx
@@ -1320,8 +1319,7 @@ function TabBar({ current }: { current: number }) {
         )
       })}
       <Spacer />
-      <Text dim>◀ ▶ </Text>
-      <Text dim>Tab </Text>
+      <Text dim>◀ ▶ navigate </Text>
       <Text dim>Q quit </Text>
     </Box>
   )

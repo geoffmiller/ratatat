@@ -169,8 +169,10 @@ examples/
   justify-content.tsx      — flexbox alignment demo
   kitchen-sink.tsx         — all features in one app
   logo.tsx                 — animated Ratatat logo with direct buffer painting
+  progress-bar.tsx         — standalone <ProgressBar> demo
   rattata.tsx              — fake AI coding assistant (Ratatat-themed demo)
   sierpinski.tsx           — React Fiber Sierpinski triangle (243 nodes, pulsing width)
+  spinner.tsx              — standalone <Spinner> demo
   static.tsx               — <Static> append-only task log
   stress-test.tsx          — 300+ FPS full-terminal color animation
   suspense.tsx             — React Suspense with async data

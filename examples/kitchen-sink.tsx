@@ -24,6 +24,8 @@ import {
   render,
   Box,
   Text,
+  Spinner,
+  ProgressBar,
   Newline,
   Spacer,
   useApp,
@@ -260,7 +262,7 @@ function BackgroundsSubsection() {
   )
 }
 
-// ─── UI Primitives (select-input + table) ────────────────────────────────────
+// ─── UI Primitives (select-input patterns + built-in components + table) ─────
 
 function LayoutSection() {
   return (
@@ -902,6 +904,22 @@ function statusColor(s: string) {
 
 function PrimitivesSubsection({ active }: { active: boolean }) {
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [buildProgress, setBuildProgress] = useState(0)
+  const [uploadProgress, setUploadProgress] = useState(12)
+  const [syncing, setSyncing] = useState(true)
+
+  useEffect(() => {
+    if (!active) return
+    const t = setInterval(() => {
+      setBuildProgress((p) => {
+        const next = p >= 100 ? 0 : p + 1
+        if (next === 0) setSyncing((s) => !s)
+        return next
+      })
+      setUploadProgress((p) => (p >= 100 ? 0 : p + 2))
+    }, 80)
+    return () => clearInterval(t)
+  }, [active])
 
   useInput((input, key) => {
     if (!active) return
@@ -915,8 +933,8 @@ function PrimitivesSubsection({ active }: { active: boolean }) {
     <Box flexDirection="column" gap={1}>
       <SectionHeading title="Primitives" />
       <Text dim>
-        select-input and table <Text>↑↓ / j k</Text>
-        <Text dim> to navigate list</Text>
+        select-input/table patterns <Text>↑↓ / j k</Text>
+        <Text dim> plus built-in Spinner + ProgressBar</Text>
       </Text>
       <Box flexDirection="row" gap={3}>
         <Box flexDirection="column" gap={1} width={26}>
@@ -946,6 +964,43 @@ function PrimitivesSubsection({ active }: { active: boolean }) {
           </Box>
         </Box>
         <Box flexDirection="column" gap={1} flexGrow={1}>
+          <Text bold>Built-in components</Text>
+          <Box borderStyle="single" borderColor="cyan" paddingX={1} paddingY={1} flexDirection="column" gap={1}>
+            <Box flexDirection="row" gap={1}>
+              <Spinner color="cyan" />
+              <Text>default spinner</Text>
+            </Box>
+            <Box flexDirection="row" gap={1}>
+              <Spinner frames={['-', '\\', '|', '/']} interval={120} color="yellow" />
+              <Text dim>ascii frames</Text>
+            </Box>
+            <Box flexDirection="row" gap={1}>
+              {syncing ? <Spinner color="magenta" interval={90} /> : <Text color="green">✔</Text>}
+              <Text color={syncing ? 'magenta' : 'green'}>{syncing ? 'syncing metadata…' : 'metadata synced'}</Text>
+            </Box>
+            <Box flexDirection="row" gap={1}>
+              <Text dim>build</Text>
+              <ProgressBar value={buildProgress} width={16} color="green" />
+            </Box>
+            <Box flexDirection="row" gap={1}>
+              <Text dim>upload</Text>
+              <ProgressBar
+                value={uploadProgress}
+                width={16}
+                completeChar="■"
+                incompleteChar="·"
+                bracket={false}
+                showPercentage={false}
+                color="yellow"
+              />
+              <Text color="yellow">{String(uploadProgress).padStart(3)}%</Text>
+            </Box>
+            <Box flexDirection="row" gap={1}>
+              <Text dim>assets</Text>
+              <ProgressBar value={45} max={60} width={16} color="blue" />
+            </Box>
+          </Box>
+
           <Text bold>User table</Text>
           <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1} paddingY={1}>
             <Box flexDirection="row" marginBottom={1}>

@@ -75,6 +75,9 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
     // We move up by however many rows we painted last frame, then col 1.
     if (paintedRows > 0) {
       process.stdout.write(`\x1b[${paintedRows}A\x1b[1G`)
+    } else {
+      // First frame: move to a fresh line so we don't overwrite the shell prompt
+      process.stdout.write('\n')
     }
 
     buf.fill(0)
@@ -96,17 +99,17 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
     }
 
     if (onExit === 'destroy') {
-      // Rewind to top of region, clear every line
+      // Rewind to top of region (plus the leading newline), clear every line
       if (paintedRows > 0) {
-        process.stdout.write(`\x1b[${paintedRows}A\x1b[1G`)
+        process.stdout.write(`\x1b[${paintedRows + 1}A\x1b[1G`)
       }
-      for (let i = 0; i < renderRows; i++) {
+      for (let i = 0; i < renderRows + 1; i++) {
         process.stdout.write('\x1b[2K')
-        if (i < renderRows - 1) process.stdout.write('\n')
+        if (i < renderRows) process.stdout.write('\n')
       }
       // Return cursor to the first line of the (now-cleared) region
-      if (renderRows > 1) {
-        process.stdout.write(`\x1b[${renderRows - 1}A\x1b[1G`)
+      if (renderRows > 0) {
+        process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
       }
     }
     // preserve: cursor is already below the last rendered row — nothing to do

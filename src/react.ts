@@ -7,6 +7,9 @@ import { RatatatReconciler, setOnAfterCommit } from './reconciler.js'
 import { renderTreeToBuffer } from './renderer.js'
 import { RatatatContext, useInput } from './hooks.js'
 import { FocusProvider, useFocusManager } from './focus.js'
+import { createInlineLoop } from './inline.js'
+import type { InlineOptions } from './inline.js'
+import { terminalSize } from '../index.js'
 
 import { Styles } from './styles.js'
 
@@ -239,5 +242,120 @@ export function render(element: React.ReactElement, options?: RenderOptions): In
     // Internal access — not part of Ink's public API but useful for ratatat-native code
     app,
     input,
+  }
+}
+
+// ─── renderInline ─────────────────────────────────────────────────────────────
+
+export interface InlineInstance {
+  /** Unmount the React tree and stop the render loop */
+  unmount(): void
+  /** Resolves when the loop exits */
+  waitUntilExit(): Promise<void>
+}
+
+/**
+ * Render a React element inline — no alternate screen. The UI appears
+ * directly below the current shell prompt and stays in terminal scrollback
+ * on exit (or is destroyed if `onExit: 'destroy'` is set).
+ *
+ * The root Box is sized to `cols × rows`. Use `useInput` and `useApp`
+ * exactly as in a full-screen render.
+ *
+ * @example
+ * ```tsx
+ * const { waitUntilExit } = renderInline(<Picker />, { rows: 12, onExit: 'destroy' })
+ * await waitUntilExit()
+ * ```
+ */
+export function renderInline(
+  element: React.ReactElement,
+  options?: InlineOptions & { maxFps?: number },
+): InlineInstance {
+  const size = terminalSize()
+  const reservedRows = options?.rows ?? 10
+  const cols = size.cols
+  const rows = Math.min(reservedRows, size.rows)
+
+  const input = new InputParser(process.stdin)
+  const rootNode = new LayoutNode()
+  rootNode.yogaNode.setWidth(cols)
+  rootNode.yogaNode.setHeight(rows)
+
+  // Minimal app-like object: no alternate screen, just quit signal + writeStdout buffer
+  const stdoutLines: string[] = []
+  const stderrLines: string[] = []
+  const appLike = {
+    writeStdout: (t: string) => stdoutLines.push(t),
+    writeStderr: (t: string) => stderrLines.push(t),
+    quit: () => loop.stop(),
+  }
+
+  const container = RatatatReconciler.createContainer(
+    rootNode,
+    0,
+    null,
+    false,
+    null,
+    '',
+    (error: Error) => console.error(error),
+    null,
+  )
+
+  const wrap = (el: React.ReactElement) =>
+    React.createElement(
+      RatatatContext.Provider,
+      {
+        value: {
+          app: appLike as any,
+          input,
+          writeStdout: appLike.writeStdout,
+          writeStderr: appLike.writeStderr,
+        },
+      },
+      React.createElement(FocusProvider, null, React.createElement(TabHandler, null, el)),
+    )
+
+  RatatatReconciler.updateContainer(wrap(element) as any, container, null, () => {})
+
+  let pendingCommit = false
+  setOnAfterCommit(() => {
+    pendingCommit = true
+  })
+
+  const loop = createInlineLoop(
+    (buf, w, h) => {
+      rootNode.calculateLayout(w, h)
+      renderTreeToBuffer(rootNode, buf, w, h)
+      pendingCommit = false
+    },
+    { ...options, rows, fps: options?.maxFps ?? options?.fps ?? 60 },
+  )
+
+  // Ctrl+C → clean exit
+  input.on('exit', () => loop.stop())
+
+  let resolveExit!: () => void
+  const exitPromise = new Promise<void>((r) => {
+    resolveExit = r
+  })
+
+  // Flush buffered stdout/stderr after the inline region is gone
+  process.on('exit', () => {
+    if (stdoutLines.length) process.stdout.write(stdoutLines.join(''))
+    if (stderrLines.length) process.stderr.write(stderrLines.join(''))
+    resolveExit()
+  })
+
+  input.start()
+  loop.start()
+
+  return {
+    unmount() {
+      loop.stop()
+    },
+    waitUntilExit() {
+      return exitPromise
+    },
   }
 }

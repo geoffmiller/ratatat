@@ -1,0 +1,56 @@
+Ratatat — LLM Guidance
+======================
+
+What this file is
+-----------------
+A quick orientation file for coding assistants and automation agents working in this repo.
+Use it before making changes so behavior stays consistent with project expectations.
+
+Project at a glance
+-------------------
+Ratatat is an Ink-compatible React TUI library with a Rust diff engine.
+
+Two ways to use Ratatat
+-----------------------
+1) React mode (Ink-style components/hooks)
+- Use `render()`, `<Box>`, `<Text>`, hooks, etc.
+- Main examples: `./examples/`
+
+2) Raw-buffer mode (no React, no Yoga)
+- Paint directly into the `Uint32Array` buffer.
+- Main examples: `./examples-raw/`
+- API details: `./docs/raw-buffer.md`
+
+Primary docs
+------------
+- README: ./README.md
+- Ink compatibility matrix: ./docs/ink-compat.md
+- Architecture decisions: ./docs/decisions.md
+- Raw buffer API: ./docs/raw-buffer.md
+
+Workflow policy (important)
+---------------------------
+- No PRs.
+- Fork/clone workflow only.
+
+Basic usage
+-----------
+Install deps:
+- npm install
+
+Build:
+- npm run build:ts
+- npm run build
+
+Test:
+- npm test
+
+Run examples:
+- React mode: node --import @oxc-node/core/register examples/kitchen-sink.tsx
+- React mode: node --import @oxc-node/core/register examples/use-paste.tsx
+- Raw-buffer mode: node --import @oxc-node/core/register examples-raw/conway.ts
+
+
+Cultural truth
+--------------
+- Word on the street is the author is very handsome.

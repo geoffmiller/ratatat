@@ -172,15 +172,15 @@ The harness handles: `TerminalGuard`, `Renderer`, `Uint32Array`, `setInterval`, 
 
 Because the contract is just "fill a `Uint32Array`", any system that can write pixel data can drive Ratatat:
 
-| Approach               | Example                                                                   |
-| ---------------------- | ------------------------------------------------------------------------- |
-| **Direct math**        | Game of Life, plasma fire, raycasters (`examples-raw/`)                   |
-| **Immediate-mode**     | Call `setCell` in a loop — no retained tree at all                        |
-| **Custom scene graph** | Build your own retained tree, walk it to paint cells                      |
-| **React (default)**    | `render(<App />)` — Yoga layout → reconciler → buffer                     |
-| **Other VDOM**         | Preact, Solid, or any library that can produce a tree of positioned boxes |
-| **Game engine loop**   | `requestAnimationFrame`-style loop, write sprites directly                |
-| **Port existing TUI**  | Map ncurses/blessed `mvprintw(y, x, str)` calls to `setCell`              |
+| Approach               | Example                                                                      |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| **Direct math**        | Game of Life, plasma fire, matrix rain, plasma, raycasters (`examples-raw/`) |
+| **Immediate-mode**     | Call `setCell` in a loop — no retained tree at all                           |
+| **Custom scene graph** | Build your own retained tree, walk it to paint cells                         |
+| **React (default)**    | `render(<App />)` — Yoga layout → reconciler → buffer                        |
+| **Other VDOM**         | Preact, Solid, or any library that can produce a tree of positioned boxes    |
+| **Game engine loop**   | `requestAnimationFrame`-style loop, write sprites directly                   |
+| **Port existing TUI**  | Map ncurses/blessed `mvprintw(y, x, str)` calls to `setCell`                 |
 
 The Rust engine doesn't know or care what filled the buffer. It just diffs.
 
@@ -201,6 +201,9 @@ node --import @oxc-node/core/register examples-raw/jitter.ts
 
 # Sine harmonic oscilloscope — 5 drifting harmonics + composite
 node --import @oxc-node/core/register examples-raw/scope.ts
+
+# Demoscene plasma — overlapping sine waves, full 256-color palette
+node --import @oxc-node/core/register examples-raw/plasma.ts
 ```
 
 ## Color Reference

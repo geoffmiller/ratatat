@@ -25,6 +25,7 @@ Ratatat implements the full Ink public API. This document tracks coverage.
 | `useBoxMetrics()`            | ✅     | `{ width, height, left, top, hasMeasured }`                               |
 | `useIsScreenReaderEnabled()` | ✅     | Stub — always returns `false`                                             |
 | `useCursor()`                | ✅     | Stub — `setCursorPosition` is a no-op                                     |
+| `useWindowSize()`            | ✅     | Terminal dimensions — `{ columns, rows }`                                 |
 
 ## Ratatat-Only API
 
@@ -35,7 +36,7 @@ These exports exist in Ratatat but have no Ink equivalent. They are safe to use 
 | `useScrollable(options)` | Built-in virtual scrolling. Returns `{ offset, atTop, atBottom, scrollBy, scrollToTop, scrollToBottom }`. Ink has no equivalent — users must implement scrolling manually. |
 | `useMouse(handler)`      | Subscribe to mouse events: click, right-click, middle, scrollUp, scrollDown, with modifier flags (shift/ctrl/meta). Ink has no mouse support at all.                       |
 | `useTextInput(options)`  | Managed text input with cursor, backspace/delete, home/end, Ctrl+U/K/W kill shortcuts, and bracketed paste. Returns `{ value, cursor, setValue, clear }`.                  |
-| `useWindowSize()`        | Terminal dimensions. Also in Ink — both expose it as a hook.                                                                                                               |
+| `useWindowSize()`        | Terminal dimensions — `{ columns, rows }`. Also in Ink's public API, listed here as well for discoverability.                                                              |
 | `DevTools`               | Debug overlay (internal)                                                                                                                                                   |
 | `RatatatApp`             | Core app instance — event emitter, paint loop, terminal lifecycle                                                                                                          |
 | `InputParser`            | Raw stdin parser — key events, mouse events, bracketed paste, escape sequences                                                                                             |
@@ -88,5 +89,5 @@ The `compat-test/` directory contains verbatim copies of Ink's example apps with
 | table                 | ⏭     | External dep: `@faker-js/faker`                                                                           |
 | router                | ⏭     | External dep: `react-router`                                                                              |
 | subprocess-output     | ⏭     | External deps                                                                                             |
-| render-throttle       | ✅     | `maxFps` option supported — `render(<App />, { maxFps: 4 })` matches Ink's throttle behavior              |
+| render-throttle       | ⏭     | No compat-test file — `maxFps` option is supported but not covered by a compat example                    |
 | jest                  | ⏭     | Test harness example, not a runtime example                                                               |

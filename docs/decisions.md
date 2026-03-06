@@ -42,9 +42,11 @@ During React batch commits, the JS `children` array and Yoga's internal child li
 
 If `yogaNode.insertChild` throws, updating `this.children` first leaves JS state permanently desync'd. Rule: always mutate the external/wasm state first, update JS only on success.
 
-## `yogaNode.free()` not called on destroy
+## `yogaNode.free()` called on destroy — safe after removeChild
 
-Calling `free()` during React's per-node batch deletion corrupts adjacent wasm heap memory in siblings. Yoga nodes are reclaimed when the wasm module is GC'd at process exit. The leak is bounded by session duration and immaterial for TUI apps.
+Calling `free()` in `destroy()` is safe. React's commit order guarantees `removeChild` (which calls `yogaNode.removeChild`) always runs before `detachDeletedInstance` (which calls `destroy()`), so the node is already detached from the Yoga tree when `free()` fires. Belt-and-suspenders: check `getParent()` before freeing and remove if still attached.
+
+The prior decision to skip `free()` was a misdiagnosis. The "Child already has a parent" corruption during keyed list reordering was caused by the double-parented insert bug, not by `free()`. Spikes confirmed safety in all configurations: isolated detach, batch subtree deletion (children before parents), and freeing a parent with children still attached. 100k nodes, 0.05 MB heap delta after GC.
 
 ## stdout buffering during alternate screen
 

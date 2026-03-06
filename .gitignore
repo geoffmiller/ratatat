@@ -136,6 +136,9 @@ benchmark/*.d.ts
 # Agent working files
 .pi/
 
+# Spikes — throwaway prototypes, not part of the library
+spikes/
+
 # Stray dev/debug files
 debug-react.log
 debug-input.mjs

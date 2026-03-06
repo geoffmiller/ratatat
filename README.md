@@ -174,6 +174,7 @@ examples-raw/              — React-free direct buffer painting (no Yoga, no re
   matrix.ts                — Matrix digital rain, age-based fade buffer
   jitter.ts                — frame timing oscilloscope — Ratatat visualizing its own render loop
   scope.ts                 — sine harmonic oscilloscope, 5 drifting harmonics + composite
+  plasma.ts                — demoscene plasma: overlapping sine waves mapped to 256-color palette
   use-stderr.tsx           — writing to stderr
   use-stdout.tsx           — writing to stdout
   use-transition.tsx       — useTransition for non-blocking updates

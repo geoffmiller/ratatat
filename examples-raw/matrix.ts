@@ -24,10 +24,38 @@ function randomChar(): string {
   return CHARS[Math.floor(Math.random() * CHARS.length)]!
 }
 
-// ─── 256-color green fade palette ─────────────────────────────────────────────
-// Index 0 = head (white-hot), then fading greens, then dark
-const TRAIL_COLORS = [
-  231, // 0: white  — head
+// ─── Persistent screen buffer with fade ──────────────────────────────────────
+// We maintain our own buffer that persists between frames.
+// Each cell has an age (0 = just written, increases each frame).
+// Cells fade through the palette based on age, then go dark.
+
+interface ScreenCell {
+  char: string
+  age: number // frames since written; 0 = fresh
+  isHead: boolean
+}
+
+let screen: ScreenCell[] = []
+let screenCols = 0
+let screenRows = 0
+
+function initScreen(cols: number, rows: number) {
+  screenCols = cols
+  screenRows = rows
+  screen = Array.from({ length: cols * rows }, () => ({ char: ' ', age: 999, isHead: false }))
+}
+
+function writeCell(x: number, y: number, char: string, isHead: boolean) {
+  if (x < 0 || x >= screenCols || y < 0 || y >= screenRows) return
+  const cell = screen[y * screenCols + x]!
+  cell.char = char
+  cell.age = 0
+  cell.isHead = isHead
+}
+
+// Fade palette: age 0 = head (white), age 1-2 = bright green, fades to dark
+const FADE: number[] = [
+  231, // 0: white head
   154, // 1: bright yellow-green
   46, // 2: bright green
   40, // 3: medium green
@@ -36,25 +64,18 @@ const TRAIL_COLORS = [
   22, // 6: very dark green
   238, // 7: near-black
   237, // 8: near-black
-  236, // 9: near-black (fade out)
+  236, // 9: near-black — beyond this, cell is blank
 ]
-const TRAIL_LENGTH = TRAIL_COLORS.length
+const FADE_OUT = FADE.length // age >= this → blank
 
 // ─── Drop state ───────────────────────────────────────────────────────────────
 
 interface Drop {
-  // Current head row (-1 to rows-1; negative = above screen, still falling in)
-  head: number
-  // How many frames between each row advance
-  speed: number
-  // Frame counter — drop advances when frameCount % speed === 0
-  tick: number
-  // Per-row character — randomizes as head passes
-  chars: string[]
-  // Is this drop active or resetting?
+  head: number // current head row (can be negative = above screen)
+  speed: number // rows per `speed` frames
+  tick: number // frame counter
   active: boolean
-  // Countdown frames before restarting after drop exits
-  resetIn: number
+  resetIn: number // frames to wait before restarting
 }
 
 let drops: Drop[] = []
@@ -64,31 +85,23 @@ let lastRows = 0
 function initDrops(cols: number, rows: number) {
   drops = []
   for (let x = 0; x < cols; x++) {
-    drops.push(makeDropWithOffset(rows, x, cols))
+    drops.push({
+      head: -Math.floor(Math.random() * rows) - 1,
+      speed: 1 + Math.floor(Math.random() * 4),
+      tick: Math.floor(Math.random() * 4),
+      active: true,
+      resetIn: 0,
+    })
   }
   lastCols = cols
   lastRows = rows
 }
 
-function makeDropWithOffset(rows: number, x: number, cols: number): Drop {
-  // Stagger initial positions so drops don't all start at row 0 together
-  const head = -Math.floor(Math.random() * rows) - 1
+function makeDrop(): Drop {
   return {
-    head,
-    speed: 1 + Math.floor(Math.random() * 4), // 1 = fast, 4 = slow
-    tick: Math.floor(Math.random() * 4),
-    chars: Array.from({ length: rows }, () => randomChar()),
-    active: true,
-    resetIn: 0,
-  }
-}
-
-function makeDrop(rows: number): Drop {
-  return {
-    head: -1 - Math.floor(Math.random() * 5), // start just above screen
+    head: -1 - Math.floor(Math.random() * 5),
     speed: 1 + Math.floor(Math.random() * 4),
     tick: 0,
-    chars: Array.from({ length: rows }, () => randomChar()),
     active: true,
     resetIn: 0,
   }
@@ -96,71 +109,67 @@ function makeDrop(rows: number): Drop {
 
 // ─── Paint ────────────────────────────────────────────────────────────────────
 
-function paint(buf: Uint32Array, cols: number, rows: number, frame: number) {
-  // Init on first frame, reinit only on genuine resize
+function paint(buf: Uint32Array, cols: number, rows: number, _frame: number) {
+  // Init on first frame
   if (drops.length === 0) {
     initDrops(cols, rows)
-  } else if (cols !== lastCols || rows !== lastRows) {
-    // Resize: rebuild drop array but preserve active drops where possible
-    const prevDrops = drops
-    drops = []
-    for (let x = 0; x < cols; x++) {
-      if (x < prevDrops.length) {
-        const d = prevDrops[x]!
-        // Clamp head to new row count, rebuild chars array for new height
-        d.head = Math.min(d.head, rows - 1)
-        d.chars = Array.from({ length: rows }, (_, i) => d.chars[i] ?? randomChar())
-        drops.push(d)
-      } else {
-        drops.push(makeDropWithOffset(rows, x, cols))
-      }
-    }
-    lastCols = cols
-    lastRows = rows
+    initScreen(cols, rows)
   }
 
-  // Advance and paint each column
+  // Handle resize — reinit everything (visual glitch on resize is acceptable)
+  if (cols !== lastCols || rows !== lastRows) {
+    initDrops(cols, rows)
+    initScreen(cols, rows)
+  }
+
+  // Age every cell by 1 each frame
+  for (let i = 0; i < screen.length; i++) {
+    screen[i]!.age++
+  }
+
+  // Advance drops and write head characters into the screen buffer
   for (let x = 0; x < cols; x++) {
     const drop = drops[x]!
 
     if (!drop.active) {
-      // Waiting to restart
       drop.resetIn--
       if (drop.resetIn <= 0) {
-        drops[x] = makeDrop(rows)
+        drops[x] = makeDrop()
       }
       continue
     }
 
-    // Advance head by one row every `speed` frames
     drop.tick++
     if (drop.tick >= drop.speed) {
       drop.tick = 0
       drop.head++
 
-      // Randomly mutate a character in the trail as it passes (glitch effect)
       if (drop.head >= 0 && drop.head < rows) {
-        const mutateRow = Math.max(0, drop.head - Math.floor(Math.random() * 3))
-        drop.chars[mutateRow] = randomChar()
+        // Write head character — age 0 = white
+        writeCell(x, drop.head, randomChar(), true)
+        // Randomly glitch a cell one row above the head
+        if (drop.head > 0 && Math.random() < 0.3) {
+          writeCell(x, drop.head - 1, randomChar(), false)
+        }
       }
 
-      // Drop has fully exited the screen
-      if (drop.head >= rows + TRAIL_LENGTH) {
+      if (drop.head >= rows) {
         drop.active = false
-        drop.resetIn = Math.floor(Math.random() * 40) // pause before restarting
-        continue
+        drop.resetIn = Math.floor(Math.random() * 40)
       }
     }
+  }
 
-    // Paint the trail — from head down to tail
-    for (let t = 0; t < TRAIL_LENGTH; t++) {
-      const row = drop.head - t
-      if (row < 0 || row >= rows) continue
-
-      const char = drop.chars[row] ?? randomChar()
-      const color = TRAIL_COLORS[t]!
-      const isBold = t === 0 // head is bold
-      setCell(buf, cols, x, row, char, color, 0, isBold ? 1 : 0)
+  // Render screen buffer → Uint32Array
+  // Note: harness zero-fills buf each frame, which is fine —
+  // we repaint every cell that has any age < FADE_OUT
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const cell = screen[y * cols + x]!
+      if (cell.age >= FADE_OUT) continue // fully faded — leave blank
+      const color = FADE[cell.age]!
+      const bold = cell.age === 0 ? 1 : 0
+      setCell(buf, cols, x, y, cell.char, color, 0, bold)
     }
   }
 }

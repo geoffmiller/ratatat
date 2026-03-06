@@ -53,20 +53,52 @@ function writeCell(x: number, y: number, char: string, isHead: boolean) {
   cell.isHead = isHead
 }
 
-// Fade palette: age 0 = head (white), age 1-2 = bright green, fades to dark
+// Fade palette indexed by age. The trail lingers for ~2 seconds at 24fps.
+// Ages 0-1: bright head, 2-8: green trail, 9-40: slow fade to dark, 41+: blank
 const FADE: number[] = [
   231, // 0: white head
-  154, // 1: bright yellow-green
-  46, // 2: bright green
-  40, // 3: medium green
-  34, // 4: green
-  28, // 5: dark green
-  22, // 6: very dark green
-  238, // 7: near-black
-  237, // 8: near-black
-  236, // 9: near-black — beyond this, cell is blank
+  231, // 1: white (head lingers one extra frame)
+  154, // 2: bright yellow-green
+  46, // 3: bright green
+  46, // 4: bright green
+  40, // 5: medium green
+  40, // 6: medium green
+  34, // 7: green
+  34, // 8: green
+  28, // 9: dark green
+  28, // 10: dark green
+  22, // 11: very dark green
+  22, // 12: very dark green
+  22, // 13: very dark green
+  238, // 14: near-black
+  238, // 15
+  238, // 16
+  237, // 17
+  237, // 18
+  237, // 19
+  237, // 20
+  236, // 21
+  236, // 22
+  236, // 23
+  236, // 24
+  235, // 25
+  235, // 26
+  235, // 27
+  235, // 28
+  234, // 29
+  234, // 30
+  234, // 31
+  234, // 32
+  233, // 33
+  233, // 34
+  233, // 35
+  233, // 36
+  232, // 37
+  232, // 38
+  232, // 39
+  232, // 40 — fully dark, next frame goes blank
 ]
-const FADE_OUT = FADE.length // age >= this → blank
+const FADE_OUT = FADE.length // age >= this → blank (cell disappears)
 
 // ─── Drop state ───────────────────────────────────────────────────────────────
 

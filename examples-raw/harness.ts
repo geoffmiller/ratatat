@@ -52,7 +52,13 @@ export function createLoop(paint: PaintFn, fps = 60): Loop {
     if (!running) return
     running = false
     if (timer) clearInterval(timer)
+    // Restore Node's stream raw mode before guard.leave() restores OS flags
+    try {
+      process.stdin.setRawMode?.(false)
+    } catch {}
+    process.stdin.pause()
     guard.leave()
+    process.exit(0)
   }
 
   function start() {
@@ -69,7 +75,6 @@ export function createLoop(paint: PaintFn, fps = 60): Loop {
 
     process.on('SIGINT', stop)
     process.on('SIGTERM', stop)
-    process.on('exit', () => guard.leave())
 
     timer = setInterval(tick, Math.round(1000 / fps))
   }

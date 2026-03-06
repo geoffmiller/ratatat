@@ -12,10 +12,14 @@ mod terminal;
 /// Compares a back buffer (from JS) against an internal front buffer and
 /// emits only the minimal ANSI escape sequences needed to update the
 /// terminal.
+///
+/// `row_offset` shifts all cursor positioning by N rows. Used for inline
+/// and partial-screen modes where the renderer doesn't own row 0.
 #[napi]
 pub struct Renderer {
     width: u16,
     height: u16,
+    row_offset: u16,
     front_buffer: Vec<u32>,
 }
 
@@ -28,6 +32,7 @@ impl Renderer {
         Self {
             width,
             height,
+            row_offset: 0,
             front_buffer: vec![u32::MAX; (width as usize) * (height as usize) * 2],
         }
     }
@@ -50,6 +55,15 @@ impl Renderer {
         self.width = width;
         self.height = height;
         self.front_buffer = vec![u32::MAX; (width as usize) * (height as usize) * 2];
+    }
+
+    /// Set a row offset for inline/partial-screen modes.
+    /// All cursor positioning will be shifted down by this many rows.
+    #[napi]
+    pub fn set_row_offset(&mut self, offset: u16) {
+        self.row_offset = offset;
+        // Reset front buffer so next frame fully redraws at the new position
+        self.front_buffer = vec![u32::MAX; (self.width as usize) * (self.height as usize) * 2];
     }
 
     #[napi]
@@ -92,7 +106,7 @@ impl Renderer {
 
                 // Only move cursor if not contiguous
                 if current_x + 1 != x as i32 || current_y != y as i32 {
-                    ansi::write_move_cursor(&mut output, x, y);
+                    ansi::write_move_cursor(&mut output, x, y + self.row_offset);
                 }
 
                 current_x = x as i32;
@@ -374,6 +388,30 @@ mod tests {
         let diff = renderer.generate_diff(&back_buffer);
         // Invalid char should be replaced with space
         assert!(diff.ends_with(' '), "Invalid char should render as space");
+    }
+
+    #[test]
+    fn test_row_offset_shifts_cursor_position() {
+        let mut renderer = Renderer::new(10, 3);
+        renderer.set_row_offset(5);
+        let mut back_buffer = vec![0u32; 10 * 3 * 2];
+        // Write 'A' at row 0, col 0 in the buffer
+        back_buffer[0] = 'A' as u32;
+        back_buffer[1] = 1;
+        let diff = renderer.generate_diff(&back_buffer);
+        // Row 0 in buffer + offset 5 = terminal row 6 (1-based)
+        assert!(diff.contains("\x1b[6;1H"), "Row offset should shift cursor to row 6");
+    }
+
+    #[test]
+    fn test_row_offset_zero_is_default_behaviour() {
+        let mut renderer = Renderer::new(10, 3);
+        // No set_row_offset — should behave as before
+        let mut back_buffer = vec![0u32; 10 * 3 * 2];
+        back_buffer[0] = 'A' as u32;
+        back_buffer[1] = 1;
+        let diff = renderer.generate_diff(&back_buffer);
+        assert!(diff.contains("\x1b[1;1H"), "Zero offset should use row 1");
     }
 
     #[test]

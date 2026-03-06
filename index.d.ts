@@ -6,6 +6,9 @@
  * Compares a back buffer (from JS) against an internal front buffer and
  * emits only the minimal ANSI escape sequences needed to update the
  * terminal.
+ *
+ * `row_offset` shifts all cursor positioning by N rows. Used for inline
+ * and partial-screen modes where the renderer doesn't own row 0.
  */
 export declare class Renderer {
   constructor(width: number, height: number)
@@ -15,6 +18,11 @@ export declare class Renderer {
   get height(): number
   /** Resize the renderer and reset the front buffer. */
   resize(width: number, height: number): void
+  /**
+   * Set a row offset for inline/partial-screen modes.
+   * All cursor positioning will be shifted down by this many rows.
+   */
+  setRowOffset(offset: number): void
   render(backBuffer: Uint32Array): void
 }
 

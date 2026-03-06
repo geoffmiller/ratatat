@@ -4,15 +4,11 @@
  * Renders a fixed-height region immediately below the current cursor,
  * without switching to the alternate screen.
  *
- * Strategy:
- *   1. Print renderRows newlines — makes room even if cursor was near the bottom.
- *   2. Send CPR (\x1b[6n) and read the response (\x1b[row;colR) — exact cursor row.
- *   3. Rewind renderRows rows up — cursor is now at the TOP of the reserved region.
- *      Save this as regionTopRow for use in destroy cleanup.
- *   4. setRowOffset(regionTopRow - 1) so Rust absolute moves land correctly.
- *   5. Render first frame. Subsequent frames: rewind renderRows, render.
- *   6. On destroy: rewind min(renderRows, regionTopRow-1) rows (never above row 1),
- *      clear each line, leave cursor at the top of the cleared area.
+ * IMPORTANT: All stdout writes go through Renderer.writeRaw() to avoid
+ * interleaving between Node's process.stdout and Rust's std::io::stdout.
+ * The only exception is the pre-renderer setup (hide cursor, newlines, CPR)
+ * which happens before the Renderer exists and completes before the first
+ * render tick.
  */
 
 import { Renderer, terminalSize } from '../index.js'
@@ -55,6 +51,11 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
   // 1-based terminal row of the top of our render region — set once CPR resolves
   let regionTopRow = 1
 
+  /** Write to stdout through the Renderer's Rust handle (avoids interleaving). */
+  function write(s: string) {
+    renderer!.writeRaw(s)
+  }
+
   function tick() {
     buf!.fill(0)
     paint(buf!, cols, renderRows, frame++)
@@ -62,20 +63,20 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
   }
 
   function startRendering(cursorRow: number) {
-    // cursorRow is 1-based — the row cursor is on AFTER the leading newlines.
-    // Rewind renderRows up — cursor now at top of our region.
     regionTopRow = cursorRow - renderRows
-    process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
+    write(`\x1b[${renderRows}A\x1b[1G`)
 
     // rowOffset: Rust emits \x1b[offset+bufRow+1;colH
-    // We need offset+0+1 = regionTopRow → offset = regionTopRow - 1
-    renderer!.setRowOffset(regionTopRow - 1)
+    // We need offset+0+1 = regionTopRow+1 → offset = regionTopRow
+    renderer!.setRowOffset(regionTopRow)
 
     tick()
 
     interval = setInterval(
       () => {
-        process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
+        // No rewind needed — Renderer uses absolute cursor positioning
+        // (\x1b[row;colH) for every dirty cell. Rewinding before each
+        // frame causes cursor drift when the diff is empty (no-op frames).
         tick()
       },
       Math.round(1000 / fps),
@@ -91,16 +92,18 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
     if (process.stdin.isTTY) process.stdin.setRawMode(true)
     process.stdin.resume()
     process.stdin.setEncoding('utf8')
-    process.stdout.write('\x1b[?25l') // hide cursor
-
-    process.on('SIGINT', stop)
 
     renderer = new Renderer(cols, renderRows)
     buf = new Uint32Array(cols * renderRows * 2)
 
-    // Reserve space then query exact cursor position via CPR.
-    process.stdout.write('\n'.repeat(renderRows))
-    process.stdout.write('\x1b[6n')
+    // Pre-render setup: these writes happen BEFORE the first render tick.
+    // The CPR response arrives asynchronously, so these will have flushed
+    // through Node's stdout before Rust's stdout is used.
+    write('\x1b[?25l') // hide cursor
+    write('\n'.repeat(renderRows))
+    write('\x1b[6n') // CPR request
+
+    process.on('SIGINT', stop)
 
     let cprBuf = ''
     const onData = (chunk: string) => {
@@ -120,20 +123,23 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
       interval = null
     }
 
-    if (onExit === 'destroy') {
-      // After the last tick(), cursor is on the last row of the region.
-      // Rewind to regionTopRow (renderRows - 1 rows up), clear each line,
-      // leave cursor at the top of the now-cleared area.
-      if (renderRows > 1) process.stdout.write(`\x1b[${renderRows - 1}A\x1b[1G`)
-      for (let i = 0; i < renderRows; i++) {
-        process.stdout.write('\x1b[2K')
-        if (i < renderRows - 1) process.stdout.write('\n')
+    if (renderer) {
+      if (onExit === 'destroy') {
+        // Use absolute positioning — cursor could be anywhere after last render.
+        // Region occupies terminal rows (regionTopRow+1) through (regionTopRow+renderRows).
+        for (let i = 0; i < renderRows; i++) {
+          write(`\x1b[${regionTopRow + 1 + i};1H\x1b[2K`)
+        }
+        // Leave cursor at top of cleared region
+        write(`\x1b[${regionTopRow + 1};1H`)
+      } else {
+        // preserve: move cursor just below the region so prompt appears after content
+        write(`\x1b[${regionTopRow + renderRows + 1};1H`)
       }
-      if (renderRows > 1) process.stdout.write(`\x1b[${renderRows - 1}A\x1b[1G`)
-    }
-    // preserve: cursor already at bottom of region
 
-    process.stdout.write('\x1b[?25h') // show cursor
+      write('\x1b[?25h') // show cursor
+    }
+
     if (process.stdin.isTTY) process.stdin.setRawMode(false)
     process.stdin.pause()
     process.exit(0)

@@ -347,8 +347,14 @@ export function renderInline(
     resolveExit()
   })
 
-  input.start()
   loop.start()
+  // Start InputParser AFTER loop.start() so the loop's CPR handler
+  // gets registered on stdin first. InputParser adds its own 'data'
+  // listener for keyboard input (useInput, useApp, etc).
+  // Note: loop.start() already calls setRawMode(true) and stdin.resume(),
+  // so InputParser.start() just adds its data listener (the duplicate
+  // setRawMode/resume calls are harmless).
+  input.start()
 
   return {
     unmount() {

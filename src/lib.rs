@@ -73,6 +73,16 @@ impl Renderer {
         }
     }
 
+    /// Write raw bytes to stdout through the same handle the renderer uses.
+    /// Use this for cursor rewind sequences in inline mode to avoid
+    /// interleaving with Node's process.stdout.write.
+    #[napi]
+    pub fn write_raw(&self, data: String) {
+        if !data.is_empty() {
+            self.write_output(data.as_bytes());
+        }
+    }
+
     pub fn generate_diff(&mut self, back_buffer: &[u32]) -> String {
         let mut output = String::new();
         // Reserve arbitrary capacity to prevent frequent reallocations
@@ -116,7 +126,11 @@ impl Renderer {
                 let bg = ((attr_code >> 8) & 0xFF) as u8;
                 let styles = ((attr_code >> 16) & 0xFF) as u8;
 
-                let ch = char::from_u32(char_code).unwrap_or(' ');
+                let ch = if char_code == 0 {
+                    ' '
+                } else {
+                    char::from_u32(char_code).unwrap_or(' ')
+                };
 
                 // Diff Styles
                 if styles != last_style {

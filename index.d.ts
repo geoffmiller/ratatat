@@ -25,6 +25,12 @@ export declare class Renderer {
    */
   setRowOffset(offset: number): void
   render(backBuffer: Uint32Array): void
+  /**
+   * Write raw bytes to stdout through the same handle the renderer uses.
+   * Use this for cursor rewind sequences in inline mode to avoid
+   * interleaving with Node's process.stdout.write.
+   */
+  writeRaw(data: string): void
 }
 
 /**

@@ -64,30 +64,30 @@ Ratatat is **not** a pure JS reimplementation of Ink. It shares the same React r
 
 The `compat-test/` directory contains verbatim copies of Ink's example apps with only the import path changed (`../../src/index.js` → `../dist/index.js`). Zero other changes.
 
-| Example               | Status | Notes                                                                                                     |
-| --------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
-| borders               | ✅     |                                                                                                           |
-| box-backgrounds       | ✅     |                                                                                                           |
-| chat                  | ✅     |                                                                                                           |
-| concurrent-suspense   | ✅     | `{concurrent:true}` option ignored (always concurrent)                                                    |
-| counter               | ✅     |                                                                                                           |
-| incremental-rendering | ✅     | `{incrementalRendering:true}` option ignored                                                              |
-| justify-content       | ✅     |                                                                                                           |
-| static                | ✅     |                                                                                                           |
-| stress-test           | ✅     |                                                                                                           |
-| suspense              | ✅     |                                                                                                           |
-| terminal-resize       | ✅     | `{patchConsole,exitOnCtrlC}` options ignored                                                              |
-| use-focus             | ✅     |                                                                                                           |
-| use-focus-with-id     | ✅     |                                                                                                           |
-| use-input             | ✅     |                                                                                                           |
-| use-stderr            | ✅     |                                                                                                           |
-| use-stdout            | ✅     |                                                                                                           |
-| use-transition        | ✅     |                                                                                                           |
-| aria                  | ✅     | `aria-role`/`aria-state`/`aria-hidden` props silently ignored; `useIsScreenReaderEnabled` returns `false` |
-| cursor-ime            | ✅     | `useCursor` is a no-op stub; cursor positioning unsupported                                               |
-| select-input          | ⏭     | External dep: `ink-select-input`                                                                          |
-| table                 | ⏭     | External dep: `@faker-js/faker`                                                                           |
-| router                | ⏭     | External dep: `react-router`                                                                              |
-| subprocess-output     | ⏭     | External deps                                                                                             |
-| render-throttle       | ⏭     | No compat-test file — `maxFps` option is supported but not covered by a compat example                    |
-| jest                  | ⏭     | Test harness example, not a runtime example                                                               |
+| Example               | Status | Notes                                                                                                                                     |
+| --------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| borders               | ✅     |                                                                                                                                           |
+| box-backgrounds       | ✅     |                                                                                                                                           |
+| chat                  | ✅     |                                                                                                                                           |
+| concurrent-suspense   | ✅     | `{concurrent:true}` option ignored (always concurrent)                                                                                    |
+| counter               | ✅     |                                                                                                                                           |
+| incremental-rendering | ✅     | `{incrementalRendering:true}` option ignored                                                                                              |
+| justify-content       | ✅     |                                                                                                                                           |
+| static                | ✅     |                                                                                                                                           |
+| stress-test           | ✅     |                                                                                                                                           |
+| suspense              | ✅     |                                                                                                                                           |
+| terminal-resize       | ✅     | `{patchConsole,exitOnCtrlC}` options ignored                                                                                              |
+| use-focus             | ✅     |                                                                                                                                           |
+| use-focus-with-id     | ✅     |                                                                                                                                           |
+| use-input             | ✅     |                                                                                                                                           |
+| use-stderr            | ✅     |                                                                                                                                           |
+| use-stdout            | ✅     |                                                                                                                                           |
+| use-transition        | ✅     |                                                                                                                                           |
+| aria                  | ✅     | `aria-role`/`aria-state`/`aria-hidden` props silently ignored; `useIsScreenReaderEnabled` returns `false`                                 |
+| cursor-ime            | ✅     | `useCursor` is a no-op stub; cursor positioning unsupported                                                                               |
+| select-input          | ⏭     | External dep: `ink-select-input`; Ratatat has select-like picker patterns in `examples/kitchen-sink.tsx` and `examples/inline-picker.tsx` |
+| table                 | ⏭     | External dep: `@faker-js/faker`                                                                                                           |
+| router                | ⏭     | External dep: `react-router`                                                                                                              |
+| subprocess-output     | ⏭     | External deps                                                                                                                             |
+| render-throttle       | ⏭     | No compat-test file — `maxFps` option is supported but not covered by a compat example                                                    |
+| jest                  | ⏭     | Test harness example, not a runtime example                                                                                               |

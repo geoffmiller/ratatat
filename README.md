@@ -73,15 +73,19 @@ The speed comes from two architectural decisions:
 - **Flexbox layout** — Yoga engine, same API as React Native / Ink
 - **Box model** — borders (`single`, `double`, `round`, `bold`, `arrow`), padding, margin, gap
 - **Text styling** — `color`, `backgroundColor`, `bold`, `italic`, `dim`, `underline`, 256-color, hex, rgb
-- **Input handling** — `useInput`, `useStdin`, keyboard + special keys, bracketed paste
-- **Mouse support** — `useMouse`, click, right-click, scroll wheel, modifier keys (Ratatat only)
-- **`useTextInput`** — managed text input: cursor, backspace/delete, home/end, Ctrl+U/K/W, paste (Ratatat only)
+- **Input handling** — `useInput`, `useStdin`, keyboard + special keys
 - **Focus management** — `useFocus`, `useFocusManager`, Tab cycling
 - **Terminal hooks** — `useWindowSize`, `useStdout`, `useStderr`
-- **`useScrollable`** — built-in scrolling primitive (not in Ink); virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`
 - **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
-- **Inline mode** — `renderInline()` renders below the cursor without clearing scrollback; `createInlineLoop` for raw buffer inline rendering
 - **Ink-compatible API** — most Ink apps work with a one-line import change
+
+### Ratatat Only Features
+
+- **Mouse support** — `useMouse`, click, right-click, scroll wheel, modifier keys
+- **`useTextInput`** — managed text input: cursor, backspace/delete, home/end, Ctrl+U/K/W, paste
+- **`useScrollable`** — built-in scrolling primitive; virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`
+- **UI components** — `<Spinner>` and `<ProgressBar>`
+- **Inline APIs** — `renderInline()` (React) and `createInlineLoop()` (raw buffer) for explicit inline rendering below the cursor without clearing scrollback
 - **React-free mode** — fill the `Uint32Array` buffer directly; no React, no Yoga needed. See [Raw Buffer API](docs/raw-buffer.md)
 
 ## Architecture
@@ -157,6 +161,8 @@ npx tsx examples/counter.tsx
 
 ## Examples
 
+### Ink-compatible / shared examples
+
 ```
 examples/
   borders.tsx              — all border styles
@@ -177,8 +183,21 @@ examples/
   use-focus-with-id.tsx    — named focus groups
   use-focus.tsx            — focus management
   use-input.tsx            — keyboard input handling
-  use-mouse.tsx            — useMouse + useTextInput + bracketed paste demo (Ratatat only)
-  use-scrollable.tsx       — useScrollable hook isolation demo (Ratatat only)
+  use-stderr.tsx           — writing to stderr
+  use-stdout.tsx           — writing to stdout
+  use-transition.tsx       — useTransition for non-blocking updates
+```
+
+### Ratatat-only APIs / features (examples)
+
+```
+examples/
+  inline-minimal.tsx       — minimal `renderInline()` demo
+  inline-picker.tsx        — inline picker using `renderInline()`
+  progress-bar.tsx         — standalone <ProgressBar> demo
+  spinner.tsx              — standalone <Spinner> demo
+  use-mouse.tsx            — useMouse + useTextInput + bracketed paste demo
+  use-scrollable.tsx       — useScrollable hook isolation demo
 
 examples-raw/              — React-free direct buffer painting (no Yoga, no reconciler)
   harness.ts               — minimal render loop (TerminalGuard + Renderer + setInterval)
@@ -188,9 +207,6 @@ examples-raw/              — React-free direct buffer painting (no Yoga, no re
   jitter.ts                — frame timing oscilloscope — Ratatat visualizing its own render loop
   scope.ts                 — sine harmonic oscilloscope, 5 drifting harmonics + composite
   plasma.ts                — demoscene plasma: overlapping sine waves mapped to 256-color palette
-  use-stderr.tsx           — writing to stderr
-  use-stdout.tsx           — writing to stdout
-  use-transition.tsx       — useTransition for non-blocking updates
 ```
 
 ## Package Size

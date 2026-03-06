@@ -38,6 +38,99 @@ export const Text: React.FC<TextProps> = (props) => {
   return React.createElement('text', props, props.children)
 }
 
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+
+const DEFAULT_SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+
+export interface SpinnerProps extends Omit<TextProps, 'children'> {
+  /**
+   * Animation frames. Defaults to Braille spinner frames.
+   */
+  frames?: readonly string[]
+  /**
+   * Interval between frame updates in milliseconds.
+   * Default: 80ms
+   */
+  interval?: number
+}
+
+/**
+ * Animated single-character spinner.
+ *
+ * @example
+ * ```tsx
+ * <Spinner color="cyan" />
+ * <Spinner frames={['-', '\\', '|', '/']} interval={100} color="yellow" />
+ * ```
+ */
+export const Spinner: React.FC<SpinnerProps> = ({ frames = DEFAULT_SPINNER_FRAMES, interval = 80, ...textProps }) => {
+  const resolvedFrames = frames.length > 0 ? frames : ['-']
+  const [index, setIndex] = React.useState(0)
+
+  React.useEffect(() => {
+    if (interval <= 0 || resolvedFrames.length <= 1) return
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % resolvedFrames.length)
+    }, interval)
+    return () => clearInterval(timer)
+  }, [interval, resolvedFrames])
+
+  return React.createElement(Text, textProps, resolvedFrames[index] ?? '-')
+}
+
+// ─── ProgressBar ──────────────────────────────────────────────────────────────
+
+export interface ProgressBarProps extends Omit<TextProps, 'children'> {
+  /** Current value. */
+  value: number
+  /** Maximum value. Default: 100 */
+  max?: number
+  /** Number of cells used for the bar body. Default: 20 */
+  width?: number
+  /** Character used for the completed segment. Default: █ */
+  completeChar?: string
+  /** Character used for the remaining segment. Default: ░ */
+  incompleteChar?: string
+  /** Wrap bar body with surrounding brackets. Default: true */
+  bracket?: boolean
+  /** Render percentage text after the bar. Default: true */
+  showPercentage?: boolean
+}
+
+/**
+ * Terminal progress bar with optional percentage suffix.
+ *
+ * @example
+ * ```tsx
+ * <ProgressBar value={42} color="green" />
+ * <ProgressBar value={downloaded} max={total} width={30} showPercentage={false} />
+ * ```
+ */
+export const ProgressBar: React.FC<ProgressBarProps> = ({
+  value,
+  max = 100,
+  width = 20,
+  completeChar = '█',
+  incompleteChar = '░',
+  bracket = true,
+  showPercentage = true,
+  ...textProps
+}) => {
+  const safeMax = max > 0 ? max : 1
+  const safeWidth = Math.max(1, Math.floor(width))
+  const clamped = Math.max(0, Math.min(value, safeMax))
+  const ratio = clamped / safeMax
+
+  const filled = Math.round(ratio * safeWidth)
+  const body = completeChar.repeat(filled) + incompleteChar.repeat(Math.max(0, safeWidth - filled))
+  const percent = Math.round(ratio * 100)
+
+  const bar = bracket ? `[${body}]` : body
+  const output = showPercentage ? `${bar} ${percent}%` : bar
+
+  return React.createElement(Text, textProps, output)
+}
+
 /**
  * Renders a newline character — equivalent to a line break in the layout.
  * Ink-compatible: <Newline count={2} />

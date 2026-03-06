@@ -76,7 +76,7 @@ function paint(buf: Uint32Array, cols: number, rows: number, _frame: number) {
     const normSum = sum / totalAmp
     const compositeRow = midRow - Math.round(normSum * halfH)
     if (compositeRow >= chartTop && compositeRow <= chartBottom) {
-      setCell(buf, cols, x, compositeRow, '█', 255, 0, 1) // bright white, bold
+      setCell(buf, cols, x, compositeRow, '▪', 231, 0, 1) // bright white ▪, bold, no bg fill
     }
 
     // Individual harmonics — drawn on top of composite
@@ -96,7 +96,7 @@ function paint(buf: Uint32Array, cols: number, rows: number, _frame: number) {
 
   // Legend — harmonic colors + composite
   const labels = [
-    { label: '━ composite', color: 255 },
+    { label: '▪ composite', color: 231 },
     { label: '▪ f1', color: HARMONICS[0]!.color },
     { label: '▪ f2', color: HARMONICS[1]!.color },
     { label: '▪ f3', color: HARMONICS[2]!.color },

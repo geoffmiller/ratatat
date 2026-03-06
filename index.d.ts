@@ -21,6 +21,7 @@ export declare class Renderer {
   /**
    * Set a row offset for inline/partial-screen modes.
    * All cursor positioning will be shifted down by this many rows.
+   * Does not reset the front buffer — call resize() if you need a full redraw.
    */
   setRowOffset(offset: number): void
   render(backBuffer: Uint32Array): void

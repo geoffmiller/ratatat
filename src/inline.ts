@@ -67,34 +67,36 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
 
   let frame = 0
   let interval: ReturnType<typeof setInterval> | null = null
-  // How many rows we've actually painted so far (0 on first frame, renderRows after)
-  let paintedRows = 0
+
+  // Set row offset once so the Rust renderer's absolute cursor moves
+  // land on the correct terminal rows. termRows - 1 (0-based) puts
+  // buffer row 0 at the bottom of the terminal, which is where the
+  // cursor will be after the leading \n in start().
+  renderer.setRowOffset(termRows - 1)
 
   function tick() {
-    if (paintedRows > 0) {
-      // Rewind cursor to top of our region with relative moves
-      process.stdout.write(`\x1b[${paintedRows}A\x1b[1G`)
-    } else {
-      // First frame: step past the prompt line onto a fresh line.
-      // Then set rowOffset so the Rust renderer's absolute \x1b[row;colH
-      // sequences land on this line rather than jumping back to row 1.
-      process.stdout.write('\n\x1b[1G')
-      // After the \n, cursor is at the bottom of the terminal (termRows, 1-based).
-      // If the terminal scrolled, that's still termRows. Set offset = termRows - 1
-      // (0-based) so buffer row 0 maps to the current terminal row.
-      renderer.setRowOffset(termRows - 1)
-    }
-
     buf.fill(0)
     paint(buf, cols, renderRows, frame++)
     renderer.render(buf)
-    paintedRows = renderRows
   }
 
   function start() {
     guard.enter()
     process.on('SIGINT', stop)
-    interval = setInterval(tick, Math.round(1000 / fps))
+
+    // Step past the prompt line. After this \n the cursor is at termRows
+    // (1-based), matching our rowOffset of termRows - 1 (0-based).
+    // From here the interval rewinds renderRows rows before each frame.
+    process.stdout.write('\n')
+    tick() // first frame immediately — cursor now below the region
+
+    interval = setInterval(
+      () => {
+        process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
+        tick()
+      },
+      Math.round(1000 / fps),
+    )
   }
 
   function stop() {
@@ -105,9 +107,7 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
 
     if (onExit === 'destroy') {
       // Rewind to top of region (plus the leading newline), clear every line
-      if (paintedRows > 0) {
-        process.stdout.write(`\x1b[${paintedRows + 1}A\x1b[1G`)
-      }
+      process.stdout.write(`\x1b[${renderRows + 1}A\x1b[1G`)
       for (let i = 0; i < renderRows + 1; i++) {
         process.stdout.write('\x1b[2K')
         if (i < renderRows) process.stdout.write('\n')

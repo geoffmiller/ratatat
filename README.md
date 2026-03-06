@@ -85,7 +85,7 @@ The speed comes from two architectural decisions:
 - **`useTextInput`** — managed text input: cursor, backspace/delete, home/end, Ctrl+U/K/W, paste
 - **`useScrollable`** — built-in scrolling primitive; virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`
 - **UI components** — `<Spinner>` and `<ProgressBar>`
-- **Inline mode** — `renderInline()` renders below the cursor without clearing scrollback; `createInlineLoop` for raw buffer inline rendering
+- **Inline APIs** — `renderInline()` (React) and `createInlineLoop()` (raw buffer) for explicit inline rendering below the cursor without clearing scrollback
 - **React-free mode** — fill the `Uint32Array` buffer directly; no React, no Yoga needed. See [Raw Buffer API](docs/raw-buffer.md)
 
 ## Architecture
@@ -188,10 +188,12 @@ examples/
   use-transition.tsx       — useTransition for non-blocking updates
 ```
 
-### Ratatat Only Features (examples)
+### Ratatat-only APIs / features (examples)
 
 ```
 examples/
+  inline-minimal.tsx       — minimal `renderInline()` demo
+  inline-picker.tsx        — inline picker using `renderInline()`
   progress-bar.tsx         — standalone <ProgressBar> demo
   spinner.tsx              — standalone <Spinner> demo
   use-mouse.tsx            — useMouse + useTextInput + bracketed paste demo

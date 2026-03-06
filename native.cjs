@@ -578,3 +578,4 @@ if (!nativeBinding) {
 module.exports = nativeBinding
 module.exports.Renderer = nativeBinding.Renderer
 module.exports.TerminalGuard = nativeBinding.TerminalGuard
+module.exports.terminalSize = nativeBinding.terminalSize

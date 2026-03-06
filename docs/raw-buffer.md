@@ -204,7 +204,45 @@ node --import @oxc-node/core/register examples-raw/scope.ts
 
 # Demoscene plasma — overlapping sine waves, full 256-color palette
 node --import @oxc-node/core/register examples-raw/plasma.ts
+
+# Inline picker — renders below cursor, preserves scrollback
+node --import @oxc-node/core/register examples-raw/inline-picker.ts
 ```
+
+## Inline Mode (Raw Buffer)
+
+`createInlineLoop` renders a fixed-height region below the current cursor without switching to the alternate screen. Scrollback is preserved.
+
+```ts
+import { createInlineLoop } from 'ratatat'
+import { setCell } from './examples-raw/harness.js'
+
+const loop = createInlineLoop(
+  (buf, cols, rows, frame) => {
+    // Paint into buf — same contract as createLoop
+    setCell(buf, cols, 0, 0, 'H', 196)
+  },
+  {
+    rows: 5, // terminal rows to reserve
+    fps: 30, // frames per second
+    onExit: 'destroy', // 'preserve' or 'destroy'
+  },
+)
+
+loop.start()
+// Call loop.stop() to exit (e.g. on keypress)
+```
+
+**Options:**
+
+- `rows` — number of terminal rows to reserve (default: 10)
+- `fps` — target frames per second (default: 60)
+- `onExit: 'preserve'` — rendered content stays in scrollback after exit
+- `onExit: 'destroy'` — rendered content is cleared, terminal looks untouched
+
+**How it works:** Prints newlines to reserve space, queries the cursor position via CPR (`\x1b[6n`), then uses the Rust renderer with `setRowOffset()` to paint only within the reserved region. The renderer uses absolute cursor positioning — no cursor drift, no scrollback wipe.
+
+See `examples-raw/inline-picker.ts` for a full working example.
 
 ## Color Reference
 

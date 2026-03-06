@@ -12,10 +12,14 @@ mod terminal;
 /// Compares a back buffer (from JS) against an internal front buffer and
 /// emits only the minimal ANSI escape sequences needed to update the
 /// terminal.
+///
+/// `row_offset` shifts all cursor positioning by N rows. Used for inline
+/// and partial-screen modes where the renderer doesn't own row 0.
 #[napi]
 pub struct Renderer {
     width: u16,
     height: u16,
+    row_offset: u16,
     front_buffer: Vec<u32>,
 }
 
@@ -28,6 +32,7 @@ impl Renderer {
         Self {
             width,
             height,
+            row_offset: 0,
             front_buffer: vec![u32::MAX; (width as usize) * (height as usize) * 2],
         }
     }
@@ -52,11 +57,29 @@ impl Renderer {
         self.front_buffer = vec![u32::MAX; (width as usize) * (height as usize) * 2];
     }
 
+    /// Set a row offset for inline/partial-screen modes.
+    /// All cursor positioning will be shifted down by this many rows.
+    /// Does not reset the front buffer — call resize() if you need a full redraw.
+    #[napi]
+    pub fn set_row_offset(&mut self, offset: u16) {
+        self.row_offset = offset;
+    }
+
     #[napi]
     pub fn render(&mut self, back_buffer: Uint32Array) {
         let output = self.generate_diff(back_buffer.as_ref());
         if !output.is_empty() {
             self.write_output(output.as_bytes());
+        }
+    }
+
+    /// Write raw bytes to stdout through the same handle the renderer uses.
+    /// Use this for cursor rewind sequences in inline mode to avoid
+    /// interleaving with Node's process.stdout.write.
+    #[napi]
+    pub fn write_raw(&self, data: String) {
+        if !data.is_empty() {
+            self.write_output(data.as_bytes());
         }
     }
 
@@ -92,7 +115,7 @@ impl Renderer {
 
                 // Only move cursor if not contiguous
                 if current_x + 1 != x as i32 || current_y != y as i32 {
-                    ansi::write_move_cursor(&mut output, x, y);
+                    ansi::write_move_cursor(&mut output, x, y + self.row_offset);
                 }
 
                 current_x = x as i32;
@@ -103,7 +126,11 @@ impl Renderer {
                 let bg = ((attr_code >> 8) & 0xFF) as u8;
                 let styles = ((attr_code >> 16) & 0xFF) as u8;
 
-                let ch = char::from_u32(char_code).unwrap_or(' ');
+                let ch = if char_code == 0 {
+                    ' '
+                } else {
+                    char::from_u32(char_code).unwrap_or(' ')
+                };
 
                 // Diff Styles
                 if styles != last_style {
@@ -374,6 +401,34 @@ mod tests {
         let diff = renderer.generate_diff(&back_buffer);
         // Invalid char should be replaced with space
         assert!(diff.ends_with(' '), "Invalid char should render as space");
+    }
+
+    #[test]
+    fn test_row_offset_shifts_cursor_position() {
+        let mut renderer = Renderer::new(10, 3);
+        renderer.set_row_offset(5);
+        let mut back_buffer = vec![0u32; 10 * 3 * 2];
+        // Write 'A' at row 0, col 0 in the buffer
+        back_buffer[0] = 'A' as u32;
+        back_buffer[1] = 1;
+        let diff = renderer.generate_diff(&back_buffer);
+        // Row 0 in buffer + offset 5 = terminal row 6 (1-based)
+        assert!(diff.contains("\x1b[6;1H"), "Row offset should shift cursor to row 6");
+    }
+
+    #[test]
+    fn test_row_offset_does_not_reset_front_buffer() {
+        let mut renderer = primed_renderer(10, 3);
+        let mut back_buffer = vec![0u32; 10 * 3 * 2];
+        back_buffer[0] = 'A' as u32;
+        back_buffer[1] = 1;
+        // First render — primes front buffer with 'A'
+        renderer.generate_diff(&back_buffer);
+        // Now set offset — should NOT reset front buffer
+        renderer.set_row_offset(2);
+        // Same buffer: should produce no cell changes (only the reset prefix)
+        let diff = renderer.generate_diff(&back_buffer);
+        assert_eq!(diff, "\x1b[0m", "setRowOffset should not reset front buffer");
     }
 
     #[test]

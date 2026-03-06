@@ -3,4 +3,4 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const native = require('./native.cjs');
 
-export const { Renderer, TerminalGuard } = native;
+export const { Renderer, TerminalGuard, terminalSize } = native;

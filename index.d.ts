@@ -6,6 +6,9 @@
  * Compares a back buffer (from JS) against an internal front buffer and
  * emits only the minimal ANSI escape sequences needed to update the
  * terminal.
+ *
+ * `row_offset` shifts all cursor positioning by N rows. Used for inline
+ * and partial-screen modes where the renderer doesn't own row 0.
  */
 export declare class Renderer {
   constructor(width: number, height: number)
@@ -15,7 +18,19 @@ export declare class Renderer {
   get height(): number
   /** Resize the renderer and reset the front buffer. */
   resize(width: number, height: number): void
+  /**
+   * Set a row offset for inline/partial-screen modes.
+   * All cursor positioning will be shifted down by this many rows.
+   * Does not reset the front buffer — call resize() if you need a full redraw.
+   */
+  setRowOffset(offset: number): void
   render(backBuffer: Uint32Array): void
+  /**
+   * Write raw bytes to stdout through the same handle the renderer uses.
+   * Use this for cursor rewind sequences in inline mode to avoid
+   * interleaving with Node's process.stdout.write.
+   */
+  writeRaw(data: string): void
 }
 
 /**
@@ -39,6 +54,9 @@ export declare class TerminalGuard {
   /** Query the current terminal size. */
   getSize(): TerminalSize
 }
+
+/** Query the current terminal size without entering any special mode. */
+export declare function terminalSize(): TerminalSize
 
 /** Terminal size returned from `TerminalGuard::get_size()`. */
 export interface TerminalSize {

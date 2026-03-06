@@ -26,8 +26,8 @@ export class RatatatApp extends EventEmitter {
   start() {
     if (this.isRunning) return
 
-    // Enter raw mode and alternate screen (RAII guard)
-    this.terminal = new TerminalGuard()
+    // Enter raw mode, alternate screen, mouse tracking, and bracketed paste (RAII guard)
+    this.terminal = new TerminalGuard(true)
 
     this.isRunning = true
   }

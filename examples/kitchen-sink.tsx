@@ -2,7 +2,7 @@
  * kitchen-sink.tsx — Ratatat interactive kitchen sink
  *
  * Navigate sections with ← → arrow keys. Each section fills the viewport.
- * Sections: Layout · Focus · Graph · Live · Incremental · UI · Htop · Static
+ * Sections: Layout · Focus · Graph · Live · Incremental · UI · Htop · Static · Mouse
  *   UI sub-sections (↑↓ in sidebar): Borders · Colors · Text · Backgrounds · Primitives
  *
  * The Graph section renders an animated bar chart directly to the Uint32Array
@@ -12,7 +12,6 @@
  * Controls:
  *   ← →     navigate sections
  *   Tab      cycle focus (Focus section)
- *   Q        quit
  *   Ctrl+C   quit
  *
  * Run: node --import @oxc-node/core/register examples/kitchen-sink.tsx
@@ -32,13 +31,16 @@ import {
   useInput,
   useFocus,
   useFocusManager,
+  useMouse,
+  useTextInput,
+  useScrollable,
   DevTools,
   Static,
 } from '../dist/index.js'
 
 // ─── Section list ─────────────────────────────────────────────────────────────
 
-const SECTIONS = ['Layout', 'Focus', 'Graph', 'Live', 'Incremental', 'UI', 'Htop', 'Static'] as const
+const SECTIONS = ['Layout', 'Focus', 'Graph', 'Live', 'Incremental', 'UI', 'Htop', 'Static', 'Mouse'] as const
 type SectionName = (typeof SECTIONS)[number]
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -1294,7 +1296,26 @@ function HtopSection({ active }: { active: boolean }) {
 
 // ─── Tab bar (top) ───────────────────────────────────────────────────────────
 
-function TabBar({ current }: { current: number }) {
+function TabBar({ current, onSelect }: { current: number; onSelect: (i: number) => void }) {
+  // Calculate click regions for each tab.
+  // Layout: border(1) + leading-space(1) + for each tab: paddingX(1) + name + paddingX(1) + marginRight(1)
+  const hitRegions = React.useMemo(() => {
+    let x = 2 // border col 0 + leading space col 1
+    return SECTIONS.map((s) => {
+      const start = x
+      const width = s.length + 2 // paddingX(1) each side
+      x += width + 1 // +marginRight(1)
+      return { start, end: start + width - 1 }
+    })
+  }, [])
+
+  useMouse((e) => {
+    if (e.button !== 'left') return
+    if (e.y !== 1) return // tab bar is always row 1 (border on row 0, content row 1)
+    const hit = hitRegions.findIndex((r) => e.x >= r.start && e.x <= r.end)
+    if (hit !== -1) onSelect(hit)
+  })
+
   return (
     <Box borderStyle="single" borderColor="gray" flexShrink={0}>
       <Text> </Text>
@@ -1317,9 +1338,7 @@ function TabBar({ current }: { current: number }) {
         )
       })}
       <Spacer />
-      <Text dim>◀ ▶ </Text>
-      <Text dim>Tab </Text>
-      <Text dim>Q quit </Text>
+      <Text dim>navigate ◀ ▶ or click | Q quit </Text>
     </Box>
   )
 }
@@ -1424,6 +1443,104 @@ function StaticSection({ active }: { active: boolean }) {
   )
 }
 
+// ─── Mouse ────────────────────────────────────────────────────────────────────
+
+interface MouseLogEntry {
+  id: number
+  text: string
+  color: string
+}
+
+let mouseLogId = 0
+
+function MouseSection({ active }: { active: boolean }) {
+  const { rows } = useWindowSize()
+  const [log, setLog] = useState<MouseLogEntry[]>([
+    { id: mouseLogId++, text: 'Click · right-click · scroll wheel', color: 'dim' },
+    { id: mouseLogId++, text: 'Type below — cursor, backspace, Ctrl+U/K/W', color: 'dim' },
+    { id: mouseLogId++, text: 'Paste with ⌘V / ctrl+shift+V', color: 'dim' },
+  ])
+
+  const addLog = (text: string, color = 'white') => setLog((prev) => [...prev, { id: mouseLogId++, text, color }])
+
+  // Mouse events
+  useMouse((e) => {
+    if (!active) return
+    if (e.button === 'left') {
+      addLog(`click  (${e.x}, ${e.y})${e.shift ? ' +shift' : ''}${e.ctrl ? ' +ctrl' : ''}`, 'cyan')
+    } else if (e.button === 'right') {
+      addLog(`right  (${e.x}, ${e.y})`, 'yellow')
+    } else if (e.button === 'middle') {
+      addLog(`middle (${e.x}, ${e.y})`, 'magenta')
+    } else if (e.button === 'scrollUp') {
+      scroll.scrollBy(-1)
+    } else if (e.button === 'scrollDown') {
+      scroll.scrollBy(1)
+    }
+  })
+
+  // Text input
+  const CHROME = 8 // section header ~3, input bar 3, borders/padding
+  const logViewport = Math.max(4, rows - CHROME)
+  const scroll = useScrollable({ viewportHeight: logViewport, contentHeight: log.length })
+
+  const { value, cursor, clear } = useTextInput({
+    isActive: active,
+    onSubmit: (v) => {
+      if (v.trim()) addLog(`› ${v}`, 'green')
+      clear()
+    },
+  })
+
+  const visibleLog = log.slice(scroll.offset, scroll.offset + logViewport)
+
+  // Cursor rendering: inverse block at cursor, trailing space at end
+  const before = value.slice(0, cursor)
+  const atChar = value[cursor] ?? ' '
+  const after = value.slice(cursor + 1)
+
+  return (
+    <Box flexDirection="column" height="100%">
+      <Box marginBottom={1}>
+        <Text bold>Mouse · TextInput · Paste</Text>
+        <Text dim> scroll wheel scrolls log · Enter to submit</Text>
+      </Box>
+
+      {/* Event log */}
+      <Box flexDirection="column" flexGrow={1} overflow="hidden">
+        {visibleLog.map((entry) => (
+          <Text key={entry.id} color={entry.color}>
+            {' '}
+            {entry.text}
+          </Text>
+        ))}
+        {Array.from({ length: Math.max(0, logViewport - visibleLog.length) }).map((_, i) => (
+          <Text key={`pad-${i}`}> </Text>
+        ))}
+      </Box>
+
+      {/* Scroll hint */}
+      {log.length > logViewport && (
+        <Box justifyContent="flex-end">
+          <Text dim>
+            {scroll.offset + 1}–{Math.min(scroll.offset + logViewport, log.length)}/{log.length}
+          </Text>
+        </Box>
+      )}
+
+      {/* Input bar */}
+      <Box borderStyle="single" borderColor="cyan" paddingX={1}>
+        <Text color="cyan" bold>
+          ›{' '}
+        </Text>
+        <Text>{before}</Text>
+        <Text inverse>{atChar}</Text>
+        <Text>{after}</Text>
+      </Box>
+    </Box>
+  )
+}
+
 // ─── Animated sections drive their own tick loop ─────────────────────────────
 // Static sections (Borders, Colors, etc.) produce no renders when idle — the
 // FPS HUD will show the true rate, not a forced 10 FPS from an unnecessary timer.
@@ -1474,11 +1591,12 @@ function KitchenSink() {
   const isUiActive = currentSection === 'UI'
   const isHtopActive = currentSection === 'Htop'
   const isStaticActive = currentSection === 'Static'
+  const isMouseActive = currentSection === 'Mouse'
 
   return (
     <Box flexDirection="column" flexGrow={1}>
       {/* Tab bar at top */}
-      <TabBar current={sectionIdx} />
+      <TabBar current={sectionIdx} onSelect={setSectionIdx} />
 
       {/* Section content fills remaining space */}
       <Box flexDirection="column" flexGrow={1} paddingX={2} paddingTop={1}>
@@ -1490,6 +1608,7 @@ function KitchenSink() {
         {currentSection === 'UI' && <UiSection active={isUiActive} />}
         {currentSection === 'Htop' && <HtopSection active={isHtopActive} />}
         {currentSection === 'Static' && <StaticSection active={isStaticActive} />}
+        {currentSection === 'Mouse' && <MouseSection active={isMouseActive} />}
       </Box>
     </Box>
   )

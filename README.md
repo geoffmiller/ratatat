@@ -61,11 +61,12 @@ The speed comes from two architectural decisions:
 - **Flexbox layout** — Yoga engine, same API as React Native / Ink
 - **Box model** — borders (`single`, `double`, `round`, `bold`, `arrow`), padding, margin, gap
 - **Text styling** — `color`, `backgroundColor`, `bold`, `italic`, `dim`, `underline`, 256-color, hex, rgb
-- **Input handling** — `useInput`, `useStdin`, keyboard + special keys
+- **Input handling** — `useInput`, `useStdin`, keyboard + special keys, bracketed paste
+- **Mouse support** — `useMouse`, click, right-click, scroll wheel, modifier keys (Ratatat only)
+- **`useTextInput`** — managed text input: cursor, backspace/delete, home/end, Ctrl+U/K/W, paste (Ratatat only)
 - **Focus management** — `useFocus`, `useFocusManager`, Tab cycling
 - **Terminal hooks** — `useWindowSize`, `useStdout`, `useStderr`
-- **`useScrollable`** — built-in scrolling primitive (not in Ink); virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`
-- **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
+- **`useScrollable`** — built-in scrolling primitive (not in Ink); virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`- **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
 - **Ink-compatible API** — most Ink apps work with a one-line import change
 
 ## Architecture
@@ -161,6 +162,7 @@ examples/
   use-focus-with-id.tsx    — named focus groups
   use-focus.tsx            — focus management
   use-input.tsx            — keyboard input handling
+  use-mouse.tsx            — useMouse + useTextInput + bracketed paste demo (Ratatat only)
   use-scrollable.tsx       — useScrollable hook isolation demo (Ratatat only)
   use-stderr.tsx           — writing to stderr
   use-stdout.tsx           — writing to stdout

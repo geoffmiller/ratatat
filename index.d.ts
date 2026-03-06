@@ -26,8 +26,11 @@ export declare class Renderer {
  * Node process crashes or the guard is garbage-collected.
  */
 export declare class TerminalGuard {
-  /** Enter raw mode, switch to the alternate screen, and hide the cursor. */
-  constructor()
+  /**
+   * Enter raw mode, switch to the alternate screen, and hide the cursor.
+   * Optionally enable SGR mouse tracking and bracketed paste mode.
+   */
+  constructor(mouse?: boolean | undefined | null)
   /**
    * Restore the terminal to its original state.
    * Safe to call multiple times — only the first call has any effect.

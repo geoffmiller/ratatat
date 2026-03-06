@@ -3,6 +3,7 @@ use std::io::stdout;
 use crossterm::{
     terminal::{enable_raw_mode, disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     cursor::{Hide, Show},
+    event::{EnableMouseCapture, DisableMouseCapture},
     execute,
 };
 
@@ -32,16 +33,26 @@ pub struct TerminalSize {
 #[napi]
 pub struct TerminalGuard {
     active: bool,
+    mouse: bool,
 }
 
 #[napi]
 impl TerminalGuard {
     /// Enter raw mode, switch to the alternate screen, and hide the cursor.
+    /// Optionally enable SGR mouse tracking and bracketed paste mode.
     #[napi(constructor)]
-    pub fn new() -> napi::Result<Self> {
+    pub fn new(mouse: Option<bool>) -> napi::Result<Self> {
+        let mouse = mouse.unwrap_or(false);
         enable_raw_mode().into_napi()?;
-        execute!(stdout(), EnterAlternateScreen, Hide).into_napi()?;
-        Ok(Self { active: true })
+        // Enable alternate screen, hide cursor, optionally enable mouse + bracketed paste
+        if mouse {
+            execute!(stdout(), EnterAlternateScreen, Hide, EnableMouseCapture).into_napi()?;
+            // Bracketed paste: \x1b[?2004h
+            print!("\x1b[?2004h");
+        } else {
+            execute!(stdout(), EnterAlternateScreen, Hide).into_napi()?;
+        }
+        Ok(Self { active: true, mouse })
     }
 
     /// Restore the terminal to its original state.
@@ -50,6 +61,11 @@ impl TerminalGuard {
     pub fn leave(&mut self) -> napi::Result<()> {
         if self.active {
             self.active = false;
+            if self.mouse {
+                // Disable bracketed paste: \x1b[?2004l
+                print!("\x1b[?2004l");
+                let _ = execute!(stdout(), DisableMouseCapture);
+            }
             disable_raw_mode().into_napi()?;
             execute!(stdout(), LeaveAlternateScreen, Show).into_napi()?;
         }
@@ -71,6 +87,10 @@ impl Drop for TerminalGuard {
     fn drop(&mut self) {
         if self.active {
             self.active = false;
+            if self.mouse {
+                print!("\x1b[?2004l");
+                let _ = execute!(stdout(), DisableMouseCapture);
+            }
             let _ = disable_raw_mode();
             let _ = execute!(stdout(), LeaveAlternateScreen, Show);
         }

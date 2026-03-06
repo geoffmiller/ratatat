@@ -14,14 +14,16 @@
  */
 
 import React, { useState } from 'react'
-import { render, Box, Text, Static, useApp, useInput, usePaste } from '../dist/index.js'
+import { render, Box, Text, useApp, useInput, usePaste } from '../dist/index.js'
 
-type EventLine = { id: number; text: string }
+type EventLine = {
+  id: number
+  source: 'usePaste' | 'useInput'
+  payload: string
+}
 
-function preview(text: string, max = 48) {
-  const oneLine = text.replace(/\r\n?/g, '\\n').replace(/\n/g, '\\n')
-  if (oneLine.length <= max) return oneLine
-  return `${oneLine.slice(0, max)}…`
+function normalizeNewlines(text: string) {
+  return text.replace(/\r\n?/g, '\n')
 }
 
 function App() {
@@ -29,13 +31,18 @@ function App() {
   const [pasteActive, setPasteActive] = useState(true)
   const [events, setEvents] = useState<EventLine[]>([])
 
-  const pushEvent = (text: string) => {
-    setEvents((prev) => [...prev, { id: prev.length + 1, text }])
+  const pushEvent = (source: EventLine['source'], payload: string) => {
+    const normalized = normalizeNewlines(payload)
+    setEvents((prev) => {
+      const next = [...prev, { id: prev.length + 1, source, payload: normalized }]
+      // Keep a bounded log so giant pastes don't consume the full UI forever.
+      return next.slice(-16)
+    })
   }
 
   usePaste(
     (text) => {
-      pushEvent(`[usePaste] len=${text.length} payload="${preview(text)}"`)
+      pushEvent('usePaste', text)
     },
     { isActive: pasteActive },
   )
@@ -56,10 +63,10 @@ function App() {
       return
     }
 
-    // useInput sees typed keys always; it only sees paste payload when usePaste
+    // useInput always sees typed keys; it only sees paste payload when usePaste
     // has no active listener (fallback behavior).
     if (input.length > 0) {
-      pushEvent(`[useInput] len=${input.length} payload="${preview(input)}"`)
+      pushEvent('useInput', input)
     }
   })
 
@@ -78,16 +85,20 @@ function App() {
 
       <Text dim>p toggle paste handler · c clear log · q/Esc quit · paste multiline text to test channel routing</Text>
 
-      <Box borderStyle="round" borderColor="gray" paddingX={1} paddingY={1} flexDirection="column">
+      <Box borderStyle="round" borderColor="gray" paddingX={1} paddingY={1} flexDirection="column" gap={1}>
         <Text bold>Events</Text>
-        <Static items={events}>
-          {(item) => (
-            <Text key={item.id} color="white">
-              {item.text}
-            </Text>
-          )}
-        </Static>
+
         {events.length === 0 && <Text dim>(no events yet)</Text>}
+
+        {events.map((item) => (
+          <Box key={item.id} flexDirection="column">
+            <Text color={item.source === 'usePaste' ? 'green' : 'yellow'} bold>
+              [{item.source}] len={item.payload.length}
+            </Text>
+            <Text>{item.payload}</Text>
+            <Text dim>{'─'.repeat(40)}</Text>
+          </Box>
+        ))}
       </Box>
     </Box>
   )

@@ -89,7 +89,7 @@ const loop = createInlineLoop(
     }
     setCell(buf, cols, cols - 1, lastRow, '│', BORDER_FG)
   },
-  { rows: ROWS, fps: 30 },
+  { rows: ROWS, fps: 30, onExit: 'destroy' },
 )
 
 // Input handling

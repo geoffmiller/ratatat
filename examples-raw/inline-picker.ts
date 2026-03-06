@@ -42,7 +42,7 @@ const HINT_FG = 238
 const ROWS = ITEMS.length + 4 // 2 border + 1 header + 1 hint
 
 const loop = createInlineLoop(
-  (buf, cols, rows) => {
+  (buf, cols, rows, frame) => {
     const listRows = rows - 4
     const visibleItems = ITEMS.slice(0, listRows)
 
@@ -83,7 +83,7 @@ const loop = createInlineLoop(
 
     // Bottom border + hint
     const lastRow = rows - 1
-    const hint = '│  ↑↓ navigate   enter select   ctrl+c cancel'
+    const hint = `│  ↑↓ navigate   enter select   ctrl+c cancel  [frame ${frame}]`
     for (let i = 0; i < Math.min(hint.length, cols - 1); i++) {
       setCell(buf, cols, i, lastRow, hint[i]!, HINT_FG)
     }

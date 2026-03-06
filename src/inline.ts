@@ -5,24 +5,13 @@
  * without switching to the alternate screen.
  *
  * Strategy:
- *   - Print `renderRows` newlines to scroll the terminal and reserve space.
- *   - Rewind cursor back up by `renderRows` — cursor is now at the TOP of
- *     the reserved region, which is guaranteed to fit on screen.
- *   - rowOffset stays 0 (default). The Rust renderer's absolute moves
- *     (\x1b[1;1H etc) are wrong — we use only the relative rewind before
- *     each frame, which puts the cursor at the right place.
- *
- * Wait — the Rust renderer still emits absolute moves. We can't avoid them.
- * The fix: don't use absolute moves at all for inline. Use CPR (\x1b[6n)
- * to query the cursor row after reserving space, then setRowOffset to that.
- *
- * Actual strategy (no CPR needed):
- *   - Print renderRows newlines → terminal scrolls, cursor at bottom of region.
- *   - Rewind renderRows rows up → cursor at TOP of region.
- *   - Query that row via the fact that after scroll+rewind, we know exactly
- *     where the cursor is: termRows - renderRows (1-based).
- *   - setRowOffset(termRows - renderRows - 1) so buffer row 0 → that terminal row.
- *   - Subsequent frames: rewind renderRows, render. Correct.
+ *   1. Print renderRows newlines — makes room even if cursor was near the bottom.
+ *      The terminal scrolls as needed; the prompt line stays in scrollback.
+ *   2. Send CPR (\x1b[6n) and read the response (\x1b[row;colR) — this tells
+ *      us the exact terminal row the cursor is on after scrolling.
+ *   3. Rewind renderRows rows up — cursor is now at the top of the region.
+ *   4. setRowOffset(row - renderRows - 1) so Rust absolute moves land correctly.
+ *   5. Render first frame. Subsequent frames: rewind renderRows, render.
  */
 
 import { Renderer, terminalSize } from '../index.js'
@@ -69,6 +58,28 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
     renderer!.render(buf!)
   }
 
+  function startRendering(cursorRow: number) {
+    // cursorRow is 1-based, the row the cursor is on AFTER the leading newlines.
+    // Rewind renderRows up — cursor now at top of our region.
+    process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
+
+    // rowOffset: buffer row 0 must map to terminal row (cursorRow - renderRows).
+    // Rust emits \x1b[offset+bufRow+1;colH, so:
+    //   offset + 0 + 1 = cursorRow - renderRows
+    //   offset = cursorRow - renderRows - 1
+    renderer!.setRowOffset(cursorRow - renderRows - 1)
+
+    tick()
+
+    interval = setInterval(
+      () => {
+        process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
+        tick()
+      },
+      Math.round(1000 / fps),
+    )
+  }
+
   function start() {
     const size = terminalSize()
     cols = size.cols
@@ -85,29 +96,24 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
     renderer = new Renderer(cols, renderRows)
     buf = new Uint32Array(cols * renderRows * 2)
 
-    // Reserve space: print renderRows newlines so the terminal scrolls
-    // and the region fits entirely on screen. Then rewind back to the
-    // top of the region.
-    //
-    // After the newlines, cursor is at the bottom of the terminal (row termRows).
-    // After rewinding renderRows rows up, cursor is at row (termRows - renderRows).
-    // That's 0-based offset: termRows - renderRows - 1.
-    //
-    // We don't print renderRows+1 (for the prompt line) because the prompt
-    // line is already above row 1 of our region — it's in the scrollback.
+    // Reserve space and query cursor position via CPR.
+    // Print renderRows newlines so there's room even at the bottom of the terminal.
+    // Then request cursor position — terminal responds with \x1b[row;colR on stdin.
     process.stdout.write('\n'.repeat(renderRows))
-    process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
-    renderer.setRowOffset(termRows - renderRows - 1)
+    process.stdout.write('\x1b[6n') // CPR request
 
-    tick() // first frame
-
-    interval = setInterval(
-      () => {
-        process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
-        tick()
-      },
-      Math.round(1000 / fps),
-    )
+    // Read CPR response from stdin, then start rendering
+    let cprBuf = ''
+    const onData = (chunk: string) => {
+      cprBuf += chunk
+      const m = cprBuf.match(/\x1b\[(\d+);(\d+)R/)
+      if (m) {
+        process.stdin.off('data', onData)
+        const cursorRow = parseInt(m[1], 10)
+        startRendering(cursorRow)
+      }
+    }
+    process.stdin.on('data', onData)
   }
 
   function stop() {

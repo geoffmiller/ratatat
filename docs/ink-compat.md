@@ -4,28 +4,29 @@ Ratatat implements the full Ink public API. This document tracks coverage.
 
 ## API Parity
 
-| Export                       | Status | Notes                                                                     |
-| ---------------------------- | ------ | ------------------------------------------------------------------------- |
-| `render()`                   | ✅     | Returns `{ rerender, unmount, waitUntilExit, app, input }`                |
-| `Box`                        | ✅     | Full Yoga layout props                                                    |
-| `Text`                       | ✅     | `color`, `bold`, `italic`, `underline`, `strikethrough`, `dim`, `inverse` |
-| `Newline`                    | ✅     |                                                                           |
-| `Spacer`                     | ✅     |                                                                           |
-| `Static`                     | ✅     | Append-only scrollback                                                    |
-| `Transform`                  | ✅     | String transform applied to children text                                 |
-| `renderToString()`           | ✅     | Synchronous headless rendering                                            |
-| `measureElement()`           | ✅     | Returns `{ width, height }` after layout                                  |
-| `useApp()`                   | ✅     | `{ exit, quit }`                                                          |
-| `useInput()`                 | ✅     | Full key support: arrows, ctrl, meta, delete, pageUp/Down, home/end       |
-| `useFocus()`                 | ✅     |                                                                           |
-| `useFocusManager()`          | ✅     |                                                                           |
-| `useStdin()`                 | ✅     |                                                                           |
-| `useStdout()`                | ✅     |                                                                           |
-| `useStderr()`                | ✅     |                                                                           |
-| `useBoxMetrics()`            | ✅     | `{ width, height, left, top, hasMeasured }`                               |
-| `useIsScreenReaderEnabled()` | ✅     | Stub — always returns `false`                                             |
-| `useCursor()`                | ✅     | Stub — `setCursorPosition` is a no-op                                     |
-| `useWindowSize()`            | ✅     | Terminal dimensions — `{ columns, rows }`                                 |
+| Export                       | Status | Notes                                                                              |
+| ---------------------------- | ------ | ---------------------------------------------------------------------------------- |
+| `render()`                   | ✅     | Returns `{ rerender, unmount, waitUntilExit, app, input }`                         |
+| `Box`                        | ✅     | Full Yoga layout props                                                             |
+| `Text`                       | ✅     | `color`, `bold`, `italic`, `underline`, `strikethrough`, `dim`, `inverse`          |
+| `Newline`                    | ✅     |                                                                                    |
+| `Spacer`                     | ✅     |                                                                                    |
+| `Static`                     | ✅     | Append-only scrollback                                                             |
+| `Transform`                  | ✅     | String transform applied to children text                                          |
+| `renderToString()`           | ✅     | Synchronous headless rendering                                                     |
+| `measureElement()`           | ✅     | Returns `{ width, height }` after layout                                           |
+| `useApp()`                   | ✅     | `{ exit, quit }`                                                                   |
+| `useInput()`                 | ✅     | Full key support: arrows, ctrl, meta, delete, pageUp/Down, home/end                |
+| `usePaste()`                 | ✅     | Bracketed paste channel; falls back to `useInput` when no paste listener is active |
+| `useFocus()`                 | ✅     |                                                                                    |
+| `useFocusManager()`          | ✅     |                                                                                    |
+| `useStdin()`                 | ✅     |                                                                                    |
+| `useStdout()`                | ✅     |                                                                                    |
+| `useStderr()`                | ✅     |                                                                                    |
+| `useBoxMetrics()`            | ✅     | `{ width, height, left, top, hasMeasured }`                                        |
+| `useIsScreenReaderEnabled()` | ✅     | Stub — always returns `false`                                                      |
+| `useCursor()`                | ✅     | Stub — `setCursorPosition` is a no-op                                              |
+| `useWindowSize()`            | ✅     | Terminal dimensions — `{ columns, rows }`                                          |
 
 ## Ratatat-Only API
 

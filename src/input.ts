@@ -63,10 +63,16 @@ export class InputParser extends EventEmitter {
       }
 
       if (this._pasteBuffer.includes('\u001b[201~')) {
-        // End marker arrived — emit the complete paste text
+        // End marker arrived — emit the complete paste text.
+        // Ink-compatible behavior:
+        // - if a paste listener exists (usePaste/useTextInput), keep paste on that channel
+        // - otherwise, fall back to normal input channel so useInput still receives pasted text
         const text = this._pasteBuffer.replace('\u001b[201~', '')
         this._pasteBuffer = null
         this.emit('paste', text)
+        if (this.listenerCount('paste') === 0) {
+          this.emit('data', text)
+        }
       }
       return
     }

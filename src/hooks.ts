@@ -142,6 +142,54 @@ export const useInput = (handler: InputHandler) => {
   }, [context])
 }
 
+// ─── usePaste ─────────────────────────────────────────────────────────────────
+
+export interface UsePasteOptions {
+  /**
+   * Enable or disable capturing pasted text.
+   * Useful when multiple components use usePaste and only one should be active.
+   *
+   * @default true
+   */
+  isActive?: boolean
+}
+
+export type PasteHandler = (text: string) => void
+
+/**
+ * Subscribe to bracketed paste events.
+ *
+ * `usePaste` and `useInput` can be used together. Paste content is delivered
+ * through this hook and not forwarded to useInput while at least one paste
+ * listener is active.
+ */
+export const usePaste = (handler: PasteHandler, options: UsePasteOptions = {}) => {
+  const context = useContext(RatatatContext)
+  if (!context) {
+    throw new Error('usePaste must be used within a Ratatat App environment')
+  }
+
+  const { isActive = true } = options
+
+  const handlerRef = useRef<PasteHandler>(handler)
+  useEffect(() => {
+    handlerRef.current = handler
+  })
+
+  useEffect(() => {
+    if (!isActive) return
+
+    const onPaste = (text: string) => {
+      handlerRef.current(text)
+    }
+
+    context.input.on('paste', onPaste)
+    return () => {
+      context.input.off('paste', onPaste)
+    }
+  }, [context, isActive])
+}
+
 /**
  * Raw access to the RatatatContext — app instance + input parser.
  * Useful for advanced integrations (e.g. DevTools, custom hooks).

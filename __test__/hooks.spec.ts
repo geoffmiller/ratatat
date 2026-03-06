@@ -1,7 +1,7 @@
 import test from 'ava'
 import React, { createElement } from 'react'
 import EventEmitter from 'eventemitter3'
-import { RatatatContext, useInput } from '../dist/hooks.js'
+import { RatatatContext, useInput, usePaste } from '../dist/hooks.js'
 import { create as createTestRenderer } from 'react-test-renderer'
 
 // Configure React act() environment
@@ -223,4 +223,97 @@ test('useInput key helper produces all required Key fields', (t) => {
   t.true('home' in received[0].k, 'home field present')
   t.true('end' in received[0].k, 'end field present')
   t.true('delete' in received[0].k, 'delete field present')
+})
+
+// ─── usePaste ────────────────────────────────────────────────────────────────
+
+test('usePaste: subscribes to paste and receives payload', async (t) => {
+  const { emitter, onCalls } = createMockInput()
+  const ctx = makeContextValue(emitter)
+
+  let received = ''
+
+  function TestComponent() {
+    usePaste((text) => {
+      received = text
+    })
+    return null
+  }
+
+  let renderer
+  await React.act(async () => {
+    renderer = createTestRenderer(createElement(RatatatContext.Provider, { value: ctx }, createElement(TestComponent)))
+  })
+
+  t.is(onCalls.filter((e) => e === 'paste').length, 1, 'paste subscribed once')
+
+  emitter.emit('paste', 'hello world')
+  t.is(received, 'hello world')
+
+  await React.act(async () => {
+    renderer.unmount()
+  })
+})
+
+test('usePaste: isActive=false does not subscribe or fire', async (t) => {
+  const { emitter, onCalls } = createMockInput()
+  const ctx = makeContextValue(emitter)
+
+  let fired = false
+
+  function TestComponent() {
+    usePaste(
+      () => {
+        fired = true
+      },
+      { isActive: false },
+    )
+    return null
+  }
+
+  let renderer
+  await React.act(async () => {
+    renderer = createTestRenderer(createElement(RatatatContext.Provider, { value: ctx }, createElement(TestComponent)))
+  })
+
+  t.is(onCalls.filter((e) => e === 'paste').length, 0, 'paste not subscribed when inactive')
+
+  emitter.emit('paste', 'ignored')
+  t.false(fired)
+
+  await React.act(async () => {
+    renderer.unmount()
+  })
+})
+
+test('usePaste + useInput: paste does not go through useInput channel', async (t) => {
+  const { emitter } = createMockInput()
+  const ctx = makeContextValue(emitter)
+
+  let pasteCount = 0
+  let inputCount = 0
+
+  function TestComponent() {
+    usePaste(() => {
+      pasteCount++
+    })
+    useInput(() => {
+      inputCount++
+    })
+    return null
+  }
+
+  let renderer
+  await React.act(async () => {
+    renderer = createTestRenderer(createElement(RatatatContext.Provider, { value: ctx }, createElement(TestComponent)))
+  })
+
+  emitter.emit('paste', 'chunked\ntext')
+
+  t.is(pasteCount, 1)
+  t.is(inputCount, 0)
+
+  await React.act(async () => {
+    renderer.unmount()
+  })
 })

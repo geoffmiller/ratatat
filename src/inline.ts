@@ -100,6 +100,7 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
     // The CPR response arrives asynchronously, so these will have flushed
     // through Node's stdout before Rust's stdout is used.
     write('\x1b[?25l') // hide cursor
+    write('\x1b[?2004h') // enable bracketed paste for usePaste/useTextInput
     write('\n'.repeat(renderRows))
     write('\x1b[6n') // CPR request
 
@@ -137,6 +138,7 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
         write(`\x1b[${regionTopRow + renderRows + 1};1H`)
       }
 
+      write('\x1b[?2004l') // disable bracketed paste
       write('\x1b[?25h') // show cursor
     }
 

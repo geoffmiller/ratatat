@@ -163,18 +163,40 @@ test('bracketed paste across multiple data events', (t) => {
   parser.stop()
 })
 
-test('bracketed paste does not emit keydown or data events', (t) => {
+test('bracketed paste does not emit keydown events', (t) => {
   const { stdin, parser } = makeParser()
   let keydownFired = false
-  let dataFired = false
   parser.on('keydown', () => {
     keydownFired = true
   })
+  stdin.emit('data', '\u001b[200~test\u001b[201~')
+  t.false(keydownFired)
+  parser.stop()
+})
+
+test('bracketed paste falls back to data when no paste listeners are active', (t) => {
+  const { stdin, parser } = makeParser()
+  let dataPayload = ''
+  parser.on('data', (value) => {
+    dataPayload = value
+  })
+  stdin.emit('data', '\u001b[200~test\u001b[201~')
+  t.is(dataPayload, 'test')
+  parser.stop()
+})
+
+test('bracketed paste does not emit data when a paste listener is active', (t) => {
+  const { stdin, parser } = makeParser()
+  let dataFired = false
+  let pasted = ''
   parser.on('data', () => {
     dataFired = true
   })
+  parser.on('paste', (text) => {
+    pasted = text
+  })
   stdin.emit('data', '\u001b[200~test\u001b[201~')
-  t.false(keydownFired)
+  t.is(pasted, 'test')
   t.false(dataFired)
   parser.stop()
 })

@@ -73,7 +73,7 @@ The speed comes from two architectural decisions:
 - **Flexbox layout** — Yoga engine, same API as React Native / Ink
 - **Box model** — borders (`single`, `double`, `round`, `bold`, `arrow`), padding, margin, gap
 - **Text styling** — `color`, `backgroundColor`, `bold`, `italic`, `dim`, `underline`, 256-color, hex, rgb
-- **Input handling** — `useInput`, `useStdin`, keyboard + special keys
+- **Input handling** — `useInput`, `usePaste`, `useStdin`, keyboard + special keys
 - **Focus management** — `useFocus`, `useFocusManager`, Tab cycling
 - **Terminal hooks** — `useWindowSize`, `useStdout`, `useStderr`
 - **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
@@ -314,7 +314,7 @@ await waitUntilExit()
 console.log('Done!')
 ```
 
-All hooks work in inline mode: `useInput`, `useApp`, `useFocus`, `useMouse`, `useTextInput`, etc.
+All hooks work in inline mode: `useInput`, `usePaste`, `useApp`, `useFocus`, `useMouse`, `useTextInput`, etc.
 
 ### `createInlineLoop(paint, options?)`
 
@@ -429,6 +429,11 @@ useInput((input, key) => {
   if (key.ctrl && input === 'c') { ... }
 })
 
+// Paste channel (Ink-compatible)
+usePaste((text) => {
+  // full pasted string, including newlines
+})
+
 // App lifecycle
 const { exit } = useApp()
 
@@ -469,7 +474,7 @@ const { value, cursor, setValue, clear } = useTextInput({
 ```bash
 npm run build      # Rust native add-on (napi-rs)
 npm run build:ts   # TypeScript
-npm test           # 209 tests
+npm test           # 219 tests
 ```
 
 ## License

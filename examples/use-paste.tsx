@@ -90,15 +90,23 @@ function App() {
 
         {events.length === 0 && <Text dim>(no events yet)</Text>}
 
-        {events.map((item) => (
-          <Box key={item.id} flexDirection="column">
-            <Text color={item.source === 'usePaste' ? 'green' : 'yellow'} bold>
-              [{item.source}] len={item.payload.length}
-            </Text>
-            <Text>{item.payload}</Text>
-            <Text dim>{'─'.repeat(40)}</Text>
-          </Box>
-        ))}
+        {events.map((item) => {
+          const lines = item.payload.split('\n')
+          return (
+            <Box key={item.id} flexDirection="column">
+              <Text color={item.source === 'usePaste' ? 'green' : 'yellow'} bold>
+                [{item.source}] len={item.payload.length} lines={lines.length}
+              </Text>
+              {/* Text nodes are single-line in the current renderer; render payload as explicit lines. */}
+              <Box flexDirection="column">
+                {lines.map((line, i) => (
+                  <Text key={i}>{line.length > 0 ? line : ' '}</Text>
+                ))}
+              </Box>
+              <Text dim>{'─'.repeat(40)}</Text>
+            </Box>
+          )
+        })}
       </Box>
     </Box>
   )

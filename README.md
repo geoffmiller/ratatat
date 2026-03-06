@@ -66,7 +66,8 @@ The speed comes from two architectural decisions:
 - **`useTextInput`** — managed text input: cursor, backspace/delete, home/end, Ctrl+U/K/W, paste (Ratatat only)
 - **Focus management** — `useFocus`, `useFocusManager`, Tab cycling
 - **Terminal hooks** — `useWindowSize`, `useStdout`, `useStderr`
-- **`useScrollable`** — built-in scrolling primitive (not in Ink); virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`- **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
+- **`useScrollable`** — built-in scrolling primitive (not in Ink); virtual viewport over any data, keyboard nav, `scrollBy`/`scrollToTop`/`scrollToBottom`
+- **App lifecycle** — `useApp().exit()`, SIGWINCH resize, alternate screen, raw mode
 - **Ink-compatible API** — most Ink apps work with a one-line import change
 
 ## Architecture
@@ -356,10 +357,24 @@ const { write } = useStdout()
 const { write } = useStderr()
 
 // Scrollable viewport — Ratatat only
-const scroll = useScrollable({ viewportSize: 20, contentSize: items.length })
+const scroll = useScrollable({ viewportHeight: 20, contentHeight: items.length })
 // scroll.offset, scroll.atTop, scroll.atBottom
 // scroll.scrollBy(n), scroll.scrollToTop(), scroll.scrollToBottom()
 const visible = items.slice(scroll.offset, scroll.offset + 20)
+
+// Mouse — Ratatat only
+useMouse((e) => {
+  if (e.button === 'left') { ... }      // left | right | middle | scrollUp | scrollDown
+  // e.x, e.y, e.shift, e.ctrl, e.meta
+})
+
+// Text input — Ratatat only
+const { value, cursor, setValue, clear } = useTextInput({
+  initialValue: '',
+  onSubmit: (v) => { ... },
+  onChange: (v) => { ... },
+  isActive: true,
+})
 ```
 
 ## Development
@@ -367,7 +382,7 @@ const visible = items.slice(scroll.offset, scroll.offset + 20)
 ```bash
 npm run build      # Rust native add-on (napi-rs)
 npm run build:ts   # TypeScript
-npm test           # 164 tests
+npm test           # 205 tests
 ```
 
 ## License

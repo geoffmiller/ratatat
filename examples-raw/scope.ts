@@ -3,7 +3,7 @@
  *
  * Plots multiple sine waves with slowly drifting frequencies and phases.
  * Each harmonic is a distinct Ratatat brand color. The composite sum is
- * drawn as a bright white line on top. Looks like a real oscilloscope.
+ * drawn as bright white on top. Looks like a real oscilloscope.
  *
  * Direct Uint32Array buffer painting — no React, no Yoga, no reconciler.
  *
@@ -18,12 +18,12 @@ import { createLoop, setCell } from './harness.js'
 // ─── Harmonics ────────────────────────────────────────────────────────────────
 
 interface Harmonic {
-  freq: number // base cycles across the screen
-  freqDrift: number // drift rate (cycles/sec)
-  phase: number // current phase offset (radians)
-  phaseDrift: number // phase drift rate (radians/sec)
-  amp: number // amplitude 0–1
-  color: number // 256-color fg index
+  freq: number
+  freqDrift: number
+  phase: number
+  phaseDrift: number
+  amp: number
+  color: number
 }
 
 const HARMONICS: Harmonic[] = [
@@ -34,14 +34,45 @@ const HARMONICS: Harmonic[] = [
   { freq: 11.0, freqDrift: 0.13, phase: 3.2, phaseDrift: 3.1, amp: 0.08, color: 208 }, // orange
 ]
 
+// ─── Persistent dirty-cell tracking ──────────────────────────────────────────
+// Track which cells we painted last frame so we can explicitly clear them
+// this frame if we're not painting them again. The Rust diff engine only
+// emits changes — if we just zero-fill the back buffer, cells that were
+// painted last frame appear as "no change" and never get erased.
+
+let prevPainted = new Set<number>() // encoded as y * MAX_COLS + x
+let currPainted = new Set<number>()
+
+function cellKey(x: number, y: number, cols: number): number {
+  return y * cols + x
+}
+
+function paintCell(buf: Uint32Array, cols: number, x: number, y: number, char: string, fg: number, bold = false) {
+  setCell(buf, cols, x, y, char, fg, 0, bold ? 1 : 0)
+  currPainted.add(cellKey(x, y, cols))
+}
+
+function clearStale(buf: Uint32Array, cols: number) {
+  for (const key of prevPainted) {
+    if (!currPainted.has(key)) {
+      const x = key % cols
+      const y = Math.floor(key / cols)
+      // Write an explicit space so the diff engine sees the change
+      setCell(buf, cols, x, y, ' ', 0)
+    }
+  }
+}
+
 // ─── Paint ────────────────────────────────────────────────────────────────────
 
 let lastT = performance.now() / 1000
 
 function paint(buf: Uint32Array, cols: number, rows: number, _frame: number) {
   const t = performance.now() / 1000
-  const dt = Math.min(t - lastT, 0.1) // clamp dt so a tab switch doesn't explode phases
+  const dt = Math.min(t - lastT, 0.1)
   lastT = t
+
+  currPainted = new Set()
 
   // Advance drifts
   for (const h of HARMONICS) {
@@ -49,52 +80,45 @@ function paint(buf: Uint32Array, cols: number, rows: number, _frame: number) {
     h.freq = Math.max(0.5, Math.min(20, h.freq + h.freqDrift * dt))
   }
 
-  // Chart area — 1 row padding top and bottom for labels
   const chartTop = 1
   const chartBottom = rows - 2
   const chartHeight = chartBottom - chartTop
   const midRow = chartTop + Math.floor(chartHeight / 2)
   const halfH = chartHeight / 2
+  const totalAmp = HARMONICS.reduce((a, h) => a + h.amp, 0)
 
   // Center line
   for (let x = 0; x < cols; x++) {
-    setCell(buf, cols, x, midRow, '─', 234)
+    paintCell(buf, cols, x, midRow, '─', 234)
   }
-
-  // Precompute composite and per-harmonic rows for each column,
-  // then draw composite first (bottom layer), harmonics on top.
-  const totalAmp = HARMONICS.reduce((a, h) => a + h.amp, 0)
 
   for (let x = 0; x < cols; x++) {
     const xNorm = x / Math.max(cols - 1, 1)
 
-    // Composite sum — draw first so harmonics paint over it
+    // Composite — drawn first, harmonics paint over it
     let sum = 0
     for (const h of HARMONICS) {
       sum += h.amp * Math.sin(2 * Math.PI * h.freq * xNorm + h.phase)
     }
-    const normSum = sum / totalAmp
-    const compositeRow = midRow - Math.round(normSum * halfH)
+    const compositeRow = midRow - Math.round((sum / totalAmp) * halfH)
     if (compositeRow >= chartTop && compositeRow <= chartBottom) {
-      setCell(buf, cols, x, compositeRow, '▪', 231, 0, 1) // bright white ▪, bold, no bg fill
+      paintCell(buf, cols, x, compositeRow, '▪', 231, true)
     }
 
-    // Individual harmonics — drawn on top of composite
+    // Individual harmonics on top
     for (const h of HARMONICS) {
       const v = h.amp * Math.sin(2 * Math.PI * h.freq * xNorm + h.phase)
       const row = midRow - Math.round(v * halfH)
       if (row < chartTop || row > chartBottom) continue
-      // Bold ▪ so harmonics are clearly visible against the background
-      setCell(buf, cols, x, row, '▪', h.color, 0, 1)
+      paintCell(buf, cols, x, row, '▪', h.color, true)
     }
   }
 
-  // Y-axis tick marks
-  setCell(buf, cols, 2, chartTop, '+', 240)
-  setCell(buf, cols, 2, midRow, '·', 240)
-  setCell(buf, cols, 2, chartBottom, '-', 240)
+  // Clear cells painted last frame that aren't painted this frame
+  clearStale(buf, cols)
+  prevPainted = currPainted
 
-  // Legend — harmonic colors + composite
+  // Legend
   const labels = [
     { label: '▪ composite', color: 231 },
     { label: '▪ f1', color: HARMONICS[0]!.color },
@@ -105,11 +129,10 @@ function paint(buf: Uint32Array, cols: number, rows: number, _frame: number) {
   ]
   let legendX = 4
   for (const { label, color } of labels) {
-    for (let i = 0; i < label.length; i++) {
+    for (let i = 0; i < label.length && legendX + i < cols - 20; i++) {
       setCell(buf, cols, legendX + i, chartTop, label[i]!, color, 0, 1)
     }
     legendX += label.length + 2
-    if (legendX >= cols - 20) break
   }
 
   // Status bar

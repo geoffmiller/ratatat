@@ -99,6 +99,59 @@ process.on('SIGWINCH', () => {
 })
 ```
 
+## Gotcha: Sparse Updates and the Diff Engine
+
+The Rust diff engine only emits **changes** — cells that are identical to the previous frame produce no output. This is what makes it fast, but it has one consequence you must handle yourself:
+
+**If you don't paint a cell this frame, the diff engine assumes it hasn't changed and leaves it alone.** It won't erase what was there before.
+
+This matters for **sparse painters** — demos that only paint a waveform, a cursor, or a moving object each frame rather than filling every cell. Simply zero-filling the buffer isn't enough: a zero cell looks the same as a "no change" cell to the diff engine.
+
+**Two patterns that work:**
+
+**1. Paint every cell every frame** (fire, Conway's Life) — always safe, no extra bookkeeping. If your demo naturally fills the whole screen, do this.
+
+```ts
+// Zero-fill then repaint everything — diff engine handles the rest
+buf.fill(0)
+for (let y = 0; y < rows; y++) {
+  for (let x = 0; x < cols; x++) {
+    setCell(buf, cols, x, y, computeChar(x, y), computeColor(x, y))
+  }
+}
+```
+
+**2. Track painted cells, explicitly clear stale ones** (oscilloscope, sprites, cursors) — for demos that only paint a subset of cells each frame.
+
+```ts
+let prevPainted = new Set<number>()
+let currPainted = new Set<number>()
+
+function paintTracked(buf, cols, x, y, char, fg) {
+  setCell(buf, cols, x, y, char, fg)
+  currPainted.add(y * cols + x)
+}
+
+function clearStale(buf, cols) {
+  for (const key of prevPainted) {
+    if (!currPainted.has(key)) {
+      // Write an explicit space — diff engine sees it as a change and erases
+      setCell(buf, cols, key % cols, Math.floor(key / cols), ' ', 0)
+    }
+  }
+}
+
+// In your paint function:
+currPainted = new Set()
+// ... paint your sparse cells with paintTracked() ...
+clearStale(buf, cols)
+prevPainted = currPainted
+```
+
+See `examples-raw/scope.ts` for a full working example of this pattern.
+
+**Also watch out for block-fill characters** (`█`, `▓`, `▒`, `░`). These paint the cell's **background color**, not just the foreground. With `bg=0` on a non-black terminal theme, they leave a colored smear that persists. Use foreground-only characters (`▪`, `·`, `│`, `─`) for anything that moves.
+
 ## The Harness
 
 `examples-raw/harness.ts` wraps all the boilerplate into a single `createLoop` call:
@@ -139,6 +192,15 @@ node --import @oxc-node/core/register examples-raw/conway.ts
 
 # Doom-style plasma fire
 node --import @oxc-node/core/register examples-raw/fire.ts
+
+# Matrix digital rain
+node --import @oxc-node/core/register examples-raw/matrix.ts
+
+# Frame timing oscilloscope — Ratatat visualizing its own render loop
+node --import @oxc-node/core/register examples-raw/jitter.ts
+
+# Sine harmonic oscilloscope — 5 drifting harmonics + composite
+node --import @oxc-node/core/register examples-raw/scope.ts
 ```
 
 ## Color Reference

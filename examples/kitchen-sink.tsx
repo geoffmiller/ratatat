@@ -1338,8 +1338,7 @@ function TabBar({ current, onSelect }: { current: number; onSelect: (i: number) 
         )
       })}
       <Spacer />
-      <Text dim>◀ ▶ navigate click to jump </Text>
-      <Text dim>Q quit </Text>
+      <Text dim>navigate ◀ ▶ or click | Q quit </Text>
     </Box>
   )
 }

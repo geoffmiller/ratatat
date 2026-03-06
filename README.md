@@ -171,6 +171,9 @@ examples-raw/              — React-free direct buffer painting (no Yoga, no re
   harness.ts               — minimal render loop (TerminalGuard + Renderer + setInterval)
   conway.ts                — Conway's Game of Life, 20fps, age-colored cells
   fire.ts                  — Doom-style plasma fire, 30fps, 256-color palette
+  matrix.ts                — Matrix digital rain, age-based fade buffer
+  jitter.ts                — frame timing oscilloscope — Ratatat visualizing its own render loop
+  scope.ts                 — sine harmonic oscilloscope, 5 drifting harmonics + composite
   use-stderr.tsx           — writing to stderr
   use-stdout.tsx           — writing to stdout
   use-transition.tsx       — useTransition for non-blocking updates

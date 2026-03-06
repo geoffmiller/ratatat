@@ -25,6 +25,16 @@ pub struct TerminalSize {
     pub rows: u32,
 }
 
+/// Query the current terminal size without entering any special mode.
+#[napi]
+pub fn terminal_size() -> napi::Result<TerminalSize> {
+    let (cols, rows) = crossterm::terminal::size().into_napi()?;
+    Ok(TerminalSize {
+        cols: cols as u32,
+        rows: rows as u32,
+    })
+}
+
 /// RAII guard that enters raw mode + alternate screen on construction
 /// and restores the terminal on drop (or explicit `leave()` call).
 ///
@@ -96,3 +106,4 @@ impl Drop for TerminalGuard {
         }
     }
 }
+

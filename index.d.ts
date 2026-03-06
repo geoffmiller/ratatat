@@ -49,6 +49,9 @@ export declare class TerminalGuard {
   getSize(): TerminalSize
 }
 
+/** Query the current terminal size without entering any special mode. */
+export declare function terminalSize(): TerminalSize
+
 /** Terminal size returned from `TerminalGuard::get_size()`. */
 export interface TerminalSize {
   cols: number

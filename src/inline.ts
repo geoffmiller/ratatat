@@ -9,17 +9,18 @@
  *   - 'destroy'            — rendered lines are cleared, terminal looks untouched
  *
  * How it works:
- *   - First frame: render rows 0..N directly from the current cursor position.
- *     The terminal scrolls naturally if needed. No blank lines printed upfront.
- *   - Subsequent frames: move cursor up by the number of rows rendered, then
- *     let the Rust diff engine repaint only changed cells. The renderer always
- *     thinks it owns rows 0..N; the TS wrapper handles the cursor rewind.
+ *   - start() queries the real terminal size via terminalSize() (crossterm,
+ *     not Node's stream layer — always correct).
+ *   - Sets rowOffset = termRows - 1 so the Rust renderer's absolute cursor
+ *     moves land on the correct row after the leading \n.
+ *   - First frame fires immediately in start() — cursor sits below the region.
+ *   - Subsequent frames: rewind renderRows rows, repaint changed cells.
  *   - On exit:
- *     - preserve: leave cursor below the last rendered row (output stays in scrollback)
- *     - destroy:  move cursor up, clear each line with \x1b[2K, return to start row
+ *     - preserve: cursor already below region — nothing to do
+ *     - destroy:  rewind, clear every line, return cursor to prompt row
  */
 
-import { Renderer } from '../index.js'
+import { Renderer, terminalSize } from '../index.js'
 
 export interface InlineOptions {
   /** Number of terminal rows to reserve. Default: 10 */
@@ -58,37 +59,47 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
   const fps = options.fps ?? 60
   const onExit = options.onExit ?? 'preserve'
 
-  const guard = new InlineGuard()
-  const { cols, rows: termRows } = guard.getSize()
-  const renderRows = Math.min(reservedRows, termRows)
-
-  const renderer = new Renderer(cols, renderRows)
-  const buf = new Uint32Array(cols * renderRows * 2)
-
-  let frame = 0
   let interval: ReturnType<typeof setInterval> | null = null
-
-  // Set row offset once so the Rust renderer's absolute cursor moves
-  // land on the correct terminal rows. termRows - 1 (0-based) puts
-  // buffer row 0 at the bottom of the terminal, which is where the
-  // cursor will be after the leading \n in start().
-  renderer.setRowOffset(termRows - 1)
+  let renderer: Renderer | null = null
+  let buf: Uint32Array | null = null
+  let cols = 80
+  let renderRows = 10
+  let frame = 0
 
   function tick() {
-    buf.fill(0)
-    paint(buf, cols, renderRows, frame++)
-    renderer.render(buf)
+    buf!.fill(0)
+    paint(buf!, cols, renderRows, frame++)
+    renderer!.render(buf!)
   }
 
   function start() {
-    guard.enter()
+    // terminalSize() calls crossterm::terminal::size() directly —
+    // always correct, no alternate screen, no Node stream layer.
+    const size = terminalSize()
+    cols = size.cols
+    const termRows = size.rows
+    renderRows = Math.min(reservedRows, termRows)
+
+    // Raw mode (Node layer only — no alternate screen)
+    if (process.stdin.isTTY) process.stdin.setRawMode(true)
+    process.stdin.resume()
+    process.stdin.setEncoding('utf8')
+    process.stdout.write('\x1b[?25l') // hide cursor
+
     process.on('SIGINT', stop)
 
-    // Step past the prompt line. After this \n the cursor is at termRows
-    // (1-based), matching our rowOffset of termRows - 1 (0-based).
-    // From here the interval rewinds renderRows rows before each frame.
+    renderer = new Renderer(cols, renderRows)
+    buf = new Uint32Array(cols * renderRows * 2)
+
+    // rowOffset anchors buffer row 0 to the terminal row the cursor will be
+    // on after the leading \n below. After \n the cursor is at termRows
+    // (1-based) = termRows - 1 in 0-based offset terms.
+    renderer.setRowOffset(termRows - 1)
+
+    // Step past the prompt line, then paint the first frame immediately.
+    // Cursor is now below the rendered region.
     process.stdout.write('\n')
-    tick() // first frame immediately — cursor now below the region
+    tick()
 
     interval = setInterval(
       () => {
@@ -106,56 +117,21 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
     }
 
     if (onExit === 'destroy') {
-      // Rewind to top of region (plus the leading newline), clear every line
+      // Rewind past rendered rows + the leading \n, clear everything
       process.stdout.write(`\x1b[${renderRows + 1}A\x1b[1G`)
       for (let i = 0; i < renderRows + 1; i++) {
         process.stdout.write('\x1b[2K')
         if (i < renderRows) process.stdout.write('\n')
       }
-      // Return cursor to the first line of the (now-cleared) region
-      if (renderRows > 0) {
-        process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
-      }
+      process.stdout.write(`\x1b[${renderRows}A\x1b[1G`)
     }
-    // preserve: cursor is already below the last rendered row — nothing to do
+    // preserve: cursor already below last rendered row — nothing to do
 
-    guard.leave()
+    process.stdout.write('\x1b[?25h') // show cursor
+    if (process.stdin.isTTY) process.stdin.setRawMode(false)
+    process.stdin.pause()
     process.exit(0)
   }
 
   return { start, stop }
-}
-
-/**
- * A minimal terminal guard for inline mode — raw mode only, no alternate screen.
- */
-class InlineGuard {
-  private active = false
-
-  getSize(): { cols: number; rows: number } {
-    const cols = process.stdout.columns ?? 80
-    const rows = process.stdout.rows ?? 24
-    return { cols, rows }
-  }
-
-  enter() {
-    if (this.active) return
-    if (process.stdin.isTTY) {
-      process.stdin.setRawMode(true)
-    }
-    process.stdin.resume()
-    process.stdin.setEncoding('utf8')
-    process.stdout.write('\x1b[?25l') // hide cursor
-    this.active = true
-  }
-
-  leave() {
-    if (!this.active) return
-    this.active = false
-    process.stdout.write('\x1b[?25h') // show cursor
-    if (process.stdin.isTTY) {
-      process.stdin.setRawMode(false)
-    }
-    process.stdin.pause()
-  }
 }

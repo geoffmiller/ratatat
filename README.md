@@ -161,6 +161,8 @@ npx tsx examples/counter.tsx
 
 ## Examples
 
+SEA binary demos (kitchen-sink + stress-test): see [`builds/sea/README.md`](builds/sea/README.md) (includes run commands and safety verification guidance).
+
 ### Ink-compatible / shared examples
 
 ```

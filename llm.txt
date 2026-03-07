@@ -23,10 +23,20 @@ Two ways to use Ratatat
 
 Primary docs
 ------------
-- README: ./README.md
+- Docs hub (GitHub Pages): ./docs/index.md
+- Getting started: ./docs/getting-started.md
+- React mode quickstart: ./docs/quickstart-react.md
+- Raw-buffer quickstart: ./docs/quickstart-raw-buffer.md
+- Components reference: ./docs/components.md
+- Hooks reference: ./docs/hooks.md
+- Rendering modes: ./docs/rendering-modes.md
+- Examples guide: ./docs/examples.md
+- Distribution (npm + SEA): ./docs/distribution.md
+- Troubleshooting: ./docs/troubleshooting.md
 - Ink compatibility matrix: ./docs/ink-compat.md
 - Architecture decisions: ./docs/decisions.md
-- Raw buffer API: ./docs/raw-buffer.md
+- Raw buffer API deep dive: ./docs/raw-buffer.md
+- README: ./README.md
 
 Workflow policy (important)
 ---------------------------

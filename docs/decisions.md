@@ -1,5 +1,7 @@
 # Architecture Decisions
 
+> Part of the [Ratatat docs](index.md). See also: [Render Loop](render-loop.md) · [Raw Buffer API](raw-buffer.md)
+
 Key design decisions made during development, with rationale.
 
 ---

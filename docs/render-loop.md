@@ -1,5 +1,7 @@
 # Ratatat Render Loop
 
+> Part of the [Ratatat docs](index.md). See also: [Troubleshooting](troubleshooting.md) · [Architecture Decisions](decisions.md)
+
 Ratatat uses a **game engine style render loop** to drive terminal output. This doc explains why, how it works, and how to tune it.
 
 ## The problem with push-based rendering

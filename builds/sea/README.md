@@ -17,6 +17,8 @@ npm run build:sea:kitchen-sink
 npm run build:sea:stress-test
 ```
 
+See [docs/distribution.md](../../docs/distribution.md) for full build instructions, safety verification checklist, and how to add new SEA targets.
+
 ## Run them
 
 ```bash

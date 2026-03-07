@@ -19,7 +19,8 @@ Output:
 
 ## Notes
 
-- Uses Node SEA (`node --build-sea`).
+- Uses Node SEA (`node --build-sea` when available).
+- On Node 23/24, falls back to `--experimental-sea-config` + local `postject` dev dependency.
 - Includes Ratatat native addon (`ratatat.darwin-arm64.node`) as SEA asset.
 - Includes `yoga-layout-prebuilt` as an externalized runtime asset tree.
 - Binary output is gitignored (`builds/sea/`).

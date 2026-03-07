@@ -4,9 +4,12 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
+import { createRequire } from 'node:module'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, '..')
+const require = createRequire(import.meta.url)
+const postjectCli = require.resolve('postject/dist/cli.js')
 
 const outDir = path.join(root, 'builds', 'sea', 'macos-arm64')
 const tmpDir = path.join(root, 'sea', '.tmp', 'kitchen-sink-macos-arm64')
@@ -143,7 +146,7 @@ if (supportsBuildSea) {
   }
 
   const postjectArgs = [
-    'postject',
+    postjectCli,
     outputBinary,
     'NODE_SEA_BLOB',
     blobPath,
@@ -154,7 +157,7 @@ if (supportsBuildSea) {
     postjectArgs.push('--macho-segment-name', 'NODE_SEA')
   }
 
-  const inject = spawnSync('npx', postjectArgs, { cwd: root, stdio: 'inherit' })
+  const inject = spawnSync(process.execPath, postjectArgs, { cwd: root, stdio: 'inherit' })
   if (inject.status !== 0) process.exit(inject.status ?? 1)
 }
 

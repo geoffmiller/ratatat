@@ -1,18 +1,21 @@
 # SEA (Single Executable Application) builds
 
-This folder contains tooling to build a standalone Node SEA binary for the kitchen-sink demo.
+This folder contains tooling to build standalone Node SEA binaries for demos.
 
 ## Build (macOS arm64)
 
 ```bash
 npm run build
 npm run build:sea:kitchen-sink
+npm run build:sea:stress-test
 ```
 
 Output:
 
 - `builds/sea/macos-arm64/ratatat-kitchen-sink`
 - `builds/sea/macos-arm64/SHA256SUMS.txt`
+- `builds/sea/macos-arm64/ratatat-stress-test`
+- `builds/sea/macos-arm64/SHA256SUMS-stress-test.txt`
 
 ## Notes
 

@@ -50,6 +50,7 @@
     "build:ts": "tsc",
     "build": "napi build --platform --release --js native.cjs && npm run build:ts",
     "build:sea:kitchen-sink": "node sea/build-kitchen-sink-sea.mjs",
+    "build:sea:stress-test": "node sea/build-stress-test-sea.mjs",
     "build:debug": "napi build --platform --js native.cjs && npm run build:ts",
     "format": "run-p format:prettier format:rs format:toml",
     "format:prettier": "prettier . -w",

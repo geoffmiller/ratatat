@@ -139,6 +139,9 @@ benchmark/*.d.ts
 # Spikes — throwaway prototypes, not part of the library
 spikes/
 
+# Local package validation sandbox (intentionally untracked)
+package-test/
+
 # Stray dev/debug files
 debug-react.log
 debug-input.mjs

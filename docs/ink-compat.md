@@ -1,5 +1,7 @@
 # Ink Compatibility
 
+> Part of the [Ratatat docs](index.md). See also: [Hooks](hooks.md) · [Components](components.md)
+
 Ratatat implements the full Ink public API. This document tracks coverage.
 
 ## API Parity

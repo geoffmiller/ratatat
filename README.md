@@ -6,6 +6,8 @@
 
 An Ink compatible React reconciler for the terminal — write TUI apps with React components, powered by a native Rust diff engine and Yoga Flexbox.
 
+**[📖 Documentation](docs/index.md)** · **[Getting Started](docs/getting-started.md)** · **[Components](docs/components.md)** · **[Hooks](docs/hooks.md)**
+
 **[Ink API Compatibility](docs/ink-compat.md)** · **[Architecture Decisions](docs/decisions.md)** · **[Render Loop](docs/render-loop.md)** · **[Raw Buffer API](docs/raw-buffer.md)**
 
 ![Ratatat stress test](docs/ratatat-stress-test.png)

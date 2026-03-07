@@ -1,4 +1,6 @@
-# Using Ratatat Without React
+# Raw Buffer API
+
+> Part of the [Ratatat docs](index.md). See also: [Quickstart: Raw-buffer mode](quickstart-raw-buffer.md) · [Rendering Modes](rendering-modes.md)
 
 Ratatat's Rust diff engine is the core — React and Yoga are just one way to fill the buffer.
 

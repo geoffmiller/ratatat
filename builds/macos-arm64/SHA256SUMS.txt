@@ -1,0 +1,1 @@
+61c3d4528c4e05cfca02395d06eff36cf45e25731c0f8c4da90538e2c0b2e9f2  builds/macos-arm64/ratatat-0.1.0-macos-arm64.tar.gz

@@ -142,6 +142,10 @@ spikes/
 # Local package validation sandbox (intentionally untracked)
 package-test/
 
+# Local SEA build outputs (binary artifacts)
+builds/sea/
+sea/.tmp/
+
 # Stray dev/debug files
 debug-react.log
 debug-input.mjs

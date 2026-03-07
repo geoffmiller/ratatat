@@ -143,7 +143,9 @@ spikes/
 package-test/
 
 # Local SEA build outputs (binary artifacts)
-builds/sea/
+builds/sea/**
+!builds/sea/
+!builds/sea/README.md
 sea/.tmp/
 
 # Stray dev/debug files

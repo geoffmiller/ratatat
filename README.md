@@ -2,6 +2,8 @@
 
 # Ratatat ([Ratatui](https://ratatui.rs) + [Ink](https://github.com/vadimdemedes/ink))
 
+> 100% vibe code. Fork/clone only - no PRs
+
 An Ink-compatible React renderer for terminal UIs, powered by a native Rust diff engine and Yoga Flexbox.
 
 **[📖 Documentation](docs/index.md)** · **[Getting Started](docs/getting-started.md)** · **[Components](docs/components.md)** · **[Hooks](docs/hooks.md)**
@@ -12,10 +14,13 @@ An Ink-compatible React renderer for terminal UIs, powered by a native Rust diff
 
 _Stress test now sustains ~700 FPS._
 
-| Layout                                               | Focus                                    | Graph                                      | Live                                     |
-| ---------------------------------------------------- | ---------------------------------------- | ------------------------------------------ | ---------------------------------------- |
-| ![Kitchen sink layout](docs/ks-layout.png)           | ![Kitchen sink focus](docs/ks-focus.png) | ![Kitchen sink graph](docs/ks-graph.png)   | ![Kitchen sink live](docs/ks-live.png)   |
-| ![Kitchen sink incremental](docs/ks-incremental.png) | ![Kitchen sink ui](docs/ks-ui.png)       | ![Kitchen sink static](docs/ks-static.png) | ![Kitchen sink mouse](docs/ks-mouse.png) |
+| Layout                                     | Focus                                    | Graph                                    | Live                                   |
+| ------------------------------------------ | ---------------------------------------- | ---------------------------------------- | -------------------------------------- |
+| ![Kitchen sink layout](docs/ks-layout.png) | ![Kitchen sink focus](docs/ks-focus.png) | ![Kitchen sink graph](docs/ks-graph.png) | ![Kitchen sink live](docs/ks-live.png) |
+
+| Incremental                                          | UI                                 | Static                                     | Mouse                                    |
+| ---------------------------------------------------- | ---------------------------------- | ------------------------------------------ | ---------------------------------------- |
+| ![Kitchen sink incremental](docs/ks-incremental.png) | ![Kitchen sink ui](docs/ks-ui.png) | ![Kitchen sink static](docs/ks-static.png) | ![Kitchen sink mouse](docs/ks-mouse.png) |
 
 ## Installation (short)
 

@@ -22,6 +22,18 @@ _Stress test now sustains ~700 FPS._
 | ---------------------------------------------------- | ---------------------------------- | ------------------------------------------ | ---------------------------------------- |
 | ![Kitchen sink incremental](docs/ks-incremental.png) | ![Kitchen sink ui](docs/ks-ui.png) | ![Kitchen sink static](docs/ks-static.png) | ![Kitchen sink mouse](docs/ks-mouse.png) |
 
+## Benchmark snapshot (Ratatat vs Ink)
+
+Measured on Apple M1 Max, 80×24 terminal.
+
+| Suite                     | Ratatat | Ink   | Speedup |
+| ------------------------- | ------- | ----- | ------- |
+| Initial mount (simple)    | 67,630  | 8,215 | 8.2×    |
+| Initial mount (complex)   | 41,253  | 1,421 | 29×     |
+| Rerender (simple)         | 95,175  | 8,095 | 11.8×   |
+| Rerender (complex)        | 49,852  | 1,384 | 36×     |
+| p99 latency (complex, µs) | 23      | 1,586 | 68×     |
+
 ## Installation (short)
 
 - **Preferred:** fork/clone this repo and build from source.

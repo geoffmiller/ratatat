@@ -162,5 +162,6 @@ loop.start()
 ## Next steps
 
 - [Raw Buffer API deep dive](raw-buffer.md)
+- [TypeScript Buffer Guide](ts-buffer-guide.md)
 - [Examples](examples.md)
 - [Rendering Modes](rendering-modes.md)

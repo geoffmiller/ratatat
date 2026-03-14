@@ -9,15 +9,16 @@
 
 ## Page ownership
 
-| Page             | Source of truth                                                |
-| ---------------- | -------------------------------------------------------------- |
-| `components.md`  | `src/react.ts`, `src/styles.ts`, `src/renderer.ts`             |
-| `hooks.md`       | `src/hooks.ts`, `src/focus.ts`, `src/input.ts`                 |
-| `ink-compat.md`  | `src/react.ts`, `src/hooks.ts`, `compat-test/`                 |
-| `raw-buffer.md`  | `src/lib.rs`, `src/terminal.rs`, `src/inline.ts`, `index.d.ts` |
-| `render-loop.md` | `src/react.ts`, `src/app.ts`, `src/reconciler.ts`              |
-| `decisions.md`   | Maintainer-updated architecture log                            |
-| `examples.md`    | `examples/`, `examples-raw/`                                   |
+| Page                 | Source of truth                                                |
+| -------------------- | -------------------------------------------------------------- |
+| `components.md`      | `src/react.ts`, `src/styles.ts`, `src/renderer.ts`             |
+| `hooks.md`           | `src/hooks.ts`, `src/focus.ts`, `src/input.ts`                 |
+| `ink-compat.md`      | `src/react.ts`, `src/hooks.ts`, `compat-test/`                 |
+| `raw-buffer.md`      | `src/lib.rs`, `src/terminal.rs`, `src/inline.ts`, `index.d.ts` |
+| `ts-buffer-guide.md` | `src/lib.rs`, `src/cell.ts`, `examples-raw/harness.ts`         |
+| `render-loop.md`     | `src/react.ts`, `src/app.ts`, `src/reconciler.ts`              |
+| `decisions.md`       | Maintainer-updated architecture log                            |
+| `examples.md`        | `examples/`, `examples-raw/`                                   |
 
 ## Update checklist
 

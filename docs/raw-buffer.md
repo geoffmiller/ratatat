@@ -1,6 +1,6 @@
 # Raw Buffer API
 
-> Part of the [Ratatat docs](index.md). See also: [Quickstart: Raw-buffer mode](quickstart-raw-buffer.md) · [Rendering Modes](rendering-modes.md)
+> Part of the [Ratatat docs](index.md). See also: [Quickstart: Raw-buffer mode](quickstart-raw-buffer.md) · [TypeScript Buffer Guide](ts-buffer-guide.md) · [Rendering Modes](rendering-modes.md)
 
 Ratatat's Rust renderer accepts a `Uint32Array` back buffer and emits minimal ANSI updates.
 
@@ -189,6 +189,7 @@ Current behavior: stopping the inline loop exits the process.
 ## Example commands
 
 ```bash
+node --import @oxc-node/core/register examples-raw/ascii-3d.ts
 node --import @oxc-node/core/register examples-raw/conway.ts
 node --import @oxc-node/core/register examples-raw/fire.ts
 node --import @oxc-node/core/register examples-raw/matrix.ts

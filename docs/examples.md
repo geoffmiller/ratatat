@@ -79,14 +79,15 @@ node --import @oxc-node/core/register examples-raw/<name>.ts
 
 ## Raw-buffer mode (`examples-raw/`)
 
-| File               | What it demonstrates        |
-| ------------------ | --------------------------- |
-| `matrix.ts`        | Matrix rain                 |
-| `conway.ts`        | Conway's Game of Life       |
-| `plasma.ts`        | Plasma effect               |
-| `fire.ts`          | Fire effect                 |
-| `jitter.ts`        | Frame-time oscilloscope     |
-| `scope.ts`         | Multi-harmonic oscilloscope |
-| `inline-picker.ts` | Inline picker without React |
+| File               | What it demonstrates                        |
+| ------------------ | ------------------------------------------- |
+| `ascii-3d.ts`      | Spinning ASCII-shaded 3D cube with z-buffer |
+| `matrix.ts`        | Matrix rain                                 |
+| `conway.ts`        | Conway's Game of Life                       |
+| `plasma.ts`        | Plasma effect                               |
+| `fire.ts`          | Fire effect                                 |
+| `jitter.ts`        | Frame-time oscilloscope                     |
+| `scope.ts`         | Multi-harmonic oscilloscope                 |
+| `inline-picker.ts` | Inline picker without React                 |
 
 All raw examples use `examples-raw/harness.ts`.

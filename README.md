@@ -14,6 +14,11 @@ An Ink-compatible React renderer for terminal UIs, powered by a native Rust diff
 
 _Stress test now sustains ~700 FPS._
 
+<video src="docs/ratatat-ascii-3d-cube-demo.mp4" controls muted loop playsinline></video>
+
+_ASCII 3D cube demo (raw-buffer mode)._  
+If your markdown viewer doesn't render embedded video, use: [`docs/ratatat-ascii-3d-cube-demo.mp4`](docs/ratatat-ascii-3d-cube-demo.mp4)
+
 | Layout                                     | Focus                                    | Graph                                    | Live                                   |
 | ------------------------------------------ | ---------------------------------------- | ---------------------------------------- | -------------------------------------- |
 | ![Kitchen sink layout](docs/ks-layout.png) | ![Kitchen sink focus](docs/ks-focus.png) | ![Kitchen sink graph](docs/ks-graph.png) | ![Kitchen sink live](docs/ks-live.png) |

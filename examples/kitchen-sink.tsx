@@ -686,7 +686,7 @@ function LiveSection() {
         <Box flexDirection="row" marginTop={1}>
           <Text dim>stress test </Text>
           <Text color="green" bold>
-            303 FPS sustained
+            700 FPS sustained
           </Text>
           <Text dim> · 8,648 cells/frame · 188×50 terminal · zero memory growth</Text>
         </Box>

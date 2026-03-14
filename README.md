@@ -8,7 +8,41 @@ An Ink-compatible React renderer for terminal UIs, powered by a native Rust diff
 
 **[Ink Compatibility](docs/ink-compat.md)** · **[Raw Buffer API](docs/raw-buffer.md)** · **[Render Loop](docs/render-loop.md)** · **[Architecture Decisions](docs/decisions.md)**
 
-![Ratatat stress test](docs/ratatat-stress-test.png)
+![Ratatat stress test (700 FPS)](docs/ratatat-stress-test-700fps.png)
+
+_Stress test now sustains ~700 FPS._
+
+| Layout                                               | Focus                                    | Graph                                      | Live                                     |
+| ---------------------------------------------------- | ---------------------------------------- | ------------------------------------------ | ---------------------------------------- |
+| ![Kitchen sink layout](docs/ks-layout.png)           | ![Kitchen sink focus](docs/ks-focus.png) | ![Kitchen sink graph](docs/ks-graph.png)   | ![Kitchen sink live](docs/ks-live.png)   |
+| ![Kitchen sink incremental](docs/ks-incremental.png) | ![Kitchen sink ui](docs/ks-ui.png)       | ![Kitchen sink static](docs/ks-static.png) | ![Kitchen sink mouse](docs/ks-mouse.png) |
+
+## Installation (short)
+
+- **Preferred:** fork/clone this repo and build from source.
+
+  ```bash
+  git clone https://github.com/geoffmiller/ratatat.git
+  cd ratatat
+  npm install
+  npm run build
+  ```
+
+- **Prebuilt tarball (macOS arm64 local artifact):**
+
+  ```bash
+  npm install ./builds/macos-arm64/ratatat-0.1.0-macos-arm64.tar.gz
+  ```
+
+  ⚠️ Do not blindly install binaries/tarballs from strangers on the internet. Trust source, verify checksums, and prefer building from source. See [`builds/README.md`](builds/README.md).
+
+- App code imports from the package name:
+
+  ```tsx
+  import { render, Box, Text } from 'ratatat'
+  ```
+
+  Run commands and demo list: [docs/examples.md](docs/examples.md)
 
 ## Minimal React example
 

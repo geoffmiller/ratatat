@@ -69,11 +69,11 @@ node --import @oxc-node/core/register examples-raw/<name>.ts
 
 ### Ratatat-specific demos
 
-| File              | What it demonstrates                   |
-| ----------------- | -------------------------------------- |
-| `logo.tsx`        | `onBeforeFlush` direct buffer overlays |
-| `rattata.tsx`     | Streaming fake-assistant demo          |
-| `stress-test.tsx` | High-frequency full-terminal animation |
+| File              | What it demonstrates                       |
+| ----------------- | ------------------------------------------ |
+| `logo.tsx`        | `onBeforeFlush` direct buffer overlays     |
+| `rattata.tsx`     | Streaming fake-assistant demo              |
+| `stress-test.tsx` | ~700 FPS sustained full-terminal animation |
 
 ---
 

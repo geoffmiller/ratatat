@@ -7,6 +7,29 @@ This folder stores manually generated test artifacts for local validation.
 - Package: `macos-arm64/ratatat-0.1.0-macos-arm64.tar.gz`
 - Checksum: `macos-arm64/SHA256SUMS.txt`
 
+## Verify checksum
+
+From repo root:
+
+```bash
+# macOS
+shasum -a 256 -c builds/macos-arm64/SHA256SUMS.txt
+
+# Linux
+sha256sum -c builds/macos-arm64/SHA256SUMS.txt
+```
+
+Expected output includes `OK` for the tarball line.
+
+If your artifact is in a different location, compute and compare manually:
+
+```bash
+shasum -a 256 /path/to/ratatat-0.1.0-macos-arm64.tar.gz
+cat builds/macos-arm64/SHA256SUMS.txt
+```
+
+Match the hash value exactly before installing.
+
 ## Install/Test locally
 
 ```bash

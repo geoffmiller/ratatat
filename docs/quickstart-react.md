@@ -5,7 +5,7 @@ Build a TUI app with React components, hooks, and Yoga layout.
 ## Minimal example
 
 ```tsx
-import { render, Box, Text, useInput } from 'ratatat'
+import { render, Box, Text, useInput } from 'ratatat/react'
 import React, { useState } from 'react'
 
 function Counter() {
@@ -99,7 +99,7 @@ See [Hooks: useInput](hooks.md#useinput) for the full key map.
 ## App lifecycle
 
 ```tsx
-import { useApp, useInput, Text } from 'ratatat'
+import { useApp, useInput, Text } from 'ratatat/react'
 
 function App() {
   const { exit } = useApp()
@@ -133,7 +133,7 @@ await waitUntilExit()
 ## `renderToString` for tests
 
 ```tsx
-import { renderToString, Box, Text } from 'ratatat'
+import { renderToString, Box, Text } from 'ratatat/react'
 import React from 'react'
 
 const output = renderToString(

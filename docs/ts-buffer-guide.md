@@ -140,7 +140,7 @@ function drawText(
 ## 4) Frame loop template
 
 ```ts
-import { Renderer, TerminalGuard, terminalSize } from 'ratatat'
+import { Renderer, TerminalGuard, terminalSize } from 'ratatat/core'
 
 const guard = new TerminalGuard()
 let { cols, rows } = terminalSize()

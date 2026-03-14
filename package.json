@@ -1,7 +1,7 @@
 {
   "name": "ratatat",
   "version": "0.1.0",
-  "description": "React-based terminal UI library powered by a Rust diff engine — Ink-compatible API, 10–35× faster",
+  "description": "Terminal UI runtime powered by a Rust diff engine, with a React adapter and Ink-compatible API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": {
@@ -143,6 +143,22 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./core": {
+      "import": "./dist/core.js",
+      "types": "./dist/core.d.ts"
+    },
+    "./react": {
+      "import": "./dist/react-entry.js",
+      "types": "./dist/react-entry.d.ts"
+    },
+    "./scene": {
+      "import": "./dist/scene.js",
+      "types": "./dist/scene.d.ts"
+    },
+    "./native": {
+      "import": "./index.js",
+      "types": "./index.d.ts"
     }
   }
 }

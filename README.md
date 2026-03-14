@@ -10,6 +10,8 @@ An Ink-compatible React renderer for terminal UIs, powered by a native Rust diff
 
 **[Ink Compatibility](docs/ink-compat.md)** · **[Raw Buffer API](docs/raw-buffer.md)** · **[Render Loop](docs/render-loop.md)** · **[Architecture Decisions](docs/decisions.md)**
 
+Primary entry points: `ratatat/react` (React adapter) and `ratatat/core` (framework-agnostic runtime). Root `ratatat` imports remain supported for compatibility.
+
 ![Ratatat stress test (700 FPS)](docs/ratatat-stress-test-700fps.png)
 
 _Stress test now sustains ~700 FPS._
@@ -61,7 +63,7 @@ Measured on Apple M1 Max, 80×24 terminal.
 - App code imports from the package name:
 
   ```tsx
-  import { render, Box, Text } from 'ratatat'
+  import { render, Box, Text } from 'ratatat/react'
   ```
 
   Run commands and demo list: [docs/examples.md](docs/examples.md)
@@ -69,7 +71,7 @@ Measured on Apple M1 Max, 80×24 terminal.
 ## Minimal React example
 
 ```tsx
-import { render, Box, Text, useInput } from 'ratatat'
+import { render, Box, Text, useInput } from 'ratatat/react'
 import React, { useState } from 'react'
 
 function Counter() {
@@ -99,7 +101,7 @@ More React examples: [`examples/`](examples/)
 ## Minimal No React / Pure TS example
 
 ```ts
-import { Renderer, TerminalGuard, terminalSize } from 'ratatat'
+import { Renderer, TerminalGuard, terminalSize } from 'ratatat/core'
 
 const guard = new TerminalGuard()
 const { cols, rows } = terminalSize()
@@ -142,11 +144,11 @@ loop.start()
 
 ## Feature summary
 
-- React 19 rendering in a terminal
+- React 19 rendering in a terminal (`ratatat/react`)
 - Ink-compatible core API: `render`, `Box`, `Text`, `Static`, `useInput`, `useApp`, etc.
 - Ratatat-only hooks/components: `useMouse`, `useTextInput`, `useScrollable`, `<Spinner>`, `<ProgressBar>`
-- Inline rendering APIs: `renderInline()` and `createInlineLoop()`
-- React-free mode via `Renderer` + `TerminalGuard` + direct `Uint32Array` painting
+- Inline rendering APIs: `renderInline()` (React) and `createInlineLoop()` (raw)
+- React-free mode via `ratatat/core`: `Renderer` + `TerminalGuard` + direct `Uint32Array` painting
 
 ## Rendering modes
 

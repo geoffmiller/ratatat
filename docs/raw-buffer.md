@@ -48,7 +48,7 @@ const idx = y * cols + x
 ## Minimal setup
 
 ```ts
-import { Renderer, TerminalGuard, terminalSize } from 'ratatat'
+import { Renderer, TerminalGuard, terminalSize } from 'ratatat/core'
 
 const guard = new TerminalGuard()
 const { cols, rows } = terminalSize()
@@ -82,7 +82,7 @@ process.on('SIGINT', () => {
 ### `Cell.pack`
 
 ```ts
-import { Cell, StyleMasks } from 'ratatat'
+import { Cell, StyleMasks } from 'ratatat/core'
 
 const [charCode, attrCode] = Cell.pack('A', 196, 0, StyleMasks.BOLD)
 buf[idx * 2] = charCode
@@ -158,7 +158,7 @@ loop.start()
 `createInlineLoop` draws a fixed-height region below the current cursor, without alternate screen takeover.
 
 ```ts
-import { createInlineLoop } from 'ratatat'
+import { createInlineLoop } from 'ratatat/core'
 
 const loop = createInlineLoop(
   (buf, cols, rows, frame) => {

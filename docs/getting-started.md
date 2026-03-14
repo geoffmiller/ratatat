@@ -2,11 +2,11 @@
 
 Ratatat supports three runtime modes:
 
-| Mode            | Primary API                         | Best for                                  |
-| --------------- | ----------------------------------- | ----------------------------------------- |
-| React mode      | `render(<App />)`                   | Component-driven TUIs with hooks and Yoga |
-| Raw-buffer mode | `Renderer` + `renderer.render`      | Direct, per-cell rendering control        |
-| Inline mode     | `renderInline` / `createInlineLoop` | Fixed-height UI below the cursor          |
+| Mode            | Primary API                         | Import path                      | Best for                                  |
+| --------------- | ----------------------------------- | -------------------------------- | ----------------------------------------- |
+| React mode      | `render(<App />)`                   | `ratatat/react`                  | Component-driven TUIs with hooks and Yoga |
+| Raw-buffer mode | `Renderer` + `renderer.render`      | `ratatat/core`                   | Direct, per-cell rendering control        |
+| Inline mode     | `renderInline` / `createInlineLoop` | `ratatat/react` / `ratatat/core` | Fixed-height UI below the cursor          |
 
 ---
 
@@ -40,7 +40,7 @@ See [Examples](examples.md) for the full list.
 
 ```diff
 - import { render, Box, Text } from 'ink'
-+ import { render, Box, Text } from 'ratatat'
++ import { render, Box, Text } from 'ratatat/react'
 ```
 
 Most app-level API usage maps directly. See [Ink Compatibility](ink-compat.md) for details and caveats.

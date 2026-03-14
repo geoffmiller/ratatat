@@ -7,7 +7,7 @@ Use this mode when you want explicit control over every terminal cell.
 ## Minimal example
 
 ```ts
-import { Renderer, TerminalGuard, terminalSize } from 'ratatat'
+import { Renderer, TerminalGuard, terminalSize } from 'ratatat/core'
 
 const { cols, rows } = terminalSize()
 const guard = new TerminalGuard()
@@ -135,7 +135,7 @@ process.on('SIGWINCH', () => {
 ## Inline mode: `createInlineLoop()`
 
 ```ts
-import { createInlineLoop } from 'ratatat'
+import { createInlineLoop } from 'ratatat/core'
 
 const loop = createInlineLoop(
   (buf, cols, rows, frame) => {

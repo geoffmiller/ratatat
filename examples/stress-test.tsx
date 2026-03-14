@@ -9,10 +9,13 @@
  * would otherwise accumulate fiber work objects faster than GC can collect.
  *
  * Run: node --import @oxc-node/core/register examples/stress-test.tsx
+ *
+ * Controls:
+ *   q / Esc / Ctrl+C   quit
  */
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { render, Box, Text, useWindowSize, useApp } from '../dist/index.js'
+import { render, Box, Text, useWindowSize, useApp, useInput } from '../dist/index.js'
 
 // ─── FPS counter ─────────────────────────────────────────────────────────────
 
@@ -89,7 +92,7 @@ function StatsBar({ fps, frame, cols, rows }: { fps: number; frame: number; cols
         {'  '}
         Cells/frame: <Text color="white">{(gridCols * gridRows).toLocaleString()}</Text>
         {'  '}
-        <Text dim>Ctrl+C to exit</Text>
+        <Text dim>q / Esc / Ctrl+C to exit</Text>
       </Text>
     </Box>
   )
@@ -102,6 +105,12 @@ function StressTest() {
   const { fps, tick } = useFps()
   const [frame, setFrame] = useState(0)
   const { exit } = useApp()
+
+  useInput((input, key) => {
+    if (input.toLowerCase() === 'q' || key.escape) {
+      exit()
+    }
+  })
 
   useEffect(() => {
     let running = true

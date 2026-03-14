@@ -89,6 +89,52 @@ function Counter() {
 render(<Counter />)
 ```
 
+More React examples: [`examples/`](examples/)
+
+## Minimal No React / Pure TS example
+
+```ts
+import { Renderer, TerminalGuard, terminalSize } from 'ratatat'
+
+const guard = new TerminalGuard()
+const { cols, rows } = terminalSize()
+const renderer = new Renderer(cols, rows)
+const buf = new Uint32Array(cols * rows * 2)
+
+const msg = 'Hello from pure TS (no React)'
+for (let i = 0; i < msg.length && i < cols; i++) {
+  const idx = (1 * cols + i) * 2
+  buf[idx] = msg.codePointAt(i)!
+  buf[idx + 1] = 46 // green fg
+}
+
+renderer.render(buf)
+
+setTimeout(() => {
+  guard.leave()
+  process.exit(0)
+}, 3000) // exit after 3 seconds
+```
+
+More No React/Pure TS examples: [`examples-raw/`](examples-raw/)
+
+If you're running from this repository, there's also a raw-mode helper harness at [`examples-raw/harness.ts`](examples-raw/harness.ts) (`createLoop`, `setCell`, etc.).
+
+Harness example:
+
+```ts
+import { createLoop, setCell } from './examples-raw/harness.js'
+
+const loop = createLoop((buf, cols, rows, frame) => {
+  const msg = `frame ${frame}`
+  for (let i = 0; i < msg.length && i < cols; i++) {
+    setCell(buf, cols, i, 1, msg[i]!, 51)
+  }
+}, 30) // 30 FPS
+
+loop.start()
+```
+
 ## Feature summary
 
 - React 19 rendering in a terminal

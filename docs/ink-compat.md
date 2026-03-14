@@ -2,95 +2,91 @@
 
 > Part of the [Ratatat docs](index.md). See also: [Hooks](hooks.md) · [Components](components.md)
 
-Ratatat implements the full Ink public API. This document tracks coverage.
+Ratatat targets Ink API compatibility for core component and hook workflows, with a few documented stubs and behavior differences.
 
-## API Parity
+---
 
-| Export                       | Status | Notes                                                                              |
-| ---------------------------- | ------ | ---------------------------------------------------------------------------------- |
-| `render()`                   | ✅     | Returns `{ rerender, unmount, waitUntilExit, app, input }`                         |
-| `Box`                        | ✅     | Full Yoga layout props                                                             |
-| `Text`                       | ✅     | `color`, `bold`, `italic`, `underline`, `strikethrough`, `dim`, `inverse`          |
-| `Newline`                    | ✅     |                                                                                    |
-| `Spacer`                     | ✅     |                                                                                    |
-| `Static`                     | ✅     | Append-only scrollback                                                             |
-| `Transform`                  | ✅     | String transform applied to children text                                          |
-| `renderToString()`           | ✅     | Synchronous headless rendering                                                     |
-| `measureElement()`           | ✅     | Returns `{ width, height }` after layout                                           |
-| `useApp()`                   | ✅     | `{ exit, quit }`                                                                   |
-| `useInput()`                 | ✅     | Full key support: arrows, ctrl, meta, delete, pageUp/Down, home/end                |
-| `usePaste()`                 | ✅     | Bracketed paste channel; falls back to `useInput` when no paste listener is active |
-| `useFocus()`                 | ✅     |                                                                                    |
-| `useFocusManager()`          | ✅     |                                                                                    |
-| `useStdin()`                 | ✅     |                                                                                    |
-| `useStdout()`                | ✅     |                                                                                    |
-| `useStderr()`                | ✅     |                                                                                    |
-| `useBoxMetrics()`            | ✅     | `{ width, height, left, top, hasMeasured }`                                        |
-| `useIsScreenReaderEnabled()` | ✅     | Stub — always returns `false`                                                      |
-| `useCursor()`                | ✅     | Stub — `setCursorPosition` is a no-op                                              |
-| `useWindowSize()`            | ✅     | Terminal dimensions — `{ columns, rows }`                                          |
+## Core API parity
 
-## Ratatat-Only API
+| Export                       | Status | Notes                                                         |
+| ---------------------------- | ------ | ------------------------------------------------------------- |
+| `render()`                   | ✅     | Returns `{ rerender, unmount, waitUntilExit, app, input }`    |
+| `Box`                        | ✅     | Yoga-backed layout                                            |
+| `Text`                       | ✅     | Core style props supported                                    |
+| `Newline`                    | ✅     | `count` supported                                             |
+| `Spacer`                     | ✅     | Flex grow spacer                                              |
+| `Static`                     | ✅     | Append-only semantics                                         |
+| `Transform`                  | ✅     | Transform callback support                                    |
+| `renderToString()`           | ✅     | Synchronous snapshot                                          |
+| `measureElement()`           | ✅     | Returns `{ width, height }`                                   |
+| `useApp()`                   | ✅     | `exit` + `quit`                                               |
+| `useInput()`                 | ✅     | Arrows, Enter, Escape, Ctrl, Meta, paging keys                |
+| `usePaste()`                 | ✅     | Bracketed paste routing                                       |
+| `useFocus()`                 | ✅     | Focus state and `focus(id)`                                   |
+| `useFocusManager()`          | ✅     | Focus navigation methods                                      |
+| `useStdin()`                 | ✅     | Raw mode helpers                                              |
+| `useStdout()`                | ✅     | Buffered while app is running                                 |
+| `useStderr()`                | ✅     | Buffered while app is running                                 |
+| `useBoxMetrics()`            | ✅     | Layout metrics + `hasMeasured` (intended for `render()` mode) |
+| `useWindowSize()`            | ✅     | `{ columns, rows }` (intended for `render()` mode)            |
+| `useIsScreenReaderEnabled()` | ⚠️     | Stub: always `false`                                          |
+| `useCursor()`                | ⚠️     | Stub: `setCursorPosition` is a no-op                          |
 
-These exports exist in Ratatat but have no Ink equivalent. They are safe to use in Ratatat-only code.
+---
 
-| Export                   | Description                                                                                                                                                                |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `useScrollable(options)` | Built-in virtual scrolling. Returns `{ offset, atTop, atBottom, scrollBy, scrollToTop, scrollToBottom }`. Ink has no equivalent — users must implement scrolling manually. |
-| `useMouse(handler)`      | Subscribe to mouse events: click, right-click, middle, scrollUp, scrollDown, with modifier flags (shift/ctrl/meta). Ink has no mouse support at all.                       |
-| `useTextInput(options)`  | Managed text input with cursor, backspace/delete, home/end, Ctrl+U/K/W kill shortcuts, and bracketed paste. Returns `{ value, cursor, setValue, clear }`.                  |
-| `useWindowSize()`        | Terminal dimensions — `{ columns, rows }`. Also in Ink's public API, listed here as well for discoverability.                                                              |
-| `DevTools`               | Debug overlay (internal)                                                                                                                                                   |
-| `RatatatApp`             | Core app instance — event emitter, paint loop, terminal lifecycle                                                                                                          |
-| `InputParser`            | Raw stdin parser — key events, mouse events, bracketed paste, escape sequences                                                                                             |
-| `LayoutNode`             | Yoga node wrapper — the render tree                                                                                                                                        |
-| `RatatatReconciler`      | The React reconciler instance                                                                                                                                              |
-| `RatatatContext`         | Internal context (app, input, stdout/stderr writers)                                                                                                                       |
-| `renderTreeToBuffer`     | Paint a layout tree into a `Uint32Array` buffer                                                                                                                            |
-| `StyleMasks`             | Bitmask constants for text attributes                                                                                                                                      |
-| `TerminalGuard`          | RAII guard — enters/leaves alternate screen, raw mode, mouse tracking, and bracketed paste                                                                                 |
+## Render option differences
 
-## Architectural Differences
+`render()` accepts Ink-style options, but these are currently ignored:
 
-Ratatat is **not** a pure JS reimplementation of Ink. It shares the same React reconciler and Yoga layout engine but replaces Ink's string-based renderer with a Rust diff engine.
+- `concurrent`
+- `patchConsole`
+- `exitOnCtrlC`
+- `incrementalRendering`
+- `debug`
 
-|                    | Ink                                              | Ratatat                                   |
-| ------------------ | ------------------------------------------------ | ----------------------------------------- |
-| Render output      | String → `chalk` colorize → stdout               | `Uint32Array` buffer → Rust diff → ANSI   |
-| Screen strategy    | Inline cursor-up rewrite (`log-update`)          | Alternate screen (`EnterAlternateScreen`) |
-| `useStdout` writes | Intercepted inline during render                 | Buffered, flushed after app exits         |
-| `patchConsole`     | Intercepts `console.log` inline                  | Not implemented (different architecture)  |
-| Screen reader      | `AccessibilityContext` + `isScreenReaderEnabled` | Stub (`false`)                            |
-| Cursor positioning | `CursorContext` + `log-update` integration       | Stub (no-op)                              |
+`maxFps` is used.
 
-## compat-test Coverage
+---
 
-The `compat-test/` directory contains verbatim copies of Ink's example apps with only the import path changed (`../../src/index.js` → `../dist/index.js`). Zero other changes.
+## Ratatat-only API (no Ink equivalent)
 
-| Example               | Status | Notes                                                                                                                                     |
-| --------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| borders               | ✅     |                                                                                                                                           |
-| box-backgrounds       | ✅     |                                                                                                                                           |
-| chat                  | ✅     |                                                                                                                                           |
-| concurrent-suspense   | ✅     | `{concurrent:true}` option ignored (always concurrent)                                                                                    |
-| counter               | ✅     |                                                                                                                                           |
-| incremental-rendering | ✅     | `{incrementalRendering:true}` option ignored                                                                                              |
-| justify-content       | ✅     |                                                                                                                                           |
-| static                | ✅     |                                                                                                                                           |
-| stress-test           | ✅     |                                                                                                                                           |
-| suspense              | ✅     |                                                                                                                                           |
-| terminal-resize       | ✅     | `{patchConsole,exitOnCtrlC}` options ignored                                                                                              |
-| use-focus             | ✅     |                                                                                                                                           |
-| use-focus-with-id     | ✅     |                                                                                                                                           |
-| use-input             | ✅     |                                                                                                                                           |
-| use-stderr            | ✅     |                                                                                                                                           |
-| use-stdout            | ✅     |                                                                                                                                           |
-| use-transition        | ✅     |                                                                                                                                           |
-| aria                  | ✅     | `aria-role`/`aria-state`/`aria-hidden` props silently ignored; `useIsScreenReaderEnabled` returns `false`                                 |
-| cursor-ime            | ✅     | `useCursor` is a no-op stub; cursor positioning unsupported                                                                               |
-| select-input          | ⏭     | External dep: `ink-select-input`; Ratatat has select-like picker patterns in `examples/kitchen-sink.tsx` and `examples/inline-picker.tsx` |
-| table                 | ⏭     | External dep: `@faker-js/faker`                                                                                                           |
-| router                | ⏭     | External dep: `react-router`                                                                                                              |
-| subprocess-output     | ⏭     | External deps                                                                                                                             |
-| render-throttle       | ⏭     | No compat-test file — `maxFps` option is supported but not covered by a compat example                                                    |
-| jest                  | ⏭     | Test harness example, not a runtime example                                                                                               |
+| Export                       | Description                             |
+| ---------------------------- | --------------------------------------- |
+| `useScrollable()`            | Virtual scrolling state helper          |
+| `useMouse()`                 | Mouse click/wheel events with modifiers |
+| `useTextInput()`             | Managed text editing hook               |
+| `Spinner`                    | Animated spinner component              |
+| `ProgressBar`                | Progress bar component                  |
+| `renderInline()`             | React inline rendering mode             |
+| `createInlineLoop()`         | Raw-buffer inline rendering loop        |
+| `Renderer` / `TerminalGuard` | Raw-buffer runtime primitives           |
+
+---
+
+## Architectural differences vs Ink
+
+| Concern            | Ink                  | Ratatat                      |
+| ------------------ | -------------------- | ---------------------------- |
+| Render strategy    | JS string renderer   | Rust diff over `Uint32Array` |
+| Screen mode        | Inline rewrite model | Alternate screen model       |
+| `patchConsole`     | Integrated           | Not implemented              |
+| Screen reader hook | Functional           | Stub (`false`)               |
+| Cursor hook        | Functional           | Stub (no-op)                 |
+
+---
+
+## `compat-test/` status
+
+The `compat-test/` directory tracks runnable Ink example ports.
+
+- Most files are direct ports with import-path changes
+- Two files include small TypeScript typing fixes from upstream examples (`use-focus.tsx`, `use-focus-with-id.tsx`)
+
+Run examples manually:
+
+```bash
+node --import @oxc-node/core/register compat-test/counter.tsx
+node --import @oxc-node/core/register compat-test/chat.tsx
+```
+
+See [compat-test/README.md](../compat-test/README.md) for the full matrix.

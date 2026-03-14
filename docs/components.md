@@ -1,107 +1,80 @@
 # Components
 
-Ratatat implements all Ink-compatible components plus a few Ratatat-only additions.
+Ratatat exposes Ink-compatible core components plus a few Ratatat-only additions.
 
 ---
 
-## Box
+## `Box`
 
-The layout primitive. Maps directly to Yoga flexbox.
+Layout primitive backed by Yoga.
 
 ```tsx
 <Box
-  flexDirection="column" // 'row' | 'column' | 'row-reverse' | 'column-reverse'
+  flexDirection="row" // row | column | row-reverse | column-reverse
   flexGrow={1}
-  flexShrink={0}
-  flexBasis="auto"
+  flexShrink={1}
   width={40}
   height={10}
   minWidth={10}
   minHeight={4}
   padding={1}
   paddingX={2}
-  paddingY={1}
-  paddingTop={0}
-  paddingBottom={0}
-  paddingLeft={1}
-  paddingRight={1}
   margin={1}
-  marginX={2}
-  marginY={0}
-  marginTop={0}
-  marginBottom={0}
-  marginLeft={1}
-  marginRight={1}
   gap={1}
-  columnGap={2}
-  rowGap={1}
-  alignItems="flex-start" // 'flex-start' | 'flex-end' | 'center' | 'stretch'
-  alignSelf="auto"
-  alignContent="flex-start"
-  justifyContent="flex-start" // 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around'
-  flexWrap="nowrap" // 'nowrap' | 'wrap' | 'wrap-reverse'
-  borderStyle="single" // 'single' | 'double' | 'round' | 'bold' | 'arrow' | 'classic'
+  alignItems="center"
+  justifyContent="space-between"
+  borderStyle="round" // single | double | round | bold | classic | singleDouble | doubleSingle
   borderColor="cyan"
-  borderTopColor="red"
-  borderBottomColor="blue"
-  borderLeftColor="green"
-  borderRightColor="yellow"
   borderTop={true}
-  borderBottom={false}
-  borderLeft={true}
   borderRight={true}
-  overflow="hidden" // 'visible' | 'hidden'
+  borderBottom={true}
+  borderLeft={true}
 >
   {children}
 </Box>
 ```
 
+Notes:
+
+- `Box` defaults to `flexDirection="row"` unless you set it explicitly.
+- Border side toggles (`borderTop`, etc.) are supported.
+- `borderColor` is rendered; per-side border colors are currently not applied.
+
 ---
 
-## Text
+## `Text`
 
 Renders styled text.
 
 ```tsx
 <Text
-  color="cyan" // named color, hex '#rrggbb', rgb(r,g,b), or xterm 256 index
+  color="cyan" // named, #rrggbb, rgb(r,g,b), or ANSI index 0-255
   backgroundColor="blue"
-  bold={true}
-  italic={true}
-  underline={true}
-  strikethrough={true}
-  dim={true}
-  dimColor={true} // alias for dim (Ink compat)
-  inverse={true}
-  wrap="wrap" // 'wrap' | 'truncate' | 'truncate-start' | 'truncate-middle'
+  bold
+  italic
+  underline
+  strikethrough
+  dim
+  inverse
 >
   Hello world
 </Text>
 ```
 
-Colors can be expressed as:
-
-- Named: `red`, `green`, `blue`, `cyan`, `magenta`, `yellow`, `white`, `black`, `gray`, `grey`
-- Hex: `#ff6600`
-- RGB: `rgb(255, 100, 0)`
-- xterm 256: integer `0–255`
+`dimColor` is supported as an Ink-compat alias for `dim`.
 
 ---
 
-## Newline
-
-Renders one or more blank lines.
+## `Newline`
 
 ```tsx
-<Newline />         // one line
+<Newline />
 <Newline count={2} />
 ```
 
 ---
 
-## Spacer
-
-Flexible spacer — fills all remaining space in a flex container.
+## `Spacer`
 
 ```tsx
 <Box flexDirection="row">
@@ -113,86 +86,69 @@ Flexible spacer — fills all remaining space in a flex container.
 
 ---
 
-## Static
+## `Static`
 
-Append-only scrollback region. Ideal for streaming output: logs, task results, chat history.
-
-Previously-rendered items are frozen — they are never re-rendered or cleared. New items appear above the dynamic UI.
+Append-only region for completed items/log lines.
 
 ```tsx
-import { Static } from 'ratatat'
-
-;<Static items={completedTasks}>
-  {(task, i) => (
-    <Box key={i}>
+<Static items={completedTasks}>
+  {(task) => (
+    <Box key={task.id}>
       <Text color="green">✓ {task.name}</Text>
     </Box>
   )}
 </Static>
 ```
 
-`items` is an array. Pass a new item by appending to the array — Static detects the new tail and renders only the new entries.
+`Static` only appends new tail items from `items`.
 
 ---
 
-## Transform
+## `Transform`
 
-Applies a string transformation to all text output from its children.
+Applies a transform function to the collected text output of its subtree.
 
 ```tsx
-import { Transform } from 'ratatat'
-
-;<Transform transform={(s) => s.toUpperCase()}>
-  <Text>hello world</Text> {/* renders as: HELLO WORLD */}
+<Transform transform={(s) => s.toUpperCase()}>
+  <Text>hello world</Text>
 </Transform>
 ```
 
-The `transform` function receives the concatenated text of all children and returns the modified string. Can be used for color injection, text replacement, etc.
-
 ---
 
-## Spinner
-
-Animated single-character spinner.
+## `Spinner` (Ratatat-only)
 
 ```tsx
-import { Spinner } from 'ratatat'
-
-<Spinner />                                    // default Braille animation, 80ms
-<Spinner color="cyan" />                       // with Text color prop
-<Spinner frames={['-', '\\', '|', '/']} interval={100} />  // custom frames
+<Spinner />
+<Spinner color="cyan" />
+<Spinner frames={['-', '\\', '|', '/']} interval={100} />
 ```
 
-Props (in addition to all `Text` props):
+Props (plus all `Text` props):
 
-| Prop       | Type       | Default        | Description                        |
-| ---------- | ---------- | -------------- | ---------------------------------- |
-| `frames`   | `string[]` | Braille frames | Array of animation frame strings   |
-| `interval` | `number`   | `80`           | Milliseconds between frame updates |
+| Prop       | Type       | Default        |
+| ---------- | ---------- | -------------- |
+| `frames`   | `string[]` | Braille frames |
+| `interval` | `number`   | `80`           |
 
 ---
 
-## ProgressBar
-
-Terminal progress bar with optional percentage label.
+## `ProgressBar` (Ratatat-only)
 
 ```tsx
-import { ProgressBar } from 'ratatat'
-
-<ProgressBar value={42} />                     // [████████░░░░░░░░░░░░] 42%
+<ProgressBar value={42} />
 <ProgressBar value={downloaded} max={total} width={30} color="green" />
-<ProgressBar value={50} showPercentage={false} />   // [██████████░░░░░░░░░░]
-<ProgressBar value={3} max={10} completeChar="=" incompleteChar="-" bracket={false} />
+<ProgressBar value={50} showPercentage={false} />
 ```
 
-Props (in addition to all `Text` props):
+Props (plus all `Text` props):
 
-| Prop             | Type      | Default  | Description                      |
-| ---------------- | --------- | -------- | -------------------------------- |
-| `value`          | `number`  | required | Current value                    |
-| `max`            | `number`  | `100`    | Maximum value                    |
-| `width`          | `number`  | `20`     | Number of cells for the bar body |
-| `completeChar`   | `string`  | `'█'`    | Filled segment character         |
-| `incompleteChar` | `string`  | `'░'`    | Empty segment character          |
-| `bracket`        | `boolean` | `true`   | Wrap bar with `[` `]`            |
-| `showPercentage` | `boolean` | `true`   | Render `N%` after bar            |
+| Prop             | Type      | Default  |
+| ---------------- | --------- | -------- |
+| `value`          | `number`  | required |
+| `max`            | `number`  | `100`    |
+| `width`          | `number`  | `20`     |
+| `completeChar`   | `string`  | `'█'`    |
+| `incompleteChar` | `string`  | `'░'`    |
+| `bracket`        | `boolean` | `true`   |
+| `showPercentage` | `boolean` | `true`   |

@@ -1,6 +1,6 @@
 # Quickstart: React Mode
 
-Build a TUI app using React components, hooks, and Yoga Flexbox layout.
+Build a TUI app with React components, hooks, and Yoga layout.
 
 ## Minimal example
 
@@ -11,7 +11,7 @@ import React, { useState } from 'react'
 function Counter() {
   const [count, setCount] = useState(0)
 
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (key.upArrow) setCount((c) => c + 1)
     if (key.downArrow) setCount((c) => c - 1)
   })
@@ -21,9 +21,7 @@ function Counter() {
       <Text bold color="cyan">
         Counter
       </Text>
-      <Text>
-        Count: <Text color="green">{count}</Text>
-      </Text>
+      <Text>Count: {count}</Text>
       <Text dim>↑↓ to change · Ctrl+C to exit</Text>
     </Box>
   )
@@ -40,18 +38,19 @@ node --import @oxc-node/core/register app.tsx
 
 ---
 
-## How it works
+## Render path
 
-1. `render(<App />)` mounts your React tree into a virtual Yoga layout
-2. Every state change triggers a React commit → dirty flag is set
-3. The render loop (~60fps) picks up the dirty flag, runs layout, paints cells into a `Uint32Array`, and diffs against the previous frame
-4. Only changed cells are written to stdout as ANSI escape sequences
+1. `render(<App />)` mounts your tree into Yoga layout nodes
+2. React commits set a dirty flag
+3. A frame loop checks the dirty flag at `maxFps` (default 60)
+4. Dirty frames run layout + paint into `Uint32Array`
+5. Rust diff emits only changed terminal cells as ANSI
 
 ---
 
-## Layout: Box and flexbox
+## Layout: `Box`
 
-`Box` is the layout primitive. It maps directly to Yoga flexbox — the same props used in React Native.
+`Box` is the main layout primitive.
 
 ```tsx
 <Box flexDirection="row" gap={2} padding={1}>
@@ -64,7 +63,7 @@ node --import @oxc-node/core/register app.tsx
 </Box>
 ```
 
-Common layout props: `flexDirection`, `flexGrow`, `flexShrink`, `flexBasis`, `width`, `height`, `minWidth`, `minHeight`, `padding`, `paddingX`, `paddingY`, `margin`, `gap`, `alignItems`, `justifyContent`, `borderStyle`.
+Common props: `flexDirection`, `flexGrow`, `flexShrink`, `width`, `height`, `padding`, `margin`, `gap`, `alignItems`, `justifyContent`, `borderStyle`.
 
 ---
 
@@ -77,59 +76,35 @@ Common layout props: `flexDirection`, `flexGrow`, `flexShrink`, `flexBasis`, `wi
 <Text italic dim>Dim italic</Text>
 ```
 
-Color accepts: named colors (`red`, `green`, `cyan`, etc.), hex strings (`#rrggbb`), rgb strings (`rgb(r,g,b)`), and xterm 256-color indices (0–255).
+Color accepts named values, `#rrggbb`, `rgb(r,g,b)`, and ANSI 256-color indices (`0-255`).
 
 ---
 
 ## Keyboard input
 
 ```tsx
-import { useInput } from 'ratatat'
-
 useInput((input, key) => {
-  // input: the printable character (or '' for special keys)
-  // key:   flags for what was pressed
-
-  if (key.upArrow) {
-    /* ↑ */
-  }
-  if (key.downArrow) {
-    /* ↓ */
-  }
-  if (key.leftArrow) {
-    /* ← */
-  }
-  if (key.rightArrow) {
-    /* → */
-  }
-  if (key.return) {
-    /* Enter */
-  }
-  if (key.escape) {
-    /* Esc */
-  }
-  if (key.ctrl && input === 'c') {
-    /* Ctrl+C */
-  }
-  if (key.tab) {
-    /* Tab */
-  }
+  if (key.upArrow) moveUp()
+  if (key.downArrow) moveDown()
+  if (key.return) submit()
+  if (key.escape) cancel()
+  if (key.ctrl && input === 'c') exit()
 })
 ```
 
-See [Hooks: useInput](hooks.md#useinput) for the full key reference.
+See [Hooks: useInput](hooks.md#useinput) for the full key map.
 
 ---
 
 ## App lifecycle
 
 ```tsx
-import { useApp } from 'ratatat'
+import { useApp, useInput, Text } from 'ratatat'
 
 function App() {
   const { exit } = useApp()
 
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (key.escape) exit()
   })
 
@@ -137,40 +112,25 @@ function App() {
 }
 ```
 
-`Ctrl+C` always exits cleanly — no extra setup needed.
+`useApp()` returns both `exit()` and `quit()`.
 
 ---
 
-## Render options
+## `render()` options and return value
 
 ```tsx
-render(<App />, {
-  maxFps: 30, // cap frame rate (default: 60)
+const { rerender, unmount, waitUntilExit } = render(<App />, {
+  maxFps: 30, // default 60
 })
-```
 
----
-
-## Return value
-
-```tsx
-const { rerender, unmount, waitUntilExit } = render(<App />)
-
-// Swap the root element
-rerender(<App version={2} />)
-
-// Tear down and restore the terminal
+rerender(<App theme="dark" />)
 unmount()
-
-// Await programmatic exit
 await waitUntilExit()
 ```
 
 ---
 
-## Testing with renderToString
-
-For unit tests, render without a real terminal:
+## `renderToString` for tests
 
 ```tsx
 import { renderToString, Box, Text } from 'ratatat'
@@ -181,13 +141,14 @@ const output = renderToString(
     <Text color="green">hello</Text>
   </Box>,
 )
-// output: 'hello'   (ANSI codes stripped — plain text)
+
+// output: 'hello'
 ```
 
 ---
 
 ## Next steps
 
-- [Components](components.md) — full component reference
-- [Hooks](hooks.md) — input, paste, mouse, focus, scroll
-- [Examples](examples.md) — runnable demos
+- [Components](components.md)
+- [Hooks](hooks.md)
+- [Examples](examples.md)

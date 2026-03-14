@@ -89,7 +89,7 @@ The loop runs every 16ms. On frames where nothing changed, the cost is:
 
 The Yoga layout, buffer paint, and Rust diff only run when `pendingCommit` is true. The Rust diff engine only writes ANSI bytes for cells that actually changed, so a frame where nothing visually changed produces zero terminal writes.
 
-## Tuning with maxFps
+## Tuning with `maxFps`
 
 ```ts
 render(<App />, { maxFps: 30 })  // 33ms frame interval — half the CPU overhead

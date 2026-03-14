@@ -1,63 +1,46 @@
 # Getting Started
 
-## Install
+Ratatat supports three runtime modes:
 
-```bash
-npm install ratatat
-```
-
-Ratatat ships with a prebuilt native addon for:
-
-- macOS arm64 (Apple Silicon)
-- macOS x64 (Intel)
-- Linux x64
-- Linux arm64
-- Windows x64
-
-No compiler required on these platforms.
-
-> **Requirements:** Node.js ≥ 20, a real TTY (Terminal.app, iTerm, Ghostty, etc.)
+| Mode            | Primary API                         | Best for                                  |
+| --------------- | ----------------------------------- | ----------------------------------------- |
+| React mode      | `render(<App />)`                   | Component-driven TUIs with hooks and Yoga |
+| Raw-buffer mode | `Renderer` + `renderer.render`      | Direct, per-cell rendering control        |
+| Inline mode     | `renderInline` / `createInlineLoop` | Fixed-height UI below the cursor          |
 
 ---
 
-## Choose a mode
+## Requirements
 
-Ratatat has two primary usage modes. Pick the one that fits your use case.
-
-|                | React mode                                            | Raw-buffer mode                                         |
-| -------------- | ----------------------------------------------------- | ------------------------------------------------------- |
-| **What it is** | Build TUI apps with React components and hooks        | Drive the Rust renderer directly with a `Uint32Array`   |
-| **Use when**   | You want layouts, components, state, focus management | You want max performance or full manual control         |
-| **Key API**    | `render(<App />)`                                     | `new Renderer(w, h)` + `renderer.render(buf)`           |
-| **Guide**      | [Quickstart: React mode](quickstart-react.md)         | [Quickstart: Raw-buffer mode](quickstart-raw-buffer.md) |
+- Node.js 20+
+- A real TTY (Terminal.app, iTerm2, Ghostty, kitty, etc.)
 
 ---
 
-## Run the demos
-
-Once installed, try the built-in examples:
+## Run examples in this repository
 
 ```bash
 # React mode
 node --import @oxc-node/core/register examples/kitchen-sink.tsx
 node --import @oxc-node/core/register examples/counter.tsx
 
-# Raw-buffer mode (pure TypeScript, no JSX)
+# Raw-buffer mode
 node --import @oxc-node/core/register examples-raw/matrix.ts
 node --import @oxc-node/core/register examples-raw/conway.ts
+
+# Inline mode (React)
+node --import @oxc-node/core/register examples/inline-minimal.tsx
 ```
 
-See [Examples](examples.md) for a full list with descriptions.
+See [Examples](examples.md) for the full list.
 
 ---
 
-## Ink users: migration
-
-If you have an existing Ink app, migration is usually one line:
+## Ink migration (typical)
 
 ```diff
 - import { render, Box, Text } from 'ink'
 + import { render, Box, Text } from 'ratatat'
 ```
 
-See [Ink Compatibility](ink-compat.md) for full API coverage details.
+Most app-level API usage maps directly. See [Ink Compatibility](ink-compat.md) for details and caveats.

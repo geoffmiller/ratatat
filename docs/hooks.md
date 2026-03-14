@@ -1,44 +1,12 @@
 # Hooks
 
-All hooks must be called inside a component rendered via `render()` (or `renderInline()`), which provides the required `RatatatContext`.
+Use these hooks inside components rendered with `render()`. Hooks that rely on the full app event emitter are marked as `render()`-mode only.
 
 ---
 
-## useInput
+## `useInput`
 
 Subscribe to keyboard input.
-
-```tsx
-import { useInput } from 'ratatat'
-
-useInput((input, key) => {
-  // input: the printable character pressed, or '' for special keys
-  // key:   flags describing what was pressed
-})
-```
-
-### Key object
-
-| Field        | Type      | Description                 |
-| ------------ | --------- | --------------------------- |
-| `upArrow`    | `boolean` | ↑ arrow key                 |
-| `downArrow`  | `boolean` | ↓ arrow key                 |
-| `leftArrow`  | `boolean` | ← arrow key                 |
-| `rightArrow` | `boolean` | → arrow key                 |
-| `return`     | `boolean` | Enter key                   |
-| `backspace`  | `boolean` | Backspace key               |
-| `delete`     | `boolean` | Delete (forward-delete) key |
-| `pageUp`     | `boolean` | Page Up                     |
-| `pageDown`   | `boolean` | Page Down                   |
-| `home`       | `boolean` | Home key                    |
-| `end`        | `boolean` | End key                     |
-| `tab`        | `boolean` | Tab key                     |
-| `shift`      | `boolean` | Shift modifier (with Tab)   |
-| `escape`     | `boolean` | Escape key                  |
-| `ctrl`       | `boolean` | Ctrl modifier               |
-| `meta`       | `boolean` | Meta/Alt modifier           |
-
-### Examples
 
 ```tsx
 useInput((input, key) => {
@@ -47,83 +15,90 @@ useInput((input, key) => {
   if (key.return) submit()
   if (key.escape) cancel()
   if (key.ctrl && input === 'c') exit()
-  if (key.ctrl && input === 'u') clearLine()
-  if (!key.ctrl && !key.meta) handleChar(input) // printable character
 })
 ```
 
+### `key` fields
+
+| Field        | Type      |
+| ------------ | --------- |
+| `upArrow`    | `boolean` |
+| `downArrow`  | `boolean` |
+| `leftArrow`  | `boolean` |
+| `rightArrow` | `boolean` |
+| `return`     | `boolean` |
+| `backspace`  | `boolean` |
+| `delete`     | `boolean` |
+| `pageUp`     | `boolean` |
+| `pageDown`   | `boolean` |
+| `home`       | `boolean` |
+| `end`        | `boolean` |
+| `tab`        | `boolean` |
+| `shift`      | `boolean` |
+| `escape`     | `boolean` |
+| `ctrl`       | `boolean` |
+| `meta`       | `boolean` |
+
 ---
 
-## usePaste
+## `usePaste`
 
 Subscribe to bracketed paste events.
 
 ```tsx
-import { usePaste } from 'ratatat'
-
 usePaste((text) => {
-  console.log('Pasted:', text)
+  handlePaste(text)
 })
 ```
 
-When at least one `usePaste` listener is active, paste content is delivered **only** through `usePaste` — it does not flow through `useInput`. When no paste listeners are active, pasted text falls back through `useInput` as regular character input.
+When at least one active `usePaste` listener exists, pasted text is routed to `usePaste` and not forwarded to `useInput`. If no paste listener is active, paste falls back to `useInput`.
 
 ### Options
 
 ```tsx
-usePaste(handler, { isActive: false }) // temporarily disable without unmounting
+usePaste(handler, { isActive: false })
 ```
 
-| Option     | Type      | Default | Description                     |
-| ---------- | --------- | ------- | ------------------------------- |
-| `isActive` | `boolean` | `true`  | Enable or disable this listener |
+| Option     | Type      | Default |
+| ---------- | --------- | ------- |
+| `isActive` | `boolean` | `true`  |
 
 ---
 
-## useMouse
+## `useMouse` (Ratatat-only)
 
-Subscribe to mouse events. Mouse tracking is enabled by default (SGR 1006).
+Subscribe to mouse events.
 
 ```tsx
-import { useMouse } from 'ratatat'
-
 useMouse((event) => {
-  // event.x, event.y      — 1-based terminal column/row
-  // event.button          — 'left' | 'right' | 'middle' | 'scrollUp' | 'scrollDown'
-  // event.shift, .ctrl, .meta — modifier flags
-  if (event.button === 'left') {
-    console.log(`Clicked at ${event.x},${event.y}`)
-  }
-  if (event.button === 'scrollUp') scrollUp()
+  // event.button: left | right | middle | scrollUp | scrollDown
+  // event.x, event.y are 0-based terminal coordinates
+  if (event.button === 'left') onClick(event.x, event.y)
 })
 ```
 
-### MouseEvent
+### Event shape
 
-| Field    | Type      | Description                                                           |
-| -------- | --------- | --------------------------------------------------------------------- |
-| `x`      | `number`  | Terminal column (1-based)                                             |
-| `y`      | `number`  | Terminal row (1-based)                                                |
-| `button` | `string`  | `'left'` \| `'right'` \| `'middle'` \| `'scrollUp'` \| `'scrollDown'` |
-| `shift`  | `boolean` | Shift modifier                                                        |
-| `ctrl`   | `boolean` | Ctrl modifier                                                         |
-| `meta`   | `boolean` | Meta/Alt modifier                                                     |
+| Field    | Type      | Notes                                 |
+| -------- | --------- | ------------------------------------- |
+| `x`      | `number`  | 0-based column                        |
+| `y`      | `number`  | 0-based row                           |
+| `button` | `string`  | left/right/middle/scrollUp/scrollDown |
+| `shift`  | `boolean` | modifier                              |
+| `ctrl`   | `boolean` | modifier                              |
+| `meta`   | `boolean` | modifier                              |
 
 ---
 
-## useTextInput
+## `useTextInput` (Ratatat-only)
 
-Managed text input with cursor positioning, editing shortcuts, and paste support.
+Managed text input with cursor + editing shortcuts.
 
 ```tsx
-import { useTextInput } from 'ratatat'
-
-const { value, cursor, setValue, clear } = useTextInput({
-  onSubmit: (v) => handleSubmit(v),
-  onChange: (v) => setPreview(v),
+const { value, cursor, clear } = useTextInput({
+  onSubmit: (v) => send(v),
 })
 
-// Render the field with a visible cursor
 return (
   <Text>
     {value.slice(0, cursor)}
@@ -135,66 +110,38 @@ return (
 
 ### Options
 
-| Option         | Type                  | Default | Description                |
-| -------------- | --------------------- | ------- | -------------------------- |
-| `initialValue` | `string`              | `''`    | Starting value             |
-| `onSubmit`     | `(v: string) => void` | —       | Called on Enter            |
-| `onChange`     | `(v: string) => void` | —       | Called on every keystroke  |
-| `isActive`     | `boolean`             | `true`  | Disable without unmounting |
+| Option         | Type                  | Default |
+| -------------- | --------------------- | ------- |
+| `initialValue` | `string`              | `''`    |
+| `onSubmit`     | `(v: string) => void` | —       |
+| `onChange`     | `(v: string) => void` | —       |
+| `isActive`     | `boolean`             | `true`  |
 
 ### Return value
 
-| Field      | Type                  | Description                                      |
-| ---------- | --------------------- | ------------------------------------------------ |
-| `value`    | `string`              | Current text                                     |
-| `cursor`   | `number`              | Cursor position (0 = before first char)          |
-| `setValue` | `(v: string) => void` | Set value programmatically (cursor moves to end) |
-| `clear`    | `() => void`          | Clear the input                                  |
+| Field      | Type                  |
+| ---------- | --------------------- |
+| `value`    | `string`              |
+| `cursor`   | `number`              |
+| `setValue` | `(v: string) => void` |
+| `clear`    | `() => void`          |
 
-### Supported editing shortcuts
-
-| Key           | Action                                |
-| ------------- | ------------------------------------- |
-| ← / →         | Move cursor                           |
-| Home / Ctrl+A | Move to start                         |
-| End / Ctrl+E  | Move to end                           |
-| Backspace     | Delete char before cursor             |
-| Delete        | Delete char after cursor              |
-| Ctrl+U        | Kill to start of line                 |
-| Ctrl+K        | Kill to end of line                   |
-| Ctrl+W        | Kill word before cursor               |
-| Enter         | Submit                                |
-| Paste         | Inserts paste text at cursor position |
+Supported editing keys: arrows, Home/End, Backspace/Delete, Ctrl+A/E/U/K/W, Enter, paste.
 
 ---
 
-## useScrollable
+## `useScrollable` (Ratatat-only)
 
-Virtual scrolling for a fixed-height viewport over variable-height content.
+Virtual scrolling state for fixed-height viewports.
 
 ```tsx
-import { useScrollable } from 'ratatat'
-
+const viewportHeight = 20
 const scroll = useScrollable({
-  viewportHeight: 20, // how many rows are visible
-  contentHeight: items.length, // total rows of content
+  viewportHeight,
+  contentHeight: items.length,
 })
 
-return (
-  <Box height={20} overflow="hidden">
-    <Box marginTop={-scroll.offset}>
-      {items.map((item, i) => (
-        <Text key={i}>{item}</Text>
-      ))}
-    </Box>
-  </Box>
-)
-```
-
-Use `useInput` to drive scroll:
-
-```tsx
-useInput((input, key) => {
+useInput((_input, key) => {
   if (key.upArrow) scroll.scrollUp()
   if (key.downArrow) scroll.scrollDown()
   if (key.pageUp) scroll.scrollBy(-10)
@@ -202,194 +149,119 @@ useInput((input, key) => {
   if (key.home) scroll.scrollToTop()
   if (key.end) scroll.scrollToBottom()
 })
+
+const visible = items.slice(scroll.offset, scroll.offset + viewportHeight)
 ```
-
-### Options
-
-| Option           | Type     | Description                                     |
-| ---------------- | -------- | ----------------------------------------------- |
-| `viewportHeight` | `number` | Height of the visible window in rows            |
-| `contentHeight`  | `number` | Total rows of content (update as content grows) |
 
 ### Return value
 
-| Field              | Type                  | Description                     |
-| ------------------ | --------------------- | ------------------------------- |
-| `offset`           | `number`              | Current scroll offset (0 = top) |
-| `scrollUp()`       | `() => void`          | Scroll up 1 row                 |
-| `scrollDown()`     | `() => void`          | Scroll down 1 row               |
-| `scrollBy(n)`      | `(n: number) => void` | Scroll by N rows                |
-| `scrollToTop()`    | `() => void`          | Jump to top                     |
-| `scrollToBottom()` | `() => void`          | Jump to bottom                  |
-| `atTop`            | `boolean`             | Already at top                  |
-| `atBottom`         | `boolean`             | Already at bottom               |
-
-`scrollToBottom()` is idempotent — safe to call on every new item append.
+`offset`, `scrollUp`, `scrollDown`, `scrollBy`, `scrollToTop`, `scrollToBottom`, `atTop`, `atBottom`.
 
 ---
 
-## useFocus
+## `useFocus`
 
-Mark a component as focusable and know when it has focus.
+Register a focusable component.
 
 ```tsx
-import { useFocus } from 'ratatat'
-
-function Input() {
-  const { isFocused } = useFocus({ autoFocus: true })
-
-  return (
-    <Box borderStyle={isFocused ? 'round' : 'single'}>
-      <Text>{isFocused ? '> ' : '  '}</Text>
-    </Box>
-  )
-}
+const { isFocused, focus } = useFocus({ id: 'search', autoFocus: true })
 ```
 
-### Options
-
-| Option      | Type      | Default | Description                      |
-| ----------- | --------- | ------- | -------------------------------- |
-| `autoFocus` | `boolean` | `false` | Focus this component on mount    |
-| `isActive`  | `boolean` | `true`  | Participate in focus cycling     |
-| `id`        | `string`  | auto    | Stable ID for programmatic focus |
-
-### Return value
-
-| Field       | Type                   | Description                      |
-| ----------- | ---------------------- | -------------------------------- |
-| `isFocused` | `boolean`              | Whether this component has focus |
-| `focus(id)` | `(id: string) => void` | Programmatically focus by ID     |
-
-Tab cycles forward, Shift+Tab cycles backward — built in, no extra code.
+Tab/Shift+Tab focus cycling is wired automatically by `render()`.
 
 ---
 
-## useFocusManager
+## `useFocusManager`
 
-Programmatically control focus cycling.
+Programmatic focus control.
 
 ```tsx
-import { useFocusManager } from 'ratatat'
-
-const { focusNext, focusPrevious, focus, enableFocus, disableFocus, activeId } = useFocusManager()
+const { focusNext, focusPrevious, focus, activeId, enableFocus, disableFocus } = useFocusManager()
 ```
 
-| Method/Field      | Description                             |
-| ----------------- | --------------------------------------- |
-| `focusNext()`     | Focus next registered component         |
-| `focusPrevious()` | Focus previous registered component     |
-| `focus(id)`       | Focus a specific component by ID        |
-| `enableFocus()`   | Enable focus cycling (default: enabled) |
-| `disableFocus()`  | Disable focus cycling                   |
-| `activeId`        | The currently focused component's ID    |
-
 ---
 
-## useApp
+## `useApp`
 
-Access app lifecycle controls.
+Lifecycle controls.
 
 ```tsx
-import { useApp } from 'ratatat'
-
-const { exit } = useApp()
-
-useInput((input, key) => {
-  if (key.escape) exit()
-})
+const { exit, quit } = useApp()
 ```
 
-| Method   | Description                                                                     |
-| -------- | ------------------------------------------------------------------------------- |
-| `exit()` | Clean shutdown (restores terminal, stops input, exits process) — Ink-compatible |
-| `quit()` | Same as `exit()` — Ratatat-native name                                          |
+`exit()` and `quit()` are equivalent.
 
 ---
 
-## useWindowSize
+## `useWindowSize`
 
-Returns current terminal dimensions. Re-renders on terminal resize.
+Returns `{ columns, rows }` and updates on terminal resize.
 
 ```tsx
-import { useWindowSize } from 'ratatat'
-
 const { columns, rows } = useWindowSize()
 ```
 
+Note: this hook relies on the full app event emitter and is intended for `render()` mode.
+
 ---
 
-## useStdout / useStderr
+## `useStdout` / `useStderr`
 
-Write to stdout or stderr without disturbing the TUI rendering.
+Write outside the rendered frame.
 
 ```tsx
-import { useStdout, useStderr } from 'ratatat'
+const { write } = useStdout()
+const { write: writeErr } = useStderr()
 
-const { write, stdout } = useStdout()
-const { write: writeErr, stderr } = useStderr()
-
-write('some output\n')
+write('log line\n')
+writeErr('warning\n')
 ```
 
 ---
 
-## useStdin
+## `useStdin`
 
-Access raw stdin stream and raw mode controls.
+Access stdin + raw mode controls.
 
 ```tsx
-import { useStdin } from 'ratatat'
-
 const { stdin, setRawMode, isRawModeSupported } = useStdin()
 ```
 
 ---
 
-## useBoxMetrics
+## `useBoxMetrics`
 
-Measure the computed layout dimensions of a `Box` ref.
+Read computed layout metrics from a `Box` ref.
 
 ```tsx
-import { useBoxMetrics } from 'ratatat'
-import React, { useRef } from 'react'
-
 const ref = useRef(null)
 const { width, height, left, top, hasMeasured } = useBoxMetrics(ref)
 
 return <Box ref={ref}>...</Box>
 ```
 
-Updates on every render and on terminal resize. Returns `{ width: 0, height: 0, left: 0, top: 0, hasMeasured: false }` until the first layout pass.
+Returns zeroed metrics until first layout pass.
+
+Note: this hook relies on the full app event emitter and is intended for `render()` mode.
 
 ---
 
-## measureElement
+## `measureElement`
 
-Imperative alternative to `useBoxMetrics`. Returns `{ width, height }` from a `LayoutNode` ref.
+Imperative element measurement.
 
 ```tsx
-import { measureElement } from 'ratatat'
-
 const { width, height } = measureElement(ref.current)
 ```
 
 ---
 
-## useIsScreenReaderEnabled
+## Compatibility stubs
 
-Stub — always returns `false`. Provided for Ink API compatibility.
+### `useIsScreenReaderEnabled`
 
-```tsx
-const isEnabled = useIsScreenReaderEnabled()
-```
+Always returns `false`.
 
----
+### `useCursor`
 
-## useCursor
-
-Stub — `setCursorPosition` is a no-op. Ratatat hides the cursor during rendering. Provided for Ink API compatibility.
-
-```tsx
-const { setCursorPosition } = useCursor()
-```
+Returns `{ setCursorPosition }`, currently a no-op stub.

@@ -4,26 +4,24 @@
 
 ## "Device not configured" (os error 6)
 
-**Cause:** The app started but there is no real TTY attached to stdin. This happens when you run the binary from a non-interactive context — piped stdin, redirected output, CI without a PTY, or backgrounded with `& > logfile`.
+**Cause:** stdin is not attached to a real TTY.
 
-**Fix:** Run in a real terminal (Terminal.app, iTerm, Ghostty, etc.) with a TTY attached:
+Common failure cases:
 
 ```bash
-# OK
-./my-app
-
-# Will fail
-./my-app > output.log
-echo "" | ./my-app
+./app > output.log
+printf '' | ./app
 ```
+
+Run in an interactive terminal session instead.
 
 ---
 
 ## Terminal left in raw mode after crash
 
-**Cause:** The app crashed or was killed before `TerminalGuard.leave()` ran.
+If the process dies hard (`kill -9`, OOM, host crash), cleanup hooks do not run.
 
-**Fix:** Type `reset` or `stty sane` in the same terminal window, then press Enter (even if you can't see what you're typing):
+Recovery in the same terminal:
 
 ```bash
 reset
@@ -31,139 +29,86 @@ reset
 stty sane
 ```
 
-Ratatat's `TerminalGuard` uses Rust RAII drop semantics — it will restore the terminal even on panic. But if the Node process was hard-killed (`kill -9`, OOM), the drop handler does not fire.
-
 ---
 
-## Blank screen / no output
+## Blank screen / no visible output
 
-**Cause:** Several possible causes:
+Check these first:
 
-1. **App is running but rendering nothing** — check that your root component returns something visible.
-2. **Alternate screen is active but nothing painted yet** — the first paint runs immediately on `render()`. If you see a blank alternate screen, your component may be returning `null`.
-3. **Terminal emulator doesn't support alternate screen** — try a different terminal.
+1. Root component renders visible content (not `null`)
+2. App is in a real TTY
+3. Terminal emulator supports alternate screen mode
 
 ---
 
 ## Input not responding
 
-**Cause:** stdin is not in raw mode, or the input parser has not started.
+Checklist:
 
-**Checks:**
-
-- Are you using `render()` (which calls `input.start()` automatically)?
-- Are you in a real TTY? (`process.stdin.isTTY` should be `true`)
-- For raw-buffer mode: did you create a `TerminalGuard` before starting your loop?
+- `process.stdin.isTTY === true`
+- In React mode, use `render()` (it starts input parser + app lifecycle)
+- In raw-buffer mode, create a `TerminalGuard` before your loop
 
 ---
 
 ## Mouse events not firing
 
-**Cause:** Mouse tracking not enabled.
-
-**Fix:** Pass `true` to `TerminalGuard`:
-
-```ts
-const guard = new TerminalGuard(true) // enables SGR 1006 mouse tracking
-```
-
-In React mode, this is enabled by default (the app calls `new TerminalGuard(true)` internally).
-
-If events still don't fire, verify your terminal emulator supports SGR mouse tracking. Most modern terminals do (Terminal.app, iTerm2, Ghostty, kitty, alacritty).
+- React mode enables mouse tracking by default
+- Raw-buffer mode needs `new TerminalGuard(true)`
+- Confirm your terminal supports SGR mouse tracking (1006)
 
 ---
 
-## Paste events not firing / paste goes to useInput instead
+## Paste not routed to `usePaste`
 
-**Cause:** Bracketed paste mode not enabled, or no active `usePaste` listener.
+Routing behavior is intentional:
 
-**Fix — bracketed paste not enabled:** In React mode, bracketed paste is enabled automatically. In raw-buffer mode, pass `true` to `TerminalGuard`:
+- If one or more active `usePaste` listeners exist, paste goes to `usePaste`
+- Otherwise, paste falls back to `useInput`
 
-```ts
-const guard = new TerminalGuard(true)
-```
+In raw-buffer mode, bracketed paste requires `new TerminalGuard(true)`.
 
-**Fix — paste goes to useInput:** This is intentional when no `usePaste` listener is active. Pasted text falls back to `useInput` as regular characters. Add a `usePaste` listener to intercept it:
+---
+
+## Scrolling content moves sibling UI unexpectedly
+
+If you use negative margins to "scroll" a child, Yoga shifts layout instead of clipping.
+
+Use data slicing instead:
 
 ```tsx
-usePaste((text) => {
-  console.log('pasted:', text)
-})
+const visible = items.slice(scroll.offset, scroll.offset + viewportHeight)
 ```
 
 ---
 
-## Text wrapping / layout looks wrong
+## Text wraps unexpectedly
 
-**Cause:** Box dimensions not constrained, or `wrap` prop not set.
+Text currently wraps to available layout width. There is no `Text wrap="..."` API in Ratatat.
 
-**Fix:** Ensure your root `Box` has a fixed or constrained width:
-
-```tsx
-const { columns } = useWindowSize()
-<Box width={columns} flexDirection="column">
-  ...
-</Box>
-```
-
-For `Text`, set the `wrap` prop explicitly when you need controlled wrapping:
-
-```tsx
-<Text wrap="wrap">long text that should wrap</Text>
-<Text wrap="truncate">text that should truncate at the edge</Text>
-```
+If output looks wrong, check parent width constraints (`Box width`, `padding`, `border`, etc.).
 
 ---
 
-## Emoji or Unicode renders as two cells
+## Wide Unicode/emoji alignment issues
 
-**Cause:** Wide characters (full-width CJK, emoji) occupy two terminal columns but Ratatat's layout may not account for display width vs codepoint count in all cases.
+Some wide glyphs (emoji, full-width CJK) can occupy two columns while string length reports one code point.
 
-**Workaround:** Treat wide characters as 2 columns wide in your layout math. Most Latin-script terminal apps are unaffected.
-
----
-
-## `@oxc-node/core/register` not found
-
-**Cause:** `@oxc-node/core` is not installed or the register path changed.
-
-**Fix:**
-
-```bash
-npm install -D @oxc-node/core
-```
-
-Alternatively, compile with `tsc` first and run the compiled `.js` output:
-
-```bash
-npm run build:ts
-node dist/examples/counter.js
-```
+For strict alignment-sensitive UIs, prefer narrow glyphs.
 
 ---
 
-## Blank output from renderToString
+## `renderToString` output surprises
 
-**Cause:** `renderToString` renders synchronously. `useEffect` callbacks run but state updates they trigger do not affect the output. `useLayoutEffect` callbacks do fire and affect output.
+`renderToString` is synchronous and returns a plain string snapshot.
 
-**Fix:** Move initial state setup to `useLayoutEffect` or directly into the component body, not `useEffect`.
-
----
-
-## SEA binary fails on macOS ("cannot be opened because the developer cannot be verified")
-
-**Cause:** The binary is ad-hoc signed but not Apple-notarized.
-
-**Fix:**
-
-```bash
-# Option 1: allow via System Preferences → Privacy & Security
-# Option 2: remove the quarantine attribute
-xattr -d com.apple.quarantine ./ratatat-kitchen-sink
-```
+- `useLayoutEffect` updates can affect output
+- `useEffect` async follow-up updates do not affect returned output
 
 ---
 
 ## Still stuck?
 
-Check the [Architecture Decisions](decisions.md) for insight into how things work internally, or open an issue on [GitHub](https://github.com/geoffmiller/ratatat).
+- Check [Architecture Decisions](decisions.md)
+- Check [Render Loop](render-loop.md)
+- Open an issue on [GitHub](https://github.com/geoffmiller/ratatat)

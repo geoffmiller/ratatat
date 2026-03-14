@@ -28,7 +28,7 @@ The loop decouples painting from React scheduling: `resetAfterCommit` sets a `pe
 
 Ink uses `const { exit } = useApp()`. `exit` is the Ink-compat alias; `quit` is the ratatat-native name. Both call the same underlying `app.quit()`.
 
-## FocusProvider + TabHandler wired inside `render()`
+## `FocusProvider` + `TabHandler` wired inside `render()`
 
 Every app tree is automatically wrapped with `<FocusProvider><TabHandler>`. Users get Tab/Shift+Tab focus cycling for free, matching Ink's behavior. The alternative (user-managed) forces boilerplate in every app.
 

@@ -50,6 +50,7 @@
     "bench:startup": "node benchmark/startup/bench-startup.mjs",
     "bench:ink:stages": "node ink-fast/prototypes/ink-stage-profiler.mjs",
     "bench:ink:matrix": "node ink-fast/prototypes/ink-stage-matrix.mjs",
+    "bench:ink:cpu": "node ink-fast/prototypes/ink-cpu-hotspots.mjs",
     "build:ts": "tsc",
     "build": "napi build --platform --release --js native.cjs && npm run build:ts",
     "build:sea:kitchen-sink": "node sea/build-kitchen-sink-sea.mjs",

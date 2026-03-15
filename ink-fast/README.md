@@ -39,10 +39,20 @@ npm run bench:ink:matrix
 RUNS=3 npm run bench:ink:matrix
 ```
 
+Run CPU hotspot sampling:
+
+```bash
+WORKLOAD=unicode WARMUP_RENDERS=20 MEASURE_RENDERS=120 \
+  OUTPUT_JSON=ink-fast/results/ink-cpu-unicode.json \
+  npm run bench:ink:cpu
+# add INCLUDE_RAW_PROFILE=1 only if you need full cpuprofile payload
+```
+
 Latest profiling notes:
 
 - `ink-fast/notes/phase0-baseline.md`
 - `ink-fast/notes/phase0-matrix.md`
+- `ink-fast/notes/phase0-hotspots.md`
 
 Optional env knobs:
 

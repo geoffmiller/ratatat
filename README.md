@@ -1,4 +1,4 @@
-![Ratatat logo](docs/ratatat-logo.png)
+![Ratatat logo](docs/media/ratatat-logo.png)
 
 # Ratatat ([Ratatui](https://ratatui.rs) + [Ink](https://github.com/vadimdemedes/ink))
 
@@ -12,22 +12,22 @@ An Ink-compatible React renderer for terminal UIs, powered by a native Rust diff
 
 Primary entry points: `ratatat/react` (React adapter) and `ratatat/core` (framework-agnostic runtime). Root `ratatat` imports remain supported for compatibility.
 
-![Ratatat stress test (700 FPS)](docs/ratatat-stress-test-700fps.png)
+![Ratatat stress test (700 FPS)](docs/media/ratatat-stress-test-700fps.png)
 
 _Stress test now sustains ~700 FPS._
 
 <video src="https://github.com/user-attachments/assets/62ae2569-f036-431b-a359-1b439461ebb4" controls muted loop playsinline></video>
 
 _ASCII 3D cube demo (raw-buffer mode)._  
-If your markdown viewer doesn't render embedded video, use: [`docs/ratatat-ascii-3d-cube-demo.mp4`](docs/ratatat-ascii-3d-cube-demo.mp4)
+If your markdown viewer doesn't render embedded video, use: [`docs/media/ratatat-ascii-3d-cube-demo.mp4`](docs/media/ratatat-ascii-3d-cube-demo.mp4)
 
-| Layout                                     | Focus                                    | Graph                                    | Live                                   |
-| ------------------------------------------ | ---------------------------------------- | ---------------------------------------- | -------------------------------------- |
-| ![Kitchen sink layout](docs/ks-layout.png) | ![Kitchen sink focus](docs/ks-focus.png) | ![Kitchen sink graph](docs/ks-graph.png) | ![Kitchen sink live](docs/ks-live.png) |
+| Layout                                           | Focus                                          | Graph                                          | Live                                         |
+| ------------------------------------------------ | ---------------------------------------------- | ---------------------------------------------- | -------------------------------------------- |
+| ![Kitchen sink layout](docs/media/ks-layout.png) | ![Kitchen sink focus](docs/media/ks-focus.png) | ![Kitchen sink graph](docs/media/ks-graph.png) | ![Kitchen sink live](docs/media/ks-live.png) |
 
-| Incremental                                          | UI                                 | Static                                     | Mouse                                    |
-| ---------------------------------------------------- | ---------------------------------- | ------------------------------------------ | ---------------------------------------- |
-| ![Kitchen sink incremental](docs/ks-incremental.png) | ![Kitchen sink ui](docs/ks-ui.png) | ![Kitchen sink static](docs/ks-static.png) | ![Kitchen sink mouse](docs/ks-mouse.png) |
+| Incremental                                                | UI                                       | Static                                           | Mouse                                          |
+| ---------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------ | ---------------------------------------------- |
+| ![Kitchen sink incremental](docs/media/ks-incremental.png) | ![Kitchen sink ui](docs/media/ks-ui.png) | ![Kitchen sink static](docs/media/ks-static.png) | ![Kitchen sink mouse](docs/media/ks-mouse.png) |
 
 ## Benchmark snapshot (Ratatat vs Ink)
 

@@ -33,13 +33,13 @@ If your markdown viewer doesn't render embedded video, use: [`docs/ratatat-ascii
 
 Measured on Apple M1 Max, 80×24 terminal.
 
-| Suite                     | Ratatat | Ink   | Speedup |
-| ------------------------- | ------- | ----- | ------- |
-| Initial mount (simple)    | 67,630  | 8,215 | 8.2×    |
-| Initial mount (complex)   | 41,253  | 1,421 | 29×     |
-| Rerender (simple)         | 95,175  | 8,095 | 11.8×   |
-| Rerender (complex)        | 49,852  | 1,384 | 36×     |
-| p99 latency (complex, µs) | 23      | 1,586 | 68×     |
+| Metric                  | Unit               | Ratatat | Ink   | Speedup |
+| ----------------------- | ------------------ | ------- | ----- | ------- |
+| Initial mount (simple)  | ops/sec            | 67,630  | 8,215 | 8.2×    |
+| Initial mount (complex) | ops/sec            | 41,253  | 1,421 | 29×     |
+| Rerender (simple)       | ops/sec            | 95,175  | 8,095 | 11.8×   |
+| Rerender (complex)      | ops/sec            | 49,852  | 1,384 | 36×     |
+| p99 latency (complex)   | µs (lower is best) | 23      | 1,586 | 68×     |
 
 ## Installation (short)
 

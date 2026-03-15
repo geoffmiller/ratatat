@@ -36,3 +36,7 @@ npm test
 See validation note:
 
 - `../notes/phase1-upstream-patch-validation.md`
+
+Draft PR text:
+
+- `pr-draft.md`

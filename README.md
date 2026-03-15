@@ -55,7 +55,7 @@ Measured on Apple M1 Max, 80×24 terminal.
 - **Prebuilt tarball (macOS arm64 local artifact):**
 
   ```bash
-  npm install ./builds/macos-arm64/ratatat-0.1.0-macos-arm64.tar.gz
+  npm install ./builds/macos-arm64/ratatat-0.1.1-macos-arm64.tar.gz
   ```
 
   ⚠️ Do not blindly install binaries/tarballs from strangers on the internet. Trust source, verify checksums, and prefer building from source. See [`builds/README.md`](builds/README.md).

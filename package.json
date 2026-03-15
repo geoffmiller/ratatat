@@ -1,6 +1,6 @@
 {
   "name": "ratatat",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Terminal UI runtime powered by a Rust diff engine, with a React adapter and Ink-compatible API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,0 +1,472 @@
+{
+  "config": {
+    "cols": 80,
+    "rows": 24,
+    "warmupRenders": 10,
+    "measureRenders": 40,
+    "maxFps": 1000,
+    "sink": "devnull",
+    "rendersObserved": 52,
+    "measuredRenders": 40
+  },
+  "summary": {
+    "layout (Yoga.calculateLayout)": {
+      "n": 40,
+      "mean": 0.058930200000003194,
+      "median": 0.056874999999990905,
+      "p95": 0.06916599999999562,
+      "min": 0.04112499999996544,
+      "max": 0.14741700000001856
+    },
+    "output assembly (Output.get)": {
+      "n": 40,
+      "mean": 0.5952488999999985,
+      "median": 0.5581250000000182,
+      "p95": 0.7036669999999958,
+      "min": 0.5177909999999883,
+      "max": 0.886333000000036
+    },
+    "render total (Ink onRender)": {
+      "n": 40,
+      "mean": 1.9909479499999976,
+      "median": 1.9704580000000078,
+      "p95": 2.177458999999999,
+      "min": 1.859292000000039,
+      "max": 2.2365839999999935
+    },
+    "est. tree/transform (render - output.get)": {
+      "n": 40,
+      "mean": 1.3956990499999988,
+      "median": 1.389250000000004,
+      "p95": 1.4507500000000277,
+      "min": 1.3296669999999722,
+      "max": 1.492290999999966
+    },
+    "stdout.write wall time": {
+      "n": 40,
+      "mean": 0.01764384999999038,
+      "median": 0.017666999999960353,
+      "p95": 0.0268329999999537,
+      "min": 0.006000999999969281,
+      "max": 0.03154099999994742
+    },
+    "stdout bytes per render": {
+      "n": 40,
+      "mean": 5810,
+      "median": 5810,
+      "p95": 5810,
+      "min": 5810,
+      "max": 5810
+    },
+    "stdout writes per render": {
+      "n": 40,
+      "mean": 3,
+      "median": 3,
+      "p95": 3,
+      "min": 3,
+      "max": 3
+    }
+  },
+  "perRender": [
+    {
+      "layoutMs": 0.058334000000002106,
+      "layoutCalls": 1,
+      "outputGetMs": 0.6364170000000513,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.0804169999999544,
+      "writeMs": 0.03154099999994742,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.049291000000039276,
+      "layoutCalls": 1,
+      "outputGetMs": 0.687582999999961,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.091165999999987,
+      "writeMs": 0.013999999999896318,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.04608400000000756,
+      "layoutCalls": 1,
+      "outputGetMs": 0.6664579999999773,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.039874999999995,
+      "writeMs": 0.016167000000052667,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.05120799999997416,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5936659999999847,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9637910000000147,
+      "writeMs": 0.02020900000002257,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.05854200000004539,
+      "layoutCalls": 1,
+      "outputGetMs": 0.6356250000000045,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.0587090000000217,
+      "writeMs": 0.017001000000050226,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.06529100000000199,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5854170000000067,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9845830000000433,
+      "writeMs": 0.00916800000004514,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.05979100000001836,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5543749999999932,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9704580000000078,
+      "writeMs": 0.022833000000048287,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.05070899999998346,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5654999999999859,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9435829999999896,
+      "writeMs": 0.011000000000024102,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.053959000000020296,
+      "layoutCalls": 1,
+      "outputGetMs": 0.886333000000036,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.2365839999999935,
+      "writeMs": 0.006000999999969281,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.061166999999954896,
+      "layoutCalls": 1,
+      "outputGetMs": 0.6510410000000206,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.057374999999979,
+      "writeMs": 0.024790999999993346,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.06695799999999963,
+      "layoutCalls": 1,
+      "outputGetMs": 0.7267089999999712,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.177458999999999,
+      "writeMs": 0.016415999999992437,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.056874999999990905,
+      "layoutCalls": 1,
+      "outputGetMs": 0.6128329999999664,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.00329099999999,
+      "writeMs": 0.01887400000003936,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.05504200000001447,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5368330000000014,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9122089999999616,
+      "writeMs": 0.020249000000035267,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.06741599999998016,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5396250000000009,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9267920000000345,
+      "writeMs": 0.019458999999983462,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.047791999999958534,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5548339999999712,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9428749999999582,
+      "writeMs": 0.017791999999928976,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.06316599999996697,
+      "layoutCalls": 1,
+      "outputGetMs": 0.543707999999981,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9500419999999963,
+      "writeMs": 0.02754299999998011,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.06916599999999562,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5575420000000122,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9467920000000163,
+      "writeMs": 0.02087499999998954,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.06387499999999591,
+      "layoutCalls": 1,
+      "outputGetMs": 0.546291999999994,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9724170000000072,
+      "writeMs": 0.017666999999960353,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.07662499999997863,
+      "layoutCalls": 1,
+      "outputGetMs": 0.6222920000000158,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.0575830000000224,
+      "writeMs": 0.022416999999904874,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.0675839999999539,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5452080000000024,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.945875000000001,
+      "writeMs": 0.01883399999996982,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.06074999999998454,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5512079999999742,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9381249999999568,
+      "writeMs": 0.02483200000006036,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.06441700000004857,
+      "layoutCalls": 1,
+      "outputGetMs": 0.7036669999999958,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.195957999999962,
+      "writeMs": 0.0268329999999537,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.14741700000001856,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5994170000000167,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9959590000000276,
+      "writeMs": 0.01966699999991306,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.06383399999998574,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5581250000000182,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9720829999999978,
+      "writeMs": 0.018250000000080036,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.052042000000028565,
+      "layoutCalls": 1,
+      "outputGetMs": 0.526916999999969,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.8728750000000218,
+      "writeMs": 0.01474999999999227,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.05029100000001563,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5177909999999883,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.859292000000039,
+      "writeMs": 0.01345800000001418,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.05349999999998545,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5591249999999945,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9462499999999636,
+      "writeMs": 0.016124999999988177,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.05962499999998272,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5642090000000053,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.047957999999994,
+      "writeMs": 0.02641700000003766,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.046333000000004176,
+      "layoutCalls": 1,
+      "outputGetMs": 0.6746250000000487,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.049874999999986,
+      "writeMs": 0.011248999999907028,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.04408300000000054,
+      "layoutCalls": 1,
+      "outputGetMs": 0.6521250000000123,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.050666999999976,
+      "writeMs": 0.009542000000010376,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.046208000000035554,
+      "layoutCalls": 1,
+      "outputGetMs": 0.6812080000000265,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.0108749999999986,
+      "writeMs": 0.01579199999997627,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.04112499999996544,
+      "layoutCalls": 1,
+      "outputGetMs": 0.6707079999999905,
+      "outputGetCalls": 1,
+      "renderTotalMs": 2.0552079999999933,
+      "writeMs": 0.007584000000008473,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.06379200000003493,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5407910000000129,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.959957999999972,
+      "writeMs": 0.01141699999999446,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.057542000000012195,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5357079999999996,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9142499999999814,
+      "writeMs": 0.021040999999968335,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.05062500000002501,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5444999999999709,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.914625000000001,
+      "writeMs": 0.01312499999994543,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.0542920000000322,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5196250000000191,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.8975839999999948,
+      "writeMs": 0.011916999999982636,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.0508750000000191,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5491660000000138,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9923330000000306,
+      "writeMs": 0.02408300000001873,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.04704100000003564,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5316669999999704,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.8631670000000327,
+      "writeMs": 0.012791999999990367,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.057833000000016455,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5507499999999936,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.9115409999999997,
+      "writeMs": 0.020125999999947908,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    },
+    {
+      "layoutMs": 0.056708000000014636,
+      "layoutCalls": 1,
+      "outputGetMs": 0.5303329999999846,
+      "outputGetCalls": 1,
+      "renderTotalMs": 1.927458999999999,
+      "writeMs": 0.013916999999992186,
+      "writeBytes": 5810,
+      "writeCalls": 3
+    }
+  ]
+}

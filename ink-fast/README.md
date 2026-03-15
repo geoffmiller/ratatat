@@ -18,3 +18,27 @@ Suggested structure as work grows:
 - `ink-fast/notes/` — findings, profiling snapshots
 - `ink-fast/prototypes/` — isolated prototypes
 - `ink-fast/results/` — benchmark outputs
+
+Phase 0 prototype currently available:
+
+- `ink-fast/prototypes/ink-stage-profiler.mjs`
+
+Run it:
+
+```bash
+npm run bench:ink:stages
+# or:
+node ink-fast/prototypes/ink-stage-profiler.mjs
+```
+
+Latest baseline write-up:
+
+- `ink-fast/notes/phase0-baseline.md`
+
+Optional env knobs:
+
+```bash
+COLS=80 ROWS=24 WARMUP_RENDERS=20 MEASURE_RENDERS=120 MAX_FPS=1000 SINK=devnull \
+  OUTPUT_JSON=ink-fast/results/ink-stage-profile.json \
+  node ink-fast/prototypes/ink-stage-profiler.mjs
+```

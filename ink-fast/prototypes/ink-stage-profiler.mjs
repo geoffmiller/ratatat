@@ -18,6 +18,7 @@
  *
  * Optional env:
  *   COLS=80 ROWS=24 WARMUP_RENDERS=20 MEASURE_RENDERS=120 MAX_FPS=1000
+ *   WORKLOAD=dense|sparse|unicode
  *   SINK=devnull|memory
  *   OUTPUT_JSON=ink-fast/results/ink-stage-profile.json
  */
@@ -43,6 +44,7 @@ const WARMUP_RENDERS = Number(process.env.WARMUP_RENDERS ?? 20)
 const MEASURE_RENDERS = Number(process.env.MEASURE_RENDERS ?? 120)
 const MAX_FPS = Number(process.env.MAX_FPS ?? 1000)
 const SINK = process.env.SINK ?? 'devnull'
+const WORKLOAD = process.env.WORKLOAD ?? 'dense'
 const OUTPUT_JSON = process.env.OUTPUT_JSON
 
 const TOTAL_UPDATES = WARMUP_RENDERS + MEASURE_RENDERS
@@ -131,6 +133,8 @@ class TimingTtyStream extends Writable {
 }
 
 const denseChars = '█▓▒░▪▫●○◆◇'
+const unicodeChars = ['漢', '字', '語', '🙂', '🚀', '界', '火', '水', '🌊', '🌲']
+
 function makeDenseFrame(frame, cols, rows) {
   let out = ''
   for (let y = 0; y < rows; y++) {
@@ -140,6 +144,44 @@ function makeDenseFrame(frame, cols, rows) {
     if (y < rows - 1) out += '\n'
   }
   return out
+}
+
+function makeSparseFrame(frame, cols, rows) {
+  const px = frame % cols
+  const py = Math.floor(frame / cols) % rows
+
+  let out = ''
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      out += x === px && y === py ? '@' : '.'
+    }
+    if (y < rows - 1) out += '\n'
+  }
+  return out
+}
+
+function makeUnicodeFrame(frame, cols, rows) {
+  let out = ''
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      out += unicodeChars[(x * 5 + y * 11 + frame) % unicodeChars.length]
+    }
+    if (y < rows - 1) out += '\n'
+  }
+  return out
+}
+
+function makeFrame(frame, cols, rows, workload) {
+  switch (workload) {
+    case 'dense':
+      return makeDenseFrame(frame, cols, rows)
+    case 'sparse':
+      return makeSparseFrame(frame, cols, rows)
+    case 'unicode':
+      return makeUnicodeFrame(frame, cols, rows)
+    default:
+      throw new Error(`Unsupported WORKLOAD: ${workload}. Expected dense|sparse|unicode`)
+  }
 }
 
 const renderRecords = new Map()
@@ -210,7 +252,7 @@ function Workload() {
     return () => clearTimeout(timer)
   }, [frame, exit])
 
-  const text = useMemo(() => makeDenseFrame(frame, COLS, ROWS), [frame])
+  const text = useMemo(() => makeFrame(frame, COLS, ROWS, WORKLOAD), [frame])
 
   return React.createElement(
     Box,
@@ -275,7 +317,7 @@ console.log('║                 ink stage profiler (phase 0)                   
 console.log('╚════════════════════════════════════════════════════════════════════╝')
 console.log('')
 console.log(
-  `cols=${COLS} rows=${ROWS} warmup=${WARMUP_RENDERS} measured=${MEASURE_RENDERS} maxFps=${MAX_FPS} sink=${SINK}`,
+  `cols=${COLS} rows=${ROWS} warmup=${WARMUP_RENDERS} measured=${MEASURE_RENDERS} maxFps=${MAX_FPS} sink=${SINK} workload=${WORKLOAD}`,
 )
 console.log(`renders observed=${renderCount} measured rows=${measured.length}`)
 console.log('')
@@ -301,6 +343,7 @@ if (OUTPUT_JSON) {
       measureRenders: MEASURE_RENDERS,
       maxFps: MAX_FPS,
       sink: SINK,
+      workload: WORKLOAD,
       rendersObserved: renderCount,
       measuredRenders: measured.length,
     },

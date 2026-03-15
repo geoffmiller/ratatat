@@ -37,8 +37,11 @@ Latest baseline write-up:
 
 Optional env knobs:
 
+- `WORKLOAD=dense|sparse|unicode` selects the frame generator.
+
 ```bash
-COLS=80 ROWS=24 WARMUP_RENDERS=20 MEASURE_RENDERS=120 MAX_FPS=1000 SINK=devnull \
+COLS=80 ROWS=24 WARMUP_RENDERS=20 MEASURE_RENDERS=120 MAX_FPS=1000 \
+  WORKLOAD=dense SINK=devnull \
   OUTPUT_JSON=ink-fast/results/ink-stage-profile.json \
   node ink-fast/prototypes/ink-stage-profiler.mjs
 ```

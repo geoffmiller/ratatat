@@ -3,7 +3,7 @@
  *
  * Phase 0 instrumentation prototype for Ink's render pipeline.
  *
- * Measures per-render stage timings for a dense redraw workload:
+ * Measures per-render stage timings for a selected redraw workload:
  *   - Yoga layout (`calculateLayout`)
  *   - Output assembly (`Output.get`)
  *   - Ink render callback total (`onRender.renderTime`)
@@ -81,6 +81,14 @@ function fmt(n) {
   return n.toFixed(3)
 }
 
+function sum(values) {
+  return values.reduce((total, value) => total + value, 0)
+}
+
+function pct(value) {
+  return `${(value * 100).toFixed(1)}%`
+}
+
 function inWindow(index) {
   return index >= WARMUP_RENDERS && index < WARMUP_RENDERS + MEASURE_RENDERS
 }
@@ -92,10 +100,28 @@ function ensureRenderRecord(map, index) {
       layoutCalls: 0,
       outputGetMs: 0,
       outputGetCalls: 0,
+      outputGetOperations: 0,
       renderTotalMs: 0,
-      writeMs: 0,
-      writeBytes: 0,
-      writeCalls: 0,
+      stdoutWriteMs: 0,
+      stdoutWriteBytes: 0,
+      stdoutWriteCalls: 0,
+      outputWriteOps: 0,
+      outputWriteChars: 0,
+      outputWriteLines: 0,
+      outputClipOps: 0,
+      outputUnclipOps: 0,
+      cacheStringWidthMs: 0,
+      cacheStringWidthCalls: 0,
+      cacheStringWidthHits: 0,
+      cacheStringWidthMisses: 0,
+      cacheStyledCharsMs: 0,
+      cacheStyledCharsCalls: 0,
+      cacheStyledCharsHits: 0,
+      cacheStyledCharsMisses: 0,
+      cacheWidestLineMs: 0,
+      cacheWidestLineCalls: 0,
+      cacheWidestLineHits: 0,
+      cacheWidestLineMisses: 0,
     })
   }
   return map.get(index)
@@ -204,9 +230,9 @@ const stdout = new TimingTtyStream({
     const idx = currentWriteRender
     if (!inWindow(idx)) return
     const rec = ensureRenderRecord(renderRecords, idx)
-    rec.writeMs += ms
-    rec.writeBytes += bytes
-    rec.writeCalls += 1
+    rec.stdoutWriteMs += ms
+    rec.stdoutWriteBytes += bytes
+    rec.stdoutWriteCalls += 1
   },
 })
 
@@ -381,22 +407,106 @@ function outputGetWithReusePatch() {
   }
 }
 
+function patchCacheMethod(caches, methodName, mapName, record, metricName) {
+  const original = caches[methodName]
+
+  caches[methodName] = function patchedCacheMethod(...args) {
+    const key = args[0]
+    const map = this[mapName]
+    const hit = map instanceof Map ? map.has(key) : false
+    const t0 = performance.now()
+    const result = original.apply(this, args)
+    const dt = performance.now() - t0
+
+    record[`${metricName}Ms`] += dt
+    record[`${metricName}Calls`] += 1
+
+    if (hit) {
+      record[`${metricName}Hits`] += 1
+    } else {
+      record[`${metricName}Misses`] += 1
+    }
+
+    return result
+  }
+
+  return () => {
+    caches[methodName] = original
+  }
+}
+
+const originalOutputWrite = Output.prototype.write
+Output.prototype.write = function patchedOutputWrite(...args) {
+  const idx = renderCount
+  if (inWindow(idx)) {
+    const rec = ensureRenderRecord(renderRecords, idx)
+    const text = String(args[2] ?? '')
+    rec.outputWriteOps += 1
+    rec.outputWriteChars += text.length
+    rec.outputWriteLines += text.length === 0 ? 0 : text.split('\n').length
+  }
+
+  return originalOutputWrite.apply(this, args)
+}
+
+const originalOutputClip = Output.prototype.clip
+Output.prototype.clip = function patchedOutputClip(...args) {
+  const idx = renderCount
+  if (inWindow(idx)) {
+    const rec = ensureRenderRecord(renderRecords, idx)
+    rec.outputClipOps += 1
+  }
+  return originalOutputClip.apply(this, args)
+}
+
+const originalOutputUnclip = Output.prototype.unclip
+Output.prototype.unclip = function patchedOutputUnclip(...args) {
+  const idx = renderCount
+  if (inWindow(idx)) {
+    const rec = ensureRenderRecord(renderRecords, idx)
+    rec.outputUnclipOps += 1
+  }
+  return originalOutputUnclip.apply(this, args)
+}
+
 const originalOutputGet = Output.prototype.get
 const selectedOutputGet = PATCH_OUTPUT_REUSE ? outputGetWithReusePatch : originalOutputGet
 
 Output.prototype.get = function patchedOutputGet(...args) {
   const idx = renderCount
-  const t0 = performance.now()
-  const result = selectedOutputGet.apply(this, args)
-  const dt = performance.now() - t0
+  const shouldRecord = inWindow(idx)
+  const rec = shouldRecord ? ensureRenderRecord(renderRecords, idx) : null
 
-  if (inWindow(idx)) {
-    const rec = ensureRenderRecord(renderRecords, idx)
-    rec.outputGetMs += dt
-    rec.outputGetCalls += 1
+  const restoreFns = []
+
+  if (rec) {
+    rec.outputGetOperations += this.operations.length
+
+    if (this.caches) {
+      restoreFns.push(
+        patchCacheMethod(this.caches, 'getStringWidth', 'widths', rec, 'cacheStringWidth'),
+        patchCacheMethod(this.caches, 'getStyledChars', 'styledChars', rec, 'cacheStyledChars'),
+        patchCacheMethod(this.caches, 'getWidestLine', 'blockWidths', rec, 'cacheWidestLine'),
+      )
+    }
   }
 
-  return result
+  const t0 = performance.now()
+
+  try {
+    return selectedOutputGet.apply(this, args)
+  } finally {
+    const dt = performance.now() - t0
+
+    if (rec) {
+      rec.outputGetMs += dt
+      rec.outputGetCalls += 1
+    }
+
+    for (let i = restoreFns.length - 1; i >= 0; i--) {
+      restoreFns[i]()
+    }
+  }
 }
 
 function Workload() {
@@ -450,6 +560,9 @@ try {
 } finally {
   Yoga.Node.prototype.calculateLayout = originalCalculateLayout
   Output.prototype.get = originalOutputGet
+  Output.prototype.write = originalOutputWrite
+  Output.prototype.clip = originalOutputClip
+  Output.prototype.unclip = originalOutputUnclip
   stdout.closeSink()
 }
 
@@ -458,20 +571,64 @@ const measured = [...renderRecords.entries()].sort((a, b) => a[0] - b[0]).map(([
 const layoutMs = measured.map((r) => r.layoutMs)
 const outputGetMs = measured.map((r) => r.outputGetMs)
 const renderTotalMs = measured.map((r) => r.renderTotalMs)
-const writeMs = measured.map((r) => r.writeMs)
-const writeBytes = measured.map((r) => r.writeBytes)
-const writeCalls = measured.map((r) => r.writeCalls)
+const stdoutWriteMs = measured.map((r) => r.stdoutWriteMs)
+const stdoutWriteBytes = measured.map((r) => r.stdoutWriteBytes)
+const stdoutWriteCalls = measured.map((r) => r.stdoutWriteCalls)
 const treeEtcMs = measured.map((r) => Math.max(0, r.renderTotalMs - r.outputGetMs))
 
-const rows = [
+const cacheStringWidthMs = measured.map((r) => r.cacheStringWidthMs)
+const cacheStyledCharsMs = measured.map((r) => r.cacheStyledCharsMs)
+const cacheWidestLineMs = measured.map((r) => r.cacheWidestLineMs)
+
+const outputWriteOps = measured.map((r) => r.outputWriteOps)
+const outputWriteChars = measured.map((r) => r.outputWriteChars)
+const outputWriteLines = measured.map((r) => r.outputWriteLines)
+const outputClipOps = measured.map((r) => r.outputClipOps)
+const outputUnclipOps = measured.map((r) => r.outputUnclipOps)
+const outputGetOperations = measured.map((r) => r.outputGetOperations)
+
+const timingRows = [
   ['layout (Yoga.calculateLayout)', summarize(layoutMs)],
   ['output assembly (Output.get)', summarize(outputGetMs)],
   ['render total (Ink onRender)', summarize(renderTotalMs)],
   ['est. tree/transform (render - output.get)', summarize(treeEtcMs)],
-  ['stdout.write wall time', summarize(writeMs)],
-  ['stdout bytes per render', summarize(writeBytes)],
-  ['stdout writes per render', summarize(writeCalls)],
+  ['cache getStringWidth wall time', summarize(cacheStringWidthMs)],
+  ['cache getStyledChars wall time', summarize(cacheStyledCharsMs)],
+  ['cache getWidestLine wall time', summarize(cacheWidestLineMs)],
+  ['stdout.write wall time', summarize(stdoutWriteMs)],
 ]
+
+const activityRows = [
+  ['stdout bytes per render', summarize(stdoutWriteBytes)],
+  ['stdout writes per render', summarize(stdoutWriteCalls)],
+  ['output.write ops per render', summarize(outputWriteOps)],
+  ['output.write chars per render', summarize(outputWriteChars)],
+  ['output.write lines per render', summarize(outputWriteLines)],
+  ['output.clip ops per render', summarize(outputClipOps)],
+  ['output.unclip ops per render', summarize(outputUnclipOps)],
+  ['output.get operations per render', summarize(outputGetOperations)],
+]
+
+const cacheTotals = {
+  stringWidth: {
+    calls: sum(measured.map((r) => r.cacheStringWidthCalls)),
+    hits: sum(measured.map((r) => r.cacheStringWidthHits)),
+    misses: sum(measured.map((r) => r.cacheStringWidthMisses)),
+    ms: sum(cacheStringWidthMs),
+  },
+  styledChars: {
+    calls: sum(measured.map((r) => r.cacheStyledCharsCalls)),
+    hits: sum(measured.map((r) => r.cacheStyledCharsHits)),
+    misses: sum(measured.map((r) => r.cacheStyledCharsMisses)),
+    ms: sum(cacheStyledCharsMs),
+  },
+  widestLine: {
+    calls: sum(measured.map((r) => r.cacheWidestLineCalls)),
+    hits: sum(measured.map((r) => r.cacheWidestLineHits)),
+    misses: sum(measured.map((r) => r.cacheWidestLineMisses)),
+    ms: sum(cacheWidestLineMs),
+  },
+}
 
 console.log('\n╔════════════════════════════════════════════════════════════════════╗')
 console.log('║                 ink stage profiler (phase 0)                     ║')
@@ -483,8 +640,9 @@ console.log(
 console.log(`renders observed=${renderCount} measured rows=${measured.length}`)
 console.log('')
 
+console.log('Timing summary')
 console.table(
-  rows.map(([stage, stats]) => ({
+  timingRows.map(([stage, stats]) => ({
     stage,
     n: stats.n,
     'mean (ms)': fmt(stats.mean),
@@ -493,6 +651,36 @@ console.table(
     'min (ms)': fmt(stats.min),
     'max (ms)': fmt(stats.max),
   })),
+)
+
+console.log('')
+console.log('Activity summary')
+console.table(
+  activityRows.map(([metric, stats]) => ({
+    metric,
+    n: stats.n,
+    mean: fmt(stats.mean),
+    median: fmt(stats.median),
+    p95: fmt(stats.p95),
+    min: fmt(stats.min),
+    max: fmt(stats.max),
+  })),
+)
+
+console.log('')
+console.log('Cache totals (aggregate across measured renders)')
+console.table(
+  Object.entries(cacheTotals).map(([cache, totals]) => {
+    const hitRate = totals.calls > 0 ? totals.hits / totals.calls : 0
+    return {
+      cache,
+      calls: totals.calls,
+      hits: totals.hits,
+      misses: totals.misses,
+      'hit rate': pct(hitRate),
+      'wall time (ms)': fmt(totals.ms),
+    }
+  }),
 )
 
 if (OUTPUT_JSON) {
@@ -509,7 +697,9 @@ if (OUTPUT_JSON) {
       rendersObserved: renderCount,
       measuredRenders: measured.length,
     },
-    summary: Object.fromEntries(rows.map(([stage, stats]) => [stage, stats])),
+    summary: Object.fromEntries(timingRows.map(([stage, stats]) => [stage, stats])),
+    activitySummary: Object.fromEntries(activityRows.map(([metric, stats]) => [metric, stats])),
+    cacheTotals,
     perRender: measured,
   }
 

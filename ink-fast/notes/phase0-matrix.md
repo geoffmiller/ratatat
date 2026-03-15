@@ -5,30 +5,31 @@ Date: 2026-03-15
 ## Command
 
 ```bash
-RUNS=3 WARMUP_RENDERS=5 MEASURE_RENDERS=20 npm run bench:ink:matrix
+RUNS=5 WARMUP_RENDERS=5 MEASURE_RENDERS=20 \
+  WORKLOADS=dense,sparse,unicode VARIANTS=stock,reuse \
+  npm run bench:ink:matrix
 ```
 
-## Results (median ms over 3 runs)
+## Results (median ms over 5 runs)
 
 | Workload | Variant | render total | tree/transform est. | output.get | layout |
 | -------- | ------- | -----------: | ------------------: | ---------: | -----: |
-| dense    | stock   |        1.967 |               1.357 |      0.599 |  0.052 |
-| dense    | reuse   |        2.050 |               1.354 |      0.651 |  0.051 |
-| sparse   | stock   |        0.547 |               0.037 |      0.518 |  0.051 |
-| sparse   | reuse   |        0.422 |               0.034 |      0.392 |  0.052 |
-| unicode  | stock   |        4.952 |               4.391 |      0.509 |  0.077 |
-| unicode  | reuse   |        5.031 |               4.493 |      0.514 |  0.072 |
+| dense    | stock   |        3.654 |               1.859 |      1.785 |  0.067 |
+| dense    | reuse   |        3.536 |               1.861 |      1.679 |  0.068 |
+| sparse   | stock   |        1.722 |               0.053 |      1.676 |  0.067 |
+| sparse   | reuse   |        1.754 |               0.052 |      1.684 |  0.065 |
+| unicode  | stock   |        6.849 |               5.670 |      1.220 |  0.083 |
+| unicode  | reuse   |        6.644 |               5.577 |      1.054 |  0.078 |
 
 ## Quick read
 
-- The output-reuse patch shows a clear win for **sparse** workload (lower `output.get` and lower render total).
-- It is worse on **dense** in this 3-run sample.
-- It is slightly worse on **unicode** in this 3-run sample.
+- Output-reuse patch shows a **small win** on dense in this run set (~3.2% render median).
+- Output-reuse patch shows a **small win** on unicode in this run set (~3.0% render median).
+- Output-reuse patch is **slightly worse** on sparse (~1.9% render median).
 
 ## Interpretation
 
-This supports a phased strategy:
-
-1. Keep using instrumentation to avoid over-generalizing from one workload.
-2. Treat output-surface reuse as a **workload-conditional** optimization (good sparse candidate, not broadly faster yet).
-3. Prioritize dense/unicode wins in the tree/transform path before attempting a broad reuse rollout.
+1. Reuse patch is no longer clearly “sparse-only better” in current prototype.
+2. Gains are modest and workload-dependent; keep it behind a feature flag.
+3. Next optimization focus should still target the dominant dense/unicode hotspots (width calculation + tokenization paths), not just output surface reuse.
+4. Re-run this matrix after each optimization slice to avoid overfitting to one workload.

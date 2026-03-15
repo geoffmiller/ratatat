@@ -129,12 +129,14 @@ for (const workload of WORKLOADS) {
       fs.unlinkSync(outputPath)
 
       const summary = payload.summary
+      const activitySummary = payload.activitySummary ?? {}
+
       const layout = getStage(summary, 'layout (Yoga.calculateLayout)')
       const outputGet = getStage(summary, 'output assembly (Output.get)')
       const renderTotal = getStage(summary, 'render total (Ink onRender)')
       const tree = getStage(summary, 'est. tree/transform (render - output.get)')
       const write = getStage(summary, 'stdout.write wall time')
-      const bytes = getStage(summary, 'stdout bytes per render')
+      const bytes = getStage(activitySummary, 'stdout bytes per render')
 
       renderMedians.push(renderTotal.median)
       treeMedians.push(tree.median)

@@ -47,11 +47,13 @@ Metric: **time-to-marker (ms)** in a PTY (`script`) — process start to first v
 
 | Suite                | Median startup (ms) | p95 (ms) | Over Node baseline (ms) |
 | -------------------- | ------------------- | -------- | ----------------------- |
-| Node baseline        | 211.50              | 220.04   | 0.00                    |
-| Ratatat (React mode) | 446.26              | 474.17   | 234.76                  |
-| Ink                  | 464.62              | 482.80   | 253.12                  |
+| Node baseline        | 149.21              | 155.57   | 0.00                    |
+| Ratatat (core/raw)   | 135.99              | 140.92   | -13.22                  |
+| Ratatat (React mode) | 295.26              | 302.43   | 146.05                  |
+| Ink                  | 313.67              | 324.48   | 164.46                  |
 
-Ratatat startup median is **18.36ms faster** than Ink in this run (**1.04×**).
+Ratatat React adapter overhead (vs Ratatat core) is **159.27ms** in this run (**2.17×**).
+Ratatat React startup is still **18.41ms faster** than Ink (**1.06×**).
 
 Re-run: `RUNS=50 WARMUP=3 npm run bench:startup`
 

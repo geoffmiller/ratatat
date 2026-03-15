@@ -8,6 +8,13 @@ Measures **time-to-marker** in a pseudo-terminal (PTY):
 - first render path
 - marker text becomes visible in PTY output
 
+Suites included:
+
+- `node baseline`
+- `ratatat (core/raw)`
+- `ratatat (react mode)`
+- `ink`
+
 ## Run
 
 ```bash

@@ -47,6 +47,11 @@ const suites = [
     command: ['node', resolve(__dirname, 'node-startup.mjs')],
   },
   {
+    name: 'ratatat (core/raw)',
+    marker: 'RATATAT_CORE_STARTUP_READY',
+    command: ['node', resolve(__dirname, 'ratatat-core-startup.mjs')],
+  },
+  {
     name: 'ratatat (react mode)',
     marker: 'RATATAT_STARTUP_READY',
     command: ['node', resolve(__dirname, 'ratatat-startup.mjs')],
@@ -241,8 +246,9 @@ for (const suite of suites) {
 }
 
 const baselineMedian = stats.get('node baseline').median
+const coreMedian = stats.get('ratatat (core/raw)').median
+const reactMedian = stats.get('ratatat (react mode)').median
 const inkMedian = stats.get('ink').median
-const ratatatMedian = stats.get('ratatat (react mode)').median
 
 const table = suites.map((suite) => {
   const s = stats.get(suite.name)
@@ -264,12 +270,24 @@ const table = suites.map((suite) => {
 console.log('')
 console.table(table)
 
-if (ratatatMedian > 0 && inkMedian > 0) {
-  const speedup = inkMedian / ratatatMedian
-  const delta = inkMedian - ratatatMedian
-  console.log(`Ratatat median startup: ${fmtMs(ratatatMedian)}`)
-  console.log(`Ink median startup:     ${fmtMs(inkMedian)}`)
-  console.log(`Delta:                  ${fmtMs(delta)} (${speedup.toFixed(2)}x)`)
+if (coreMedian > 0 && reactMedian > 0) {
+  const reactOverhead = reactMedian - coreMedian
+  const reactFactor = reactMedian / coreMedian
+  console.log(`Ratatat core median startup:   ${fmtMs(coreMedian)}`)
+  console.log(`Ratatat react median startup:  ${fmtMs(reactMedian)}`)
+  console.log(`React adapter overhead:        ${fmtMs(reactOverhead)} (${reactFactor.toFixed(2)}x)`)
+}
+
+if (reactMedian > 0 && inkMedian > 0) {
+  const speedup = inkMedian / reactMedian
+  const delta = inkMedian - reactMedian
+  console.log(`Ratatat (react) vs Ink delta: ${fmtMs(delta)} (${speedup.toFixed(2)}x)`)
+}
+
+if (coreMedian > 0 && inkMedian > 0) {
+  const speedup = inkMedian / coreMedian
+  const delta = inkMedian - coreMedian
+  console.log(`Ratatat (core) vs Ink delta:  ${fmtMs(delta)} (${speedup.toFixed(2)}x)`)
 }
 
 console.log('')

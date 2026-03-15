@@ -17,13 +17,15 @@
  *   MAX_FPS=1000
  *   TOP_N=20
  *   OUTPUT_JSON=ink-fast/results/ink-cpu-hotspots.json
+ *   PATCH_SHARED_OUTPUT_CACHES=0|1
  *   INCLUDE_RAW_PROFILE=0|1
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
 import inspector from 'node:inspector'
-import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Writable, PassThrough } from 'node:stream'
 import React, { useEffect, useMemo, useState } from 'react'
 import { render, Box, Text, useApp } from 'ink'
@@ -36,9 +38,31 @@ const MAX_FPS = Number(process.env.MAX_FPS ?? 1000)
 const WORKLOAD = process.env.WORKLOAD ?? 'dense'
 const TOP_N = Number(process.env.TOP_N ?? 20)
 const OUTPUT_JSON = process.env.OUTPUT_JSON
+const PATCH_SHARED_OUTPUT_CACHES = process.env.PATCH_SHARED_OUTPUT_CACHES === '1'
 const INCLUDE_RAW_PROFILE = process.env.INCLUDE_RAW_PROFILE === '1'
 
 const TOTAL_UPDATES = WARMUP_RENDERS + MEASURE_RENDERS
+
+const require = createRequire(import.meta.url)
+const inkEntryPath = require.resolve('ink')
+const inkPackageDir = path.resolve(path.dirname(inkEntryPath), '..')
+const outputPath = path.join(inkPackageDir, 'build', 'output.js')
+const { default: Output } = await import(pathToFileURL(outputPath).href)
+
+const originalOutputGet = Output.prototype.get
+let sharedOutputCaches = null
+
+if (PATCH_SHARED_OUTPUT_CACHES) {
+  Output.prototype.get = function patchedCpuOutputGet(...args) {
+    if (sharedOutputCaches === null) {
+      sharedOutputCaches = this.caches
+    } else {
+      this.caches = sharedOutputCaches
+    }
+
+    return originalOutputGet.apply(this, args)
+  }
+}
 
 class DevNullTtyStream extends Writable {
   constructor({ columns, rows }) {
@@ -293,7 +317,7 @@ try {
   console.log('╚════════════════════════════════════════════════════════════════════╝')
   console.log('')
   console.log(
-    `workload=${WORKLOAD} cols=${COLS} rows=${ROWS} warmup=${WARMUP_RENDERS} measured=${MEASURE_RENDERS} rendersObserved=${renderCount}`,
+    `workload=${WORKLOAD} cols=${COLS} rows=${ROWS} warmup=${WARMUP_RENDERS} measured=${MEASURE_RENDERS} rendersObserved=${renderCount} sharedOutputCaches=${PATCH_SHARED_OUTPUT_CACHES}`,
   )
   console.log(
     `duration=${fmtMs(hotspots.durationMs)}ms totalSamples=${hotspots.totalHits} sample≈${fmtMs(hotspots.sampleMs)}ms`,
@@ -335,6 +359,7 @@ try {
         measureRenders: MEASURE_RENDERS,
         maxFps: MAX_FPS,
         workload: WORKLOAD,
+        patchSharedOutputCaches: PATCH_SHARED_OUTPUT_CACHES,
         rendersObserved: renderCount,
         topN: TOP_N,
         includeRawProfile: INCLUDE_RAW_PROFILE,
@@ -357,6 +382,7 @@ try {
 
   console.log('')
 } finally {
+  Output.prototype.get = originalOutputGet
   session.disconnect()
   stdout.closeSink()
 }

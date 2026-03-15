@@ -31,12 +31,16 @@ npm run bench:ink:stages
 node ink-fast/prototypes/ink-stage-profiler.mjs
 ```
 
-Run workload matrix (stock vs output-reuse patch):
+Run workload matrix (stock/reuse and optional prototype variants):
 
 ```bash
 npm run bench:ink:matrix
 # repeated runs:
 RUNS=3 npm run bench:ink:matrix
+# include shared-cache variants:
+VARIANTS=stock,reuse,stock-sharedcache,reuse-sharedcache npm run bench:ink:matrix
+# include fast-width variants:
+VARIANTS=stock,reuse,stock-fastwidth,reuse-fastwidth npm run bench:ink:matrix
 ```
 
 Run CPU hotspot sampling:
@@ -45,6 +49,8 @@ Run CPU hotspot sampling:
 WORKLOAD=unicode WARMUP_RENDERS=20 MEASURE_RENDERS=120 \
   OUTPUT_JSON=ink-fast/results/ink-cpu-unicode.json \
   npm run bench:ink:cpu
+# compare with shared-cache patch:
+PATCH_SHARED_OUTPUT_CACHES=1 WORKLOAD=unicode npm run bench:ink:cpu
 # add INCLUDE_RAW_PROFILE=1 only if you need full cpuprofile payload
 ```
 
@@ -53,11 +59,14 @@ Latest profiling notes:
 - `ink-fast/notes/phase0-baseline.md`
 - `ink-fast/notes/phase0-matrix.md`
 - `ink-fast/notes/phase0-hotspots.md`
+- `ink-fast/notes/phase1-shared-cache-spike.md`
 
 Optional env knobs:
 
 - `WORKLOAD=dense|sparse|unicode` selects the frame generator.
 - `PATCH_OUTPUT_REUSE=1` enables a prototype output-surface reuse patch for `Output.get`.
+- `PATCH_ASCII_WIDTH_FASTPATH=1` enables an ASCII fast-path in `getStringWidth` cache wrapper.
+- `PATCH_SHARED_OUTPUT_CACHES=1` reuses one `Output.caches` object across frames.
 
 ```bash
 COLS=80 ROWS=24 WARMUP_RENDERS=20 MEASURE_RENDERS=120 MAX_FPS=1000 \

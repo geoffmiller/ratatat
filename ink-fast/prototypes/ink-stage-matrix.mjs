@@ -8,7 +8,7 @@
  *
  * Optional env:
  *   WORKLOADS=dense,sparse,unicode
- *   VARIANTS=stock,reuse
+ *   VARIANTS=stock,reuse,stock-sharedcache,reuse-sharedcache
  *   RUNS=3
  *   WARMUP_RENDERS=5 MEASURE_RENDERS=20 MAX_FPS=1000 SINK=devnull
  */
@@ -25,15 +25,26 @@ const WORKLOADS = (process.env.WORKLOADS ?? 'dense,sparse,unicode')
   .map((x) => x.trim())
   .filter(Boolean)
 
+const VALID_VARIANTS = new Set([
+  'stock',
+  'reuse',
+  'stock-fastwidth',
+  'reuse-fastwidth',
+  'stock-sharedcache',
+  'reuse-sharedcache',
+])
+
 const VARIANTS = (process.env.VARIANTS ?? 'stock,reuse')
   .split(',')
   .map((x) => x.trim())
-  .filter((x) => x === 'stock' || x === 'reuse')
+  .filter((x) => VALID_VARIANTS.has(x))
 
 const RUNS = Math.max(1, Number(process.env.RUNS ?? 1))
 
 if (VARIANTS.length === 0) {
-  throw new Error('No valid variants selected. Use VARIANTS=stock,reuse')
+  throw new Error(
+    'No valid variants selected. Use VARIANTS=stock,reuse,stock-fastwidth,reuse-fastwidth,stock-sharedcache,reuse-sharedcache',
+  )
 }
 
 const BASE_ENV = {
@@ -45,6 +56,25 @@ const BASE_ENV = {
   SINK: process.env.SINK ?? 'devnull',
 }
 
+function resolveVariantEnv(variant) {
+  switch (variant) {
+    case 'stock':
+      return { PATCH_OUTPUT_REUSE: '0', PATCH_ASCII_WIDTH_FASTPATH: '0', PATCH_SHARED_OUTPUT_CACHES: '0' }
+    case 'reuse':
+      return { PATCH_OUTPUT_REUSE: '1', PATCH_ASCII_WIDTH_FASTPATH: '0', PATCH_SHARED_OUTPUT_CACHES: '0' }
+    case 'stock-fastwidth':
+      return { PATCH_OUTPUT_REUSE: '0', PATCH_ASCII_WIDTH_FASTPATH: '1', PATCH_SHARED_OUTPUT_CACHES: '0' }
+    case 'reuse-fastwidth':
+      return { PATCH_OUTPUT_REUSE: '1', PATCH_ASCII_WIDTH_FASTPATH: '1', PATCH_SHARED_OUTPUT_CACHES: '0' }
+    case 'stock-sharedcache':
+      return { PATCH_OUTPUT_REUSE: '0', PATCH_ASCII_WIDTH_FASTPATH: '0', PATCH_SHARED_OUTPUT_CACHES: '1' }
+    case 'reuse-sharedcache':
+      return { PATCH_OUTPUT_REUSE: '1', PATCH_ASCII_WIDTH_FASTPATH: '0', PATCH_SHARED_OUTPUT_CACHES: '1' }
+    default:
+      throw new Error(`Unknown variant: ${variant}`)
+  }
+}
+
 function runProfiler(workload, variant, outputPath) {
   return new Promise((resolvePromise, rejectPromise) => {
     const child = spawn('node', ['ink-fast/prototypes/ink-stage-profiler.mjs'], {
@@ -53,7 +83,7 @@ function runProfiler(workload, variant, outputPath) {
         ...process.env,
         ...BASE_ENV,
         WORKLOAD: workload,
-        PATCH_OUTPUT_REUSE: variant === 'reuse' ? '1' : '0',
+        ...resolveVariantEnv(variant),
         OUTPUT_JSON: outputPath,
       },
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -120,6 +150,9 @@ for (const workload of WORKLOADS) {
     const layoutMedians = []
     const writeMedians = []
     const bytesMedians = []
+    const fastPathCallsMedians = []
+    const stringWidthMissesPerRender = []
+    const styledCharsMissesPerRender = []
 
     for (let run = 0; run < RUNS; run++) {
       const outputPath = path.join(os.tmpdir(), `ink-stage-profile-${workload}-${variant}-${run}-${Date.now()}.json`)
@@ -130,6 +163,7 @@ for (const workload of WORKLOADS) {
 
       const summary = payload.summary
       const activitySummary = payload.activitySummary ?? {}
+      const cacheTotals = payload.cacheTotals ?? {}
 
       const layout = getStage(summary, 'layout (Yoga.calculateLayout)')
       const outputGet = getStage(summary, 'output assembly (Output.get)')
@@ -137,6 +171,11 @@ for (const workload of WORKLOADS) {
       const tree = getStage(summary, 'est. tree/transform (render - output.get)')
       const write = getStage(summary, 'stdout.write wall time')
       const bytes = getStage(activitySummary, 'stdout bytes per render')
+      const fastPathCalls = getStage(activitySummary, 'cache getStringWidth fast-path calls per render')
+
+      const measuredRenders = payload.config?.measuredRenders ?? Number(BASE_ENV.MEASURE_RENDERS)
+      const stringWidthMisses = cacheTotals.stringWidth?.misses ?? 0
+      const styledCharsMisses = cacheTotals.styledChars?.misses ?? 0
 
       renderMedians.push(renderTotal.median)
       treeMedians.push(tree.median)
@@ -144,6 +183,9 @@ for (const workload of WORKLOADS) {
       layoutMedians.push(layout.median)
       writeMedians.push(write.median)
       bytesMedians.push(bytes.median)
+      fastPathCallsMedians.push(fastPathCalls.median)
+      stringWidthMissesPerRender.push(measuredRenders > 0 ? stringWidthMisses / measuredRenders : 0)
+      styledCharsMissesPerRender.push(measuredRenders > 0 ? styledCharsMisses / measuredRenders : 0)
     }
 
     results.push({
@@ -157,6 +199,9 @@ for (const workload of WORKLOADS) {
       'layout med (ms)': fmt(median(layoutMedians)),
       'write med (ms)': fmt(median(writeMedians)),
       'bytes/render': fmt(median(bytesMedians)),
+      'fast-path calls/render': fmt(median(fastPathCallsMedians)),
+      'strWidth misses/render': fmt(median(stringWidthMissesPerRender)),
+      'styledChars misses/render': fmt(median(styledCharsMissesPerRender)),
     })
   }
 }

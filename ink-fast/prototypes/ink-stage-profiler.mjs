@@ -21,6 +21,8 @@
  *   WORKLOAD=dense|sparse|unicode
  *   SINK=devnull|memory
  *   PATCH_OUTPUT_REUSE=0|1
+ *   PATCH_ASCII_WIDTH_FASTPATH=0|1
+ *   PATCH_SHARED_OUTPUT_CACHES=0|1
  *   OUTPUT_JSON=ink-fast/results/ink-stage-profile.json
  */
 
@@ -49,6 +51,8 @@ const MAX_FPS = Number(process.env.MAX_FPS ?? 1000)
 const SINK = process.env.SINK ?? 'devnull'
 const WORKLOAD = process.env.WORKLOAD ?? 'dense'
 const PATCH_OUTPUT_REUSE = process.env.PATCH_OUTPUT_REUSE === '1'
+const PATCH_ASCII_WIDTH_FASTPATH = process.env.PATCH_ASCII_WIDTH_FASTPATH === '1'
+const PATCH_SHARED_OUTPUT_CACHES = process.env.PATCH_SHARED_OUTPUT_CACHES === '1'
 const OUTPUT_JSON = process.env.OUTPUT_JSON
 
 const TOTAL_UPDATES = WARMUP_RENDERS + MEASURE_RENDERS
@@ -114,6 +118,8 @@ function ensureRenderRecord(map, index) {
       cacheStringWidthCalls: 0,
       cacheStringWidthHits: 0,
       cacheStringWidthMisses: 0,
+      cacheStringWidthFastPathCalls: 0,
+      cacheStringWidthFastPathMs: 0,
       cacheStyledCharsMs: 0,
       cacheStyledCharsCalls: 0,
       cacheStyledCharsHits: 0,
@@ -259,6 +265,8 @@ const BLANK_CELL = Object.freeze({
   fullWidth: false,
   styles: Object.freeze([]),
 })
+
+let sharedOutputCaches = null
 
 function getReusableOutputGrid(outputInstance) {
   const width = outputInstance.width
@@ -412,14 +420,32 @@ function patchCacheMethod(caches, methodName, mapName, record, metricName) {
 
   caches[methodName] = function patchedCacheMethod(...args) {
     const key = args[0]
+    const t0 = performance.now()
+    record[`${metricName}Calls`] += 1
+
+    if (
+      metricName === 'cacheStringWidth' &&
+      PATCH_ASCII_WIDTH_FASTPATH &&
+      typeof key === 'string' &&
+      key.length === 1
+    ) {
+      const code = key.charCodeAt(0)
+      if (code >= 0x20 && code <= 0x7e) {
+        const dt = performance.now() - t0
+        record.cacheStringWidthFastPathCalls += 1
+        record.cacheStringWidthFastPathMs += dt
+        record[`${metricName}Ms`] += dt
+        record[`${metricName}Hits`] += 1
+        return 1
+      }
+    }
+
     const map = this[mapName]
     const hit = map instanceof Map ? map.has(key) : false
-    const t0 = performance.now()
     const result = original.apply(this, args)
     const dt = performance.now() - t0
 
     record[`${metricName}Ms`] += dt
-    record[`${metricName}Calls`] += 1
 
     if (hit) {
       record[`${metricName}Hits`] += 1
@@ -474,6 +500,15 @@ const selectedOutputGet = PATCH_OUTPUT_REUSE ? outputGetWithReusePatch : origina
 
 Output.prototype.get = function patchedOutputGet(...args) {
   const idx = renderCount
+
+  if (PATCH_SHARED_OUTPUT_CACHES) {
+    if (sharedOutputCaches === null) {
+      sharedOutputCaches = this.caches
+    } else {
+      this.caches = sharedOutputCaches
+    }
+  }
+
   const shouldRecord = inWindow(idx)
   const rec = shouldRecord ? ensureRenderRecord(renderRecords, idx) : null
 
@@ -577,6 +612,8 @@ const stdoutWriteCalls = measured.map((r) => r.stdoutWriteCalls)
 const treeEtcMs = measured.map((r) => Math.max(0, r.renderTotalMs - r.outputGetMs))
 
 const cacheStringWidthMs = measured.map((r) => r.cacheStringWidthMs)
+const cacheStringWidthFastPathCalls = measured.map((r) => r.cacheStringWidthFastPathCalls)
+const cacheStringWidthFastPathMs = measured.map((r) => r.cacheStringWidthFastPathMs)
 const cacheStyledCharsMs = measured.map((r) => r.cacheStyledCharsMs)
 const cacheWidestLineMs = measured.map((r) => r.cacheWidestLineMs)
 
@@ -607,6 +644,7 @@ const activityRows = [
   ['output.clip ops per render', summarize(outputClipOps)],
   ['output.unclip ops per render', summarize(outputUnclipOps)],
   ['output.get operations per render', summarize(outputGetOperations)],
+  ['cache getStringWidth fast-path calls per render', summarize(cacheStringWidthFastPathCalls)],
 ]
 
 const cacheTotals = {
@@ -614,6 +652,8 @@ const cacheTotals = {
     calls: sum(measured.map((r) => r.cacheStringWidthCalls)),
     hits: sum(measured.map((r) => r.cacheStringWidthHits)),
     misses: sum(measured.map((r) => r.cacheStringWidthMisses)),
+    fastPathCalls: sum(cacheStringWidthFastPathCalls),
+    fastPathMs: sum(cacheStringWidthFastPathMs),
     ms: sum(cacheStringWidthMs),
   },
   styledChars: {
@@ -635,7 +675,7 @@ console.log('║                 ink stage profiler (phase 0)                   
 console.log('╚════════════════════════════════════════════════════════════════════╝')
 console.log('')
 console.log(
-  `cols=${COLS} rows=${ROWS} warmup=${WARMUP_RENDERS} measured=${MEASURE_RENDERS} maxFps=${MAX_FPS} sink=${SINK} workload=${WORKLOAD} outputReusePatch=${PATCH_OUTPUT_REUSE}`,
+  `cols=${COLS} rows=${ROWS} warmup=${WARMUP_RENDERS} measured=${MEASURE_RENDERS} maxFps=${MAX_FPS} sink=${SINK} workload=${WORKLOAD} outputReusePatch=${PATCH_OUTPUT_REUSE} asciiWidthFastPath=${PATCH_ASCII_WIDTH_FASTPATH} sharedOutputCaches=${PATCH_SHARED_OUTPUT_CACHES}`,
 )
 console.log(`renders observed=${renderCount} measured rows=${measured.length}`)
 console.log('')
@@ -678,6 +718,8 @@ console.table(
       hits: totals.hits,
       misses: totals.misses,
       'hit rate': pct(hitRate),
+      'fast-path calls': totals.fastPathCalls ?? 0,
+      'fast-path ms': fmt(totals.fastPathMs ?? 0),
       'wall time (ms)': fmt(totals.ms),
     }
   }),
@@ -694,6 +736,8 @@ if (OUTPUT_JSON) {
       sink: SINK,
       workload: WORKLOAD,
       patchOutputReuse: PATCH_OUTPUT_REUSE,
+      patchAsciiWidthFastPath: PATCH_ASCII_WIDTH_FASTPATH,
+      patchSharedOutputCaches: PATCH_SHARED_OUTPUT_CACHES,
       rendersObserved: renderCount,
       measuredRenders: measured.length,
     },

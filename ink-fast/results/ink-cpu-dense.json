@@ -6,361 +6,454 @@
     "measureRenders": 60,
     "maxFps": 1000,
     "workload": "dense",
+    "patchSharedOutputCaches": false,
     "rendersObserved": 72,
     "topN": 20,
     "includeRawProfile": false
   },
   "summary": {
-    "durationMs": 296.291,
-    "totalSamples": 207,
-    "sampleMs": 1.4313574879227053
+    "durationMs": 277.333,
+    "totalSamples": 197,
+    "sampleMs": 1.407781725888325
   },
   "topFunctions": [
     {
       "function": "stringWidth",
       "file": "node_modules/string-width/index.js",
       "line": 69,
-      "hits": 60,
-      "selfMs": 85.88144927536231,
-      "selfPct": 0.2898550724637681
+      "hits": 57,
+      "selfMs": 80.24355837563452,
+      "selfPct": 0.2893401015228426
     },
     {
       "function": "(idle)",
       "file": "(native)",
       "line": 0,
-      "hits": 55,
-      "selfMs": 78.72466183574879,
-      "selfPct": 0.26570048309178745
+      "hits": 54,
+      "selfMs": 76.02021319796955,
+      "selfPct": 0.27411167512690354
     },
     {
       "function": "styledCharsToString",
       "file": "node_modules/@alcalzone/ansi-tokenize/build/styledChars.js",
       "line": 20,
-      "hits": 15,
-      "selfMs": 21.47036231884058,
-      "selfPct": 0.07246376811594203
+      "hits": 13,
+      "selfMs": 18.301162436548225,
+      "selfPct": 0.06598984771573604
     },
     {
       "function": "diffAnsiCodes",
       "file": "node_modules/@alcalzone/ansi-tokenize/build/diff.js",
       "line": 7,
-      "hits": 13,
-      "selfMs": 18.60764734299517,
-      "selfPct": 0.06280193236714976
-    },
-    {
-      "function": "(anonymous)",
-      "file": "node_modules/ink/build/output.js",
-      "line": 171,
-      "hits": 8,
-      "selfMs": 11.450859903381643,
-      "selfPct": 0.03864734299516908
-    },
-    {
-      "function": "ansiCodesToString",
-      "file": "node_modules/@alcalzone/ansi-tokenize/build/ansiCodes.js",
-      "line": 50,
-      "hits": 7,
-      "selfMs": 10.019502415458938,
-      "selfPct": 0.033816425120772944
-    },
-    {
-      "function": "get",
-      "file": "node_modules/ink/build/output.js",
-      "line": 71,
-      "hits": 6,
-      "selfMs": 8.588144927536232,
-      "selfPct": 0.028985507246376812
-    },
-    {
-      "function": "isZeroWidthCluster",
-      "file": "node_modules/string-width/index.js",
-      "line": 52,
-      "hits": 5,
-      "selfMs": 7.1567874396135265,
-      "selfPct": 0.024154589371980676
-    },
-    {
-      "function": "process.env.NODE_ENV.exports.createElement",
-      "file": "node_modules/react/cjs/react.development.js",
-      "line": 1004,
-      "hits": 5,
-      "selfMs": 7.1567874396135265,
-      "selfPct": 0.024154589371980676
-    },
-    {
-      "function": "tokenize",
-      "file": "node_modules/@alcalzone/ansi-tokenize/build/tokenize.js",
-      "line": 101,
-      "hits": 4,
-      "selfMs": 5.725429951690821,
-      "selfPct": 0.01932367149758454
-    },
-    {
-      "function": "(program)",
-      "file": "(native)",
-      "line": 0,
-      "hits": 4,
-      "selfMs": 5.725429951690821,
-      "selfPct": 0.01932367149758454
+      "hits": 12,
+      "selfMs": 16.893380710659898,
+      "selfPct": 0.06091370558375635
     },
     {
       "function": "(garbage collector)",
       "file": "(native)",
       "line": 0,
-      "hits": 3,
-      "selfMs": 4.294072463768116,
-      "selfPct": 0.014492753623188406
+      "hits": 10,
+      "selfMs": 14.07781725888325,
+      "selfPct": 0.050761421319796954
     },
     {
-      "function": "processTimers",
-      "file": "node:internal/timers",
-      "line": 534,
-      "hits": 3,
-      "selfMs": 4.294072463768116,
-      "selfPct": 0.014492753623188406
+      "function": "(anonymous)",
+      "file": "node_modules/ink/build/output.js",
+      "line": 171,
+      "hits": 6,
+      "selfMs": 8.446690355329949,
+      "selfPct": 0.030456852791878174
+    },
+    {
+      "function": "ansiCodesToString",
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/ansiCodes.js",
+      "line": 50,
+      "hits": 5,
+      "selfMs": 7.038908629441625,
+      "selfPct": 0.025380710659898477
     },
     {
       "function": "baseVisible",
       "file": "node_modules/string-width/index.js",
       "line": 48,
+      "hits": 4,
+      "selfMs": 5.6311269035533,
+      "selfPct": 0.02030456852791878
+    },
+    {
+      "function": "get",
+      "file": "node_modules/ink/build/output.js",
+      "line": 71,
       "hits": 2,
-      "selfMs": 2.8627149758454107,
-      "selfPct": 0.00966183574879227
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
     },
     {
-      "function": "processImmediate",
+      "function": "tokenize",
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/tokenize.js",
+      "line": 101,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "function": "structuredClone",
+      "file": "node:internal/worker/js_transferable",
+      "line": 112,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "function": "process.env.NODE_ENV.exports.createElement",
+      "file": "node_modules/react/cjs/react.development.js",
+      "line": 1004,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "function": "processTimers",
       "file": "node:internal/timers",
-      "line": 463,
-      "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "line": 534,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
     },
     {
-      "function": "commitRoot",
+      "function": "startUpdateTimerByLane",
       "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
-      "line": 15464,
-      "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
-    },
-    {
-      "function": "renderer",
-      "file": "node_modules/ink/build/renderer.js",
-      "line": 3,
-      "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
-    },
-    {
-      "function": "isDoubleWidthNonRgiEmojiSequence",
-      "file": "node_modules/string-width/index.js",
-      "line": 29,
-      "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
-    },
-    {
-      "function": "isFullWidth",
-      "file": "node_modules/get-east-asian-width/lookup.js",
-      "line": 62,
-      "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "line": 2983,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
     },
     {
       "function": "undoAnsiCodes",
       "file": "node_modules/@alcalzone/ansi-tokenize/build/undo.js",
       "line": 3,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "function": "styledCharsFromTokens",
-      "file": "node_modules/@alcalzone/ansi-tokenize/build/styledChars.js",
-      "line": 4,
+      "function": "(anonymous)",
+      "file": "node_modules/ink/build/output.js",
+      "line": 173,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "function": "s",
-      "file": "node_modules/yoga-layout/dist/binaries/yoga-wasm-base64-esm.js",
-      "line": 60,
+      "function": "renderer",
+      "file": "node_modules/ink/build/renderer.js",
+      "line": 3,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "function": "beginWork",
+      "function": "isZeroWidthCluster",
+      "file": "node_modules/string-width/index.js",
+      "line": 52,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "FastBuffer",
+      "file": "node:internal/buffer",
+      "line": 960,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "writeSync",
+      "file": "node:fs",
+      "line": 889,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "wrappedFn",
+      "file": "node:internal/errors",
+      "line": 535,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "incRefCount",
+      "file": "node:internal/timers",
+      "line": 335,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "sanitizeAnsi",
+      "file": "node_modules/ink/build/sanitize-ansi.js",
+      "line": 7,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "flushLayoutEffects",
       "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
-      "line": 9128,
+      "line": 15624,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "function": "Workload",
-      "file": "ink-fast/prototypes/ink-cpu-hotspots.mjs",
-      "line": 232,
+      "function": "get entryType",
+      "file": "node:internal/perf/performance_entry",
+      "line": 56,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "function": "areHookInputsEqual",
+      "function": "createPerformanceMeasure",
+      "file": "node:internal/perf/usertiming",
+      "line": 159,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "validateChildKeys",
+      "file": "node_modules/react/cjs/react.development.js",
+      "line": 256,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "attemptEarlyBailoutIfNoScheduledUpdate",
       "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
-      "line": 5274,
+      "line": 9001,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "function": "structuredClone",
+      "function": "calculateStartDuration",
+      "file": "node:internal/perf/usertiming",
+      "line": 174,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "addObjectDiffToProperties",
+      "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+      "line": 957,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "createTask",
       "file": "(native)",
       "line": 0,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
-    },
-    {
-      "function": "getComponentNameFromFiber",
-      "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
-      "line": 302,
-      "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
       "function": "enqueueConcurrentHookUpdate",
       "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
       "line": 4751,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "function": "getRootForUpdatedFiber",
+      "function": "emitBeforeScript",
+      "file": "node:internal/async_hooks",
+      "line": 509,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "settleThrottle",
+      "file": "node_modules/ink/build/ink.js",
+      "line": 430,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "(program)",
+      "file": "(native)",
+      "line": 0,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "processRootScheduleInMicrotask",
       "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
-      "line": 4788,
+      "line": 3203,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "function": "dispatchSetState",
-      "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
-      "line": 6734,
+      "function": "Immediate",
+      "file": "node:internal/timers",
+      "line": 662,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "function": "wasm-function[58]",
-      "file": "wasm://wasm/000460e2",
-      "line": 1,
+      "function": "processTicksAndRejections",
+      "file": "node:internal/process/task_queues",
+      "line": 72,
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     }
   ],
   "topFiles": [
     {
-      "file": "node_modules/string-width/index.js",
-      "hits": 68,
-      "selfMs": 97.33230917874397,
-      "selfPct": 0.3285024154589372
+      "file": "(native)",
+      "hits": 66,
+      "selfMs": 92.91359390862945,
+      "selfPct": 0.3350253807106599
     },
     {
-      "file": "(native)",
-      "hits": 63,
-      "selfMs": 90.17552173913043,
-      "selfPct": 0.30434782608695654
+      "file": "node_modules/string-width/index.js",
+      "hits": 62,
+      "selfMs": 87.28246700507614,
+      "selfPct": 0.3147208121827411
     },
     {
       "file": "node_modules/@alcalzone/ansi-tokenize/build/styledChars.js",
-      "hits": 16,
-      "selfMs": 22.901719806763285,
-      "selfPct": 0.07729468599033816
-    },
-    {
-      "file": "node_modules/ink/build/output.js",
-      "hits": 14,
-      "selfMs": 20.039004830917875,
-      "selfPct": 0.06763285024154589
+      "hits": 13,
+      "selfMs": 18.301162436548225,
+      "selfPct": 0.06598984771573604
     },
     {
       "file": "node_modules/@alcalzone/ansi-tokenize/build/diff.js",
-      "hits": 13,
-      "selfMs": 18.60764734299517,
-      "selfPct": 0.06280193236714976
+      "hits": 12,
+      "selfMs": 16.893380710659898,
+      "selfPct": 0.06091370558375635
+    },
+    {
+      "file": "node_modules/ink/build/output.js",
+      "hits": 9,
+      "selfMs": 12.670035532994925,
+      "selfPct": 0.04568527918781726
     },
     {
       "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
       "hits": 7,
-      "selfMs": 10.019502415458938,
-      "selfPct": 0.033816425120772944
+      "selfMs": 9.854472081218274,
+      "selfPct": 0.03553299492385787
     },
     {
       "file": "node_modules/@alcalzone/ansi-tokenize/build/ansiCodes.js",
-      "hits": 7,
-      "selfMs": 10.019502415458938,
-      "selfPct": 0.033816425120772944
-    },
-    {
-      "file": "node_modules/react/cjs/react.development.js",
       "hits": 5,
-      "selfMs": 7.1567874396135265,
-      "selfPct": 0.024154589371980676
+      "selfMs": 7.038908629441625,
+      "selfPct": 0.025380710659898477
     },
     {
       "file": "node:internal/timers",
       "hits": 4,
-      "selfMs": 5.725429951690821,
-      "selfPct": 0.01932367149758454
+      "selfMs": 5.6311269035533,
+      "selfPct": 0.02030456852791878
+    },
+    {
+      "file": "node_modules/react/cjs/react.development.js",
+      "hits": 3,
+      "selfMs": 4.223345177664974,
+      "selfPct": 0.015228426395939087
     },
     {
       "file": "node_modules/@alcalzone/ansi-tokenize/build/tokenize.js",
-      "hits": 4,
-      "selfMs": 5.725429951690821,
-      "selfPct": 0.01932367149758454
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
     },
     {
-      "file": "node_modules/ink/build/renderer.js",
-      "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "file": "node:internal/perf/usertiming",
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
     },
     {
-      "file": "node_modules/get-east-asian-width/lookup.js",
-      "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "file": "node:internal/worker/js_transferable",
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
     },
     {
       "file": "node_modules/@alcalzone/ansi-tokenize/build/undo.js",
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "file": "node_modules/yoga-layout/dist/binaries/yoga-wasm-base64-esm.js",
+      "file": "node_modules/ink/build/renderer.js",
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "file": "ink-fast/prototypes/ink-cpu-hotspots.mjs",
+      "file": "node:internal/buffer",
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     },
     {
-      "file": "wasm://wasm/000460e2",
+      "file": "node:fs",
       "hits": 1,
-      "selfMs": 1.4313574879227053,
-      "selfPct": 0.004830917874396135
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node:internal/errors",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node_modules/ink/build/sanitize-ansi.js",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node:internal/perf/performance_entry",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node:internal/async_hooks",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node_modules/ink/build/ink.js",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node:internal/process/task_queues",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
     }
   ]
 }

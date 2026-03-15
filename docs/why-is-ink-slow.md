@@ -1,6 +1,6 @@
 # Why is Ink slow? (and why Ratatat is faster)
 
-> Part of the [Ratatat docs](index.md). See also: [Render Loop](render-loop.md) · [Rendering Modes](rendering-modes.md) · [Raw Buffer API](raw-buffer.md)
+> Part of the [Ratatat docs](index.md). See also: [Ink performance plan](ink-performance-plan.md) · [Render Loop](render-loop.md) · [Rendering Modes](rendering-modes.md) · [Raw Buffer API](raw-buffer.md)
 
 Short answer: **Yoga is not the main bottleneck**. Ink and Ratatat both use Yoga in broadly similar ways. The biggest performance difference shows up **after layout** in the render/output pipeline.
 

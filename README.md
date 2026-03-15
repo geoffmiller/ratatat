@@ -53,7 +53,9 @@ Metric: **time-to-marker (ms)** in a PTY (`script`) — process start to first v
 | Ink                  | 313.67              | 324.48   | 164.46                  |
 
 Ratatat React adapter overhead (vs Ratatat core) is **159.27ms** in this run (**2.17×**).
-Ratatat React startup is still **18.41ms faster** than Ink (**1.06×**).
+Ratatat React startup is basically equivalent but **18.41ms faster** than Ink (**1.06×**).
+
+> Note: `ratatat (core/raw)` can appear faster than the `node baseline` row because the baseline marker is written through Node's stdout path, while core marker output goes through the native renderer write path. For framework overhead, use `ratatat (react mode) - ratatat (core/raw)`.
 
 Re-run: `RUNS=50 WARMUP=3 npm run bench:startup`
 

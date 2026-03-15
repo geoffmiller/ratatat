@@ -60,6 +60,7 @@ Latest profiling notes:
 - `ink-fast/notes/phase0-matrix.md`
 - `ink-fast/notes/phase0-hotspots.md`
 - `ink-fast/notes/phase1-shared-cache-spike.md`
+- `ink-fast/notes/phase1-upstream-patch-plan.md`
 
 Optional env knobs:
 

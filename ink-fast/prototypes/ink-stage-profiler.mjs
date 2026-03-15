@@ -20,6 +20,7 @@
  *   COLS=80 ROWS=24 WARMUP_RENDERS=20 MEASURE_RENDERS=120 MAX_FPS=1000
  *   WORKLOAD=dense|sparse|unicode
  *   SINK=devnull|memory
+ *   PATCH_OUTPUT_REUSE=0|1
  *   OUTPUT_JSON=ink-fast/results/ink-stage-profile.json
  */
 
@@ -31,6 +32,8 @@ import { Writable, PassThrough } from 'node:stream'
 import React, { useEffect, useMemo, useState } from 'react'
 import { render, Box, Text, useApp } from 'ink'
 import Yoga from 'yoga-layout'
+import sliceAnsi from 'slice-ansi'
+import { styledCharsToString } from '@alcalzone/ansi-tokenize'
 
 const require = createRequire(import.meta.url)
 const inkEntryPath = require.resolve('ink')
@@ -45,6 +48,7 @@ const MEASURE_RENDERS = Number(process.env.MEASURE_RENDERS ?? 120)
 const MAX_FPS = Number(process.env.MAX_FPS ?? 1000)
 const SINK = process.env.SINK ?? 'devnull'
 const WORKLOAD = process.env.WORKLOAD ?? 'dense'
+const PATCH_OUTPUT_REUSE = process.env.PATCH_OUTPUT_REUSE === '1'
 const OUTPUT_JSON = process.env.OUTPUT_JSON
 
 const TOTAL_UPDATES = WARMUP_RENDERS + MEASURE_RENDERS
@@ -222,11 +226,168 @@ Yoga.Node.prototype.calculateLayout = function patchedCalculateLayout(...args) {
   return result
 }
 
+const OUTPUT_SCRATCH = Symbol('ink-fast-output-scratch')
+const BLANK_CELL = Object.freeze({
+  type: 'char',
+  value: ' ',
+  fullWidth: false,
+  styles: Object.freeze([]),
+})
+
+function getReusableOutputGrid(outputInstance) {
+  const width = outputInstance.width
+  const height = outputInstance.height
+  let scratch = outputInstance[OUTPUT_SCRATCH]
+
+  if (!scratch || scratch.width !== width || scratch.height !== height) {
+    const rows = Array.from({ length: height }, () => Array(width).fill(BLANK_CELL))
+    scratch = { width, height, rows }
+    outputInstance[OUTPUT_SCRATCH] = scratch
+    return rows
+  }
+
+  for (const row of scratch.rows) {
+    row.length = width
+    row.fill(BLANK_CELL)
+  }
+
+  return scratch.rows
+}
+
+function outputGetWithReusePatch() {
+  const output = getReusableOutputGrid(this)
+  const clips = []
+
+  for (const operation of this.operations) {
+    if (operation.type === 'clip') {
+      clips.push(operation.clip)
+      continue
+    }
+
+    if (operation.type === 'unclip') {
+      clips.pop()
+      continue
+    }
+
+    if (operation.type !== 'write') {
+      continue
+    }
+
+    const { text, transformers } = operation
+    let { x, y } = operation
+    let lines = text.split('\n')
+    const clip = clips.at(-1)
+
+    if (clip) {
+      const clipHorizontally = typeof clip?.x1 === 'number' && typeof clip?.x2 === 'number'
+      const clipVertically = typeof clip?.y1 === 'number' && typeof clip?.y2 === 'number'
+
+      if (clipHorizontally) {
+        const width = this.caches.getWidestLine(text)
+        if (x + width < clip.x1 || x > clip.x2) {
+          continue
+        }
+      }
+
+      if (clipVertically) {
+        const height = lines.length
+        if (y + height < clip.y1 || y > clip.y2) {
+          continue
+        }
+      }
+
+      if (clipHorizontally) {
+        lines = lines.map((line) => {
+          const from = x < clip.x1 ? clip.x1 - x : 0
+          const width = this.caches.getStringWidth(line)
+          const to = x + width > clip.x2 ? clip.x2 - x : width
+          return sliceAnsi(line, from, to)
+        })
+
+        if (x < clip.x1) {
+          x = clip.x1
+        }
+      }
+
+      if (clipVertically) {
+        const from = y < clip.y1 ? clip.y1 - y : 0
+        const height = lines.length
+        const to = y + height > clip.y2 ? clip.y2 - y : height
+        lines = lines.slice(from, to)
+
+        if (y < clip.y1) {
+          y = clip.y1
+        }
+      }
+    }
+
+    let offsetY = 0
+
+    for (const [lineIndex, originalLine] of lines.entries()) {
+      const currentLine = output[y + offsetY]
+      if (!currentLine) {
+        offsetY += 1
+        continue
+      }
+
+      let line = originalLine
+      for (const transformer of transformers) {
+        line = transformer(line, lineIndex)
+      }
+
+      const characters = this.caches.getStyledChars(line)
+      let offsetX = x
+
+      for (const character of characters) {
+        const characterWidth = Math.max(1, this.caches.getStringWidth(character.value))
+
+        if (offsetX < 0) {
+          offsetX += characterWidth
+          continue
+        }
+
+        if (offsetX >= currentLine.length) {
+          break
+        }
+
+        currentLine[offsetX] = character
+
+        if (characterWidth > 1) {
+          for (let index = 1; index < characterWidth; index++) {
+            if (offsetX + index >= currentLine.length) {
+              break
+            }
+
+            currentLine[offsetX + index] = {
+              type: 'char',
+              value: '',
+              fullWidth: false,
+              styles: character.styles,
+            }
+          }
+        }
+
+        offsetX += characterWidth
+      }
+
+      offsetY += 1
+    }
+  }
+
+  const generatedOutput = output.map((line) => styledCharsToString(line).trimEnd()).join('\n')
+  return {
+    output: generatedOutput,
+    height: output.length,
+  }
+}
+
 const originalOutputGet = Output.prototype.get
+const selectedOutputGet = PATCH_OUTPUT_REUSE ? outputGetWithReusePatch : originalOutputGet
+
 Output.prototype.get = function patchedOutputGet(...args) {
   const idx = renderCount
   const t0 = performance.now()
-  const result = originalOutputGet.apply(this, args)
+  const result = selectedOutputGet.apply(this, args)
   const dt = performance.now() - t0
 
   if (inWindow(idx)) {
@@ -317,7 +478,7 @@ console.log('║                 ink stage profiler (phase 0)                   
 console.log('╚════════════════════════════════════════════════════════════════════╝')
 console.log('')
 console.log(
-  `cols=${COLS} rows=${ROWS} warmup=${WARMUP_RENDERS} measured=${MEASURE_RENDERS} maxFps=${MAX_FPS} sink=${SINK} workload=${WORKLOAD}`,
+  `cols=${COLS} rows=${ROWS} warmup=${WARMUP_RENDERS} measured=${MEASURE_RENDERS} maxFps=${MAX_FPS} sink=${SINK} workload=${WORKLOAD} outputReusePatch=${PATCH_OUTPUT_REUSE}`,
 )
 console.log(`renders observed=${renderCount} measured rows=${measured.length}`)
 console.log('')
@@ -344,6 +505,7 @@ if (OUTPUT_JSON) {
       maxFps: MAX_FPS,
       sink: SINK,
       workload: WORKLOAD,
+      patchOutputReuse: PATCH_OUTPUT_REUSE,
       rendersObserved: renderCount,
       measuredRenders: measured.length,
     },

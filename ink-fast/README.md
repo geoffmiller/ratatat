@@ -31,19 +31,21 @@ npm run bench:ink:stages
 node ink-fast/prototypes/ink-stage-profiler.mjs
 ```
 
-Run workload matrix:
+Run workload matrix (stock vs output-reuse patch):
 
 ```bash
 npm run bench:ink:matrix
 ```
 
-Latest baseline write-up:
+Latest profiling notes:
 
 - `ink-fast/notes/phase0-baseline.md`
+- `ink-fast/notes/phase0-matrix.md`
 
 Optional env knobs:
 
 - `WORKLOAD=dense|sparse|unicode` selects the frame generator.
+- `PATCH_OUTPUT_REUSE=1` enables a prototype output-surface reuse patch for `Output.get`.
 
 ```bash
 COLS=80 ROWS=24 WARMUP_RENDERS=20 MEASURE_RENDERS=120 MAX_FPS=1000 \

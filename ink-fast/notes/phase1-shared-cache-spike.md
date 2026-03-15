@@ -38,6 +38,18 @@ RUNS=5 WARMUP_RENDERS=5 MEASURE_RENDERS=20 \
 | unicode  | stock-sharedcache |      6.762 |          1.061 |                    0.0 |                       0.0 |
 | unicode  | reuse-sharedcache |      6.598 |          0.980 |                    0.0 |                       0.0 |
 
+## Relative deltas vs stock (render median)
+
+- dense
+  - `stock-sharedcache`: **~6.2% faster** (`3.452 -> 3.237`)
+  - `reuse-sharedcache`: **~10.3% faster** (`3.452 -> 3.096`)
+- sparse
+  - `stock-sharedcache`: **~0.8% faster** (`1.678 -> 1.665`)
+  - `reuse-sharedcache`: **~7.9% faster** (`1.678 -> 1.545`)
+- unicode
+  - `stock-sharedcache`: **~0.2% faster** (`6.778 -> 6.762`)
+  - `reuse-sharedcache`: **~2.7% faster** (`6.778 -> 6.598`)
+
 ## Takeaways
 
 1. Shared-cache variants consistently drive cache misses to ~0 for dense/unicode.

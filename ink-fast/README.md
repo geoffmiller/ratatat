@@ -61,6 +61,12 @@ Latest profiling notes:
 - `ink-fast/notes/phase0-hotspots.md`
 - `ink-fast/notes/phase1-shared-cache-spike.md`
 - `ink-fast/notes/phase1-upstream-patch-plan.md`
+- `ink-fast/notes/phase1-upstream-patch-validation.md`
+
+Upstream-ready patch drafts:
+
+- `ink-fast/upstream-patches/README.md`
+- `ink-fast/upstream-patches/ink-shared-output-caches.patch`
 
 Optional env knobs:
 

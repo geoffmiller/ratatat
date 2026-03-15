@@ -37,6 +37,10 @@ Where `sharedCaches` is retained across frames for a given renderer instance/std
 
 ## Proposed code changes (Ink source repo)
 
+Draft patch file in this repo:
+
+- `ink-fast/upstream-patches/ink-shared-output-caches.patch`
+
 1. **`source/output.ts`**
    - Add optional constructor input: `sharedCaches?: OutputCaches`
    - If provided, set `this.caches = sharedCaches`

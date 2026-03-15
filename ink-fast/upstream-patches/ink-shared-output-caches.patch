@@ -1,0 +1,73 @@
+--- a/src/output.ts	2026-03-15 13:36:54
++++ b/src/output.ts	2026-03-15 13:36:54
+@@ -19,6 +19,7 @@
+ type Options = {
+ 	width: number;
+ 	height: number;
++	caches?: OutputCaches;
+ };
+ 
+ type Operation = WriteOperation | ClipOperation | UnclipOperation;
+@@ -47,7 +48,7 @@
+ 	type: 'unclip';
+ };
+ 
+-class OutputCaches {
++export class OutputCaches {
+ 	widths = new Map<string, number>();
+ 	blockWidths = new Map<string, number>();
+ 	styledChars = new Map<string, StyledChar[]>();
+@@ -93,13 +94,14 @@
+ 	height: number;
+ 
+ 	private readonly operations: Operation[] = [];
+-	private readonly caches: OutputCaches = new OutputCaches();
++	private readonly caches: OutputCaches;
+ 
+ 	constructor(options: Options) {
+-		const {width, height} = options;
++		const {width, height, caches} = options;
+ 
+ 		this.width = width;
+ 		this.height = height;
++		this.caches = caches ?? new OutputCaches();
+ 	}
+ 
+ 	write(
+--- a/src/renderer.ts	2026-03-15 13:36:54
++++ b/src/renderer.ts	2026-03-15 13:36:54
+@@ -1,7 +1,7 @@
+ import renderNodeToOutput, {
+ 	renderNodeToScreenReaderOutput,
+ } from './render-node-to-output.js';
+-import Output from './output.js';
++import Output, {OutputCaches} from './output.js';
+ import {type DOMElement} from './dom.js';
+ 
+ type Result = {
+@@ -10,6 +10,9 @@
+ 	staticOutput: string;
+ };
+ 
++const interactiveOutputCaches = new OutputCaches();
++const staticOutputCaches = new OutputCaches();
++
+ const renderer = (node: DOMElement, isScreenReaderEnabled: boolean): Result => {
+ 	if (node.yogaNode) {
+ 		if (isScreenReaderEnabled) {
+@@ -37,6 +40,7 @@
+ 		const output = new Output({
+ 			width: node.yogaNode.getComputedWidth(),
+ 			height: node.yogaNode.getComputedHeight(),
++			caches: interactiveOutputCaches,
+ 		});
+ 
+ 		renderNodeToOutput(node, output, {
+@@ -49,6 +53,7 @@
+ 			staticOutput = new Output({
+ 				width: node.staticNode.yogaNode.getComputedWidth(),
+ 				height: node.staticNode.yogaNode.getComputedHeight(),
++				caches: staticOutputCaches,
+ 			});
+ 
+ 			renderNodeToOutput(node.staticNode, staticOutput, {

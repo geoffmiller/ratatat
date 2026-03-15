@@ -41,6 +41,8 @@ Measured on Apple M1 Max, 80×24 terminal.
 | Rerender (complex)      | ops/sec            | 49,852  | 1,384 | 36×     |
 | p99 latency (complex)   | µs (lower is best) | 23      | 1,586 | 68×     |
 
+Startup benchmark (Ratatat vs Ink): `npm run bench:startup`
+
 ## Installation (short)
 
 - **Preferred:** fork/clone this repo and build from source.

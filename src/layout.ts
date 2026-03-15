@@ -1,5 +1,6 @@
-import { YogaNode } from 'yoga-layout'
 import Yoga from 'yoga-layout-prebuilt'
+
+type YogaNode = ReturnType<typeof Yoga.Node.create>
 
 // Global registry: yogaNode → owning LayoutNode
 // Used to reliably detach nodes regardless of JS object identity issues

@@ -35,6 +35,8 @@ Run workload matrix (stock vs output-reuse patch):
 
 ```bash
 npm run bench:ink:matrix
+# repeated runs:
+RUNS=3 npm run bench:ink:matrix
 ```
 
 Latest profiling notes:

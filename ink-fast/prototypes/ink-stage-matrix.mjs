@@ -9,6 +9,7 @@
  * Optional env:
  *   WORKLOADS=dense,sparse,unicode
  *   VARIANTS=stock,reuse
+ *   RUNS=3
  *   WARMUP_RENDERS=5 MEASURE_RENDERS=20 MAX_FPS=1000 SINK=devnull
  */
 
@@ -18,6 +19,7 @@ import path from 'node:path'
 import { spawn } from 'node:child_process'
 
 const ROOT = process.cwd()
+
 const WORKLOADS = (process.env.WORKLOADS ?? 'dense,sparse,unicode')
   .split(',')
   .map((x) => x.trim())
@@ -27,6 +29,8 @@ const VARIANTS = (process.env.VARIANTS ?? 'stock,reuse')
   .split(',')
   .map((x) => x.trim())
   .filter((x) => x === 'stock' || x === 'reuse')
+
+const RUNS = Math.max(1, Number(process.env.RUNS ?? 1))
 
 if (VARIANTS.length === 0) {
   throw new Error('No valid variants selected. Use VARIANTS=stock,reuse')
@@ -87,38 +91,70 @@ function fmt(n) {
   return Number(n).toFixed(3)
 }
 
+function median(values) {
+  if (values.length === 0) return 0
+  const sorted = [...values].sort((a, b) => a - b)
+  return sorted[Math.floor(sorted.length / 2)]
+}
+
+function min(values) {
+  return values.length === 0 ? 0 : Math.min(...values)
+}
+
+function max(values) {
+  return values.length === 0 ? 0 : Math.max(...values)
+}
+
 console.log('\nRunning Ink stage profiler matrix...')
 console.log(
-  `workloads=${WORKLOADS.join(',')} variants=${VARIANTS.join(',')} cols=${BASE_ENV.COLS} rows=${BASE_ENV.ROWS} warmup=${BASE_ENV.WARMUP_RENDERS} measured=${BASE_ENV.MEASURE_RENDERS} sink=${BASE_ENV.SINK}`,
+  `workloads=${WORKLOADS.join(',')} variants=${VARIANTS.join(',')} runs=${RUNS} cols=${BASE_ENV.COLS} rows=${BASE_ENV.ROWS} warmup=${BASE_ENV.WARMUP_RENDERS} measured=${BASE_ENV.MEASURE_RENDERS} sink=${BASE_ENV.SINK}`,
 )
 
 const results = []
 
 for (const workload of WORKLOADS) {
   for (const variant of VARIANTS) {
-    const outputPath = path.join(os.tmpdir(), `ink-stage-profile-${workload}-${variant}-${Date.now()}.json`)
-    await runProfiler(workload, variant, outputPath)
+    const renderMedians = []
+    const treeMedians = []
+    const outputGetMedians = []
+    const layoutMedians = []
+    const writeMedians = []
+    const bytesMedians = []
 
-    const payload = JSON.parse(fs.readFileSync(outputPath, 'utf8'))
-    fs.unlinkSync(outputPath)
+    for (let run = 0; run < RUNS; run++) {
+      const outputPath = path.join(os.tmpdir(), `ink-stage-profile-${workload}-${variant}-${run}-${Date.now()}.json`)
+      await runProfiler(workload, variant, outputPath)
 
-    const summary = payload.summary
-    const layout = getStage(summary, 'layout (Yoga.calculateLayout)')
-    const outputGet = getStage(summary, 'output assembly (Output.get)')
-    const renderTotal = getStage(summary, 'render total (Ink onRender)')
-    const tree = getStage(summary, 'est. tree/transform (render - output.get)')
-    const write = getStage(summary, 'stdout.write wall time')
-    const bytes = getStage(summary, 'stdout bytes per render')
+      const payload = JSON.parse(fs.readFileSync(outputPath, 'utf8'))
+      fs.unlinkSync(outputPath)
+
+      const summary = payload.summary
+      const layout = getStage(summary, 'layout (Yoga.calculateLayout)')
+      const outputGet = getStage(summary, 'output assembly (Output.get)')
+      const renderTotal = getStage(summary, 'render total (Ink onRender)')
+      const tree = getStage(summary, 'est. tree/transform (render - output.get)')
+      const write = getStage(summary, 'stdout.write wall time')
+      const bytes = getStage(summary, 'stdout bytes per render')
+
+      renderMedians.push(renderTotal.median)
+      treeMedians.push(tree.median)
+      outputGetMedians.push(outputGet.median)
+      layoutMedians.push(layout.median)
+      writeMedians.push(write.median)
+      bytesMedians.push(bytes.median)
+    }
 
     results.push({
       workload,
       variant,
-      'render median (ms)': fmt(renderTotal.median),
-      'tree median (ms)': fmt(tree.median),
-      'output.get median (ms)': fmt(outputGet.median),
-      'layout median (ms)': fmt(layout.median),
-      'write median (ms)': fmt(write.median),
-      'bytes/render': fmt(bytes.median),
+      runs: RUNS,
+      'render med (ms)': fmt(median(renderMedians)),
+      'render min-max (ms)': `${fmt(min(renderMedians))}-${fmt(max(renderMedians))}`,
+      'tree med (ms)': fmt(median(treeMedians)),
+      'output.get med (ms)': fmt(median(outputGetMedians)),
+      'layout med (ms)': fmt(median(layoutMedians)),
+      'write med (ms)': fmt(median(writeMedians)),
+      'bytes/render': fmt(median(bytesMedians)),
     })
   }
 }

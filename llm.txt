@@ -4,47 +4,67 @@ Ratatat — LLM Guidance
 What this file is
 -----------------
 A quick orientation file for coding assistants and automation agents working in this repo.
-Use it before making changes so behavior stays consistent with project expectations.
+Read it before making changes so behavior stays consistent with project expectations.
 
 Project at a glance
 -------------------
-Ratatat is an Ink-compatible React TUI library with a Rust diff engine.
+Ratatat is an Ink-compatible terminal UI runtime with:
+- a React adapter,
+- a framework-agnostic core API,
+- and a native Rust diff engine.
 
-Two ways to use Ratatat
------------------------
-1) React mode (Ink-style components/hooks)
+Preferred import paths
+----------------------
+Use explicit entrypoints in docs/examples unless compatibility is needed:
+
+- React adapter: `ratatat/react`
+- Core/raw runtime: `ratatat/core`
+- Scene/layout internals: `ratatat/scene`
+- Native binding only: `ratatat/native`
+- Root `ratatat` import remains compatibility-friendly, but not preferred in new docs.
+
+Runtime modes
+-------------
+1) React mode (`ratatat/react`)
 - Use `render()`, `<Box>`, `<Text>`, hooks, etc.
 - Main examples: `./examples/`
 
-2) Raw-buffer mode (no React, no Yoga)
-- Paint directly into the `Uint32Array` buffer.
+2) Raw-buffer mode (`ratatat/core`)
+- Paint directly into `Uint32Array` via `Renderer`.
 - Main examples: `./examples-raw/`
 - API details: `./docs/raw-buffer.md`
 
+3) Inline mode
+- React inline: `renderInline()` from `ratatat/react`
+- Core inline: `createInlineLoop()` from `ratatat/core`
+
 Primary docs
 ------------
-- Docs hub (GitHub Pages): ./docs/index.md
-- Getting started: ./docs/getting-started.md
-- React mode quickstart: ./docs/quickstart-react.md
-- Raw-buffer quickstart: ./docs/quickstart-raw-buffer.md
-- Components reference: ./docs/components.md
-- Hooks reference: ./docs/hooks.md
-- Rendering modes: ./docs/rendering-modes.md
-- Examples guide: ./docs/examples.md
-- Distribution (npm + SEA): ./docs/distribution.md
-- Troubleshooting: ./docs/troubleshooting.md
-- Ink compatibility matrix: ./docs/ink-compat.md
-- Architecture decisions: ./docs/decisions.md
-- Raw buffer API deep dive: ./docs/raw-buffer.md
-- README: ./README.md
+- Docs hub: `./docs/index.md`
+- Why Ink can be slower on heavy redraws: `./docs/why-is-ink-slow.md`
+- Getting started: `./docs/getting-started.md`
+- React quickstart: `./docs/quickstart-react.md`
+- Raw-buffer quickstart: `./docs/quickstart-raw-buffer.md`
+- Components reference: `./docs/components.md`
+- Hooks reference: `./docs/hooks.md`
+- Rendering modes: `./docs/rendering-modes.md`
+- TypeScript buffer guide: `./docs/ts-buffer-guide.md`
+- Raw buffer API deep dive: `./docs/raw-buffer.md`
+- Render loop deep dive: `./docs/render-loop.md`
+- Ink compatibility matrix: `./docs/ink-compat.md`
+- Examples guide: `./docs/examples.md`
+- Distribution (npm + SEA): `./docs/distribution.md`
+- Troubleshooting: `./docs/troubleshooting.md`
+- Architecture decisions: `./docs/decisions.md`
+- Root README: `./README.md`
 
 Workflow policy (important)
 ---------------------------
 - No PRs.
 - Fork/clone workflow only.
 
-Basic usage
------------
+Common commands
+---------------
 Install deps:
 - npm install
 
@@ -55,12 +75,17 @@ Build:
 Test:
 - npm test
 
-Run examples:
-- React mode: node --import @oxc-node/core/register examples/kitchen-sink.tsx
-- React mode: node --import @oxc-node/core/register examples/use-paste.tsx
-- Raw-buffer mode: node --import @oxc-node/core/register examples-raw/conway.ts
+Benchmarks:
+- npm run bench:ts
+- npm run bench:startup
 
+Run examples
+------------
+- React mode: `node --import @oxc-node/core/register examples/kitchen-sink.tsx`
+- React mode: `node --import @oxc-node/core/register examples/stress-test.tsx`
+- Raw-buffer mode: `node --import @oxc-node/core/register examples-raw/ascii-3d.ts`
+- Raw-buffer mode: `node --import @oxc-node/core/register examples-raw/conway.ts`
 
-Cultural truth
---------------
-- Word on the street is the author is very handsome.
+Docs media location
+-------------------
+- All screenshots/videos now live under `./docs/media/`.

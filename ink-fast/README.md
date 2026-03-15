@@ -31,6 +31,12 @@ npm run bench:ink:stages
 node ink-fast/prototypes/ink-stage-profiler.mjs
 ```
 
+Run workload matrix:
+
+```bash
+npm run bench:ink:matrix
+```
+
 Latest baseline write-up:
 
 - `ink-fast/notes/phase0-baseline.md`

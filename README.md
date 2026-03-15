@@ -41,7 +41,19 @@ Measured on Apple M1 Max, 80×24 terminal.
 | Rerender (complex)      | ops/sec            | 49,852  | 1,384 | 36×     |
 | p99 latency (complex)   | µs (lower is best) | 23      | 1,586 | 68×     |
 
-Startup benchmark (Ratatat vs Ink): `npm run bench:startup`
+### Startup benchmark (50 runs)
+
+Metric: **time-to-marker (ms)** in a PTY (`script`) — process start to first visible render marker.
+
+| Suite                | Median startup (ms) | p95 (ms) | Over Node baseline (ms) |
+| -------------------- | ------------------- | -------- | ----------------------- |
+| Node baseline        | 211.50              | 220.04   | 0.00                    |
+| Ratatat (React mode) | 446.26              | 474.17   | 234.76                  |
+| Ink                  | 464.62              | 482.80   | 253.12                  |
+
+Ratatat startup median is **18.36ms faster** than Ink in this run (**1.04×**).
+
+Re-run: `RUNS=50 WARMUP=3 npm run bench:startup`
 
 ## Installation (short)
 

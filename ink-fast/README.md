@@ -16,5 +16,5 @@ Initial execution focus:
 Suggested structure as work grows:
 
 - `ink-fast/notes/` — findings, profiling snapshots
-- `ink-fast/spikes/` — isolated prototypes
+- `ink-fast/prototypes/` — isolated prototypes
 - `ink-fast/results/` — benchmark outputs

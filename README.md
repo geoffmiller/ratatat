@@ -16,7 +16,7 @@ Primary entry points: `ratatat/react` (React adapter) and `ratatat/core` (framew
 
 _Stress test now sustains ~700 FPS._
 
-<video src="docs/ratatat-ascii-3d-cube-demo.mp4" controls muted loop playsinline></video>
+<video src="https://github.com/user-attachments/assets/62ae2569-f036-431b-a359-1b439461ebb4" controls muted loop playsinline></video>
 
 _ASCII 3D cube demo (raw-buffer mode)._  
 If your markdown viewer doesn't render embedded video, use: [`docs/ratatat-ascii-3d-cube-demo.mp4`](docs/ratatat-ascii-3d-cube-demo.mp4)

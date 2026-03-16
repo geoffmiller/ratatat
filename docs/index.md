@@ -30,6 +30,8 @@ Ratatat is a React terminal UI renderer with an Ink-compatible API, Yoga layout,
 ## Deep dives
 
 - [Why Ink is slower on heavy redraws](why-is-ink-slow.md) — pipeline-level comparison with Ratatat
+- [Ink performance plan](ink-performance-plan.md) — phased roadmap to speed up Ink without switching stacks
+- [ink-fast research fork (implementation + benchmarks)](https://github.com/geoffmiller/ink-fast/blob/main/TECHNICAL-README.md) — PoC execution of the plan with measured results
 - [Raw Buffer API](raw-buffer.md) — buffer contract and cell format
 - [TypeScript Buffer Guide](ts-buffer-guide.md) — practical indexing/packing patterns with ASCII diagrams
 - [Ink Compatibility](ink-compat.md) — parity matrix and stubs

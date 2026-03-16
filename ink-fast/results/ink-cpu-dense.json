@@ -1,0 +1,459 @@
+{
+  "config": {
+    "cols": 80,
+    "rows": 24,
+    "warmupRenders": 10,
+    "measureRenders": 60,
+    "maxFps": 1000,
+    "workload": "dense",
+    "patchSharedOutputCaches": false,
+    "rendersObserved": 72,
+    "topN": 20,
+    "includeRawProfile": false
+  },
+  "summary": {
+    "durationMs": 277.333,
+    "totalSamples": 197,
+    "sampleMs": 1.407781725888325
+  },
+  "topFunctions": [
+    {
+      "function": "stringWidth",
+      "file": "node_modules/string-width/index.js",
+      "line": 69,
+      "hits": 57,
+      "selfMs": 80.24355837563452,
+      "selfPct": 0.2893401015228426
+    },
+    {
+      "function": "(idle)",
+      "file": "(native)",
+      "line": 0,
+      "hits": 54,
+      "selfMs": 76.02021319796955,
+      "selfPct": 0.27411167512690354
+    },
+    {
+      "function": "styledCharsToString",
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/styledChars.js",
+      "line": 20,
+      "hits": 13,
+      "selfMs": 18.301162436548225,
+      "selfPct": 0.06598984771573604
+    },
+    {
+      "function": "diffAnsiCodes",
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/diff.js",
+      "line": 7,
+      "hits": 12,
+      "selfMs": 16.893380710659898,
+      "selfPct": 0.06091370558375635
+    },
+    {
+      "function": "(garbage collector)",
+      "file": "(native)",
+      "line": 0,
+      "hits": 10,
+      "selfMs": 14.07781725888325,
+      "selfPct": 0.050761421319796954
+    },
+    {
+      "function": "(anonymous)",
+      "file": "node_modules/ink/build/output.js",
+      "line": 171,
+      "hits": 6,
+      "selfMs": 8.446690355329949,
+      "selfPct": 0.030456852791878174
+    },
+    {
+      "function": "ansiCodesToString",
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/ansiCodes.js",
+      "line": 50,
+      "hits": 5,
+      "selfMs": 7.038908629441625,
+      "selfPct": 0.025380710659898477
+    },
+    {
+      "function": "baseVisible",
+      "file": "node_modules/string-width/index.js",
+      "line": 48,
+      "hits": 4,
+      "selfMs": 5.6311269035533,
+      "selfPct": 0.02030456852791878
+    },
+    {
+      "function": "get",
+      "file": "node_modules/ink/build/output.js",
+      "line": 71,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "function": "tokenize",
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/tokenize.js",
+      "line": 101,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "function": "structuredClone",
+      "file": "node:internal/worker/js_transferable",
+      "line": 112,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "function": "process.env.NODE_ENV.exports.createElement",
+      "file": "node_modules/react/cjs/react.development.js",
+      "line": 1004,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "function": "processTimers",
+      "file": "node:internal/timers",
+      "line": 534,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "function": "startUpdateTimerByLane",
+      "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+      "line": 2983,
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "function": "undoAnsiCodes",
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/undo.js",
+      "line": 3,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "(anonymous)",
+      "file": "node_modules/ink/build/output.js",
+      "line": 173,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "renderer",
+      "file": "node_modules/ink/build/renderer.js",
+      "line": 3,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "isZeroWidthCluster",
+      "file": "node_modules/string-width/index.js",
+      "line": 52,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "FastBuffer",
+      "file": "node:internal/buffer",
+      "line": 960,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "writeSync",
+      "file": "node:fs",
+      "line": 889,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "wrappedFn",
+      "file": "node:internal/errors",
+      "line": 535,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "incRefCount",
+      "file": "node:internal/timers",
+      "line": 335,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "sanitizeAnsi",
+      "file": "node_modules/ink/build/sanitize-ansi.js",
+      "line": 7,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "flushLayoutEffects",
+      "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+      "line": 15624,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "get entryType",
+      "file": "node:internal/perf/performance_entry",
+      "line": 56,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "createPerformanceMeasure",
+      "file": "node:internal/perf/usertiming",
+      "line": 159,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "validateChildKeys",
+      "file": "node_modules/react/cjs/react.development.js",
+      "line": 256,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "attemptEarlyBailoutIfNoScheduledUpdate",
+      "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+      "line": 9001,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "calculateStartDuration",
+      "file": "node:internal/perf/usertiming",
+      "line": 174,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "addObjectDiffToProperties",
+      "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+      "line": 957,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "createTask",
+      "file": "(native)",
+      "line": 0,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "enqueueConcurrentHookUpdate",
+      "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+      "line": 4751,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "emitBeforeScript",
+      "file": "node:internal/async_hooks",
+      "line": 509,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "settleThrottle",
+      "file": "node_modules/ink/build/ink.js",
+      "line": 430,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "(program)",
+      "file": "(native)",
+      "line": 0,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "processRootScheduleInMicrotask",
+      "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+      "line": 3203,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "Immediate",
+      "file": "node:internal/timers",
+      "line": 662,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "function": "processTicksAndRejections",
+      "file": "node:internal/process/task_queues",
+      "line": 72,
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    }
+  ],
+  "topFiles": [
+    {
+      "file": "(native)",
+      "hits": 66,
+      "selfMs": 92.91359390862945,
+      "selfPct": 0.3350253807106599
+    },
+    {
+      "file": "node_modules/string-width/index.js",
+      "hits": 62,
+      "selfMs": 87.28246700507614,
+      "selfPct": 0.3147208121827411
+    },
+    {
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/styledChars.js",
+      "hits": 13,
+      "selfMs": 18.301162436548225,
+      "selfPct": 0.06598984771573604
+    },
+    {
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/diff.js",
+      "hits": 12,
+      "selfMs": 16.893380710659898,
+      "selfPct": 0.06091370558375635
+    },
+    {
+      "file": "node_modules/ink/build/output.js",
+      "hits": 9,
+      "selfMs": 12.670035532994925,
+      "selfPct": 0.04568527918781726
+    },
+    {
+      "file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+      "hits": 7,
+      "selfMs": 9.854472081218274,
+      "selfPct": 0.03553299492385787
+    },
+    {
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/ansiCodes.js",
+      "hits": 5,
+      "selfMs": 7.038908629441625,
+      "selfPct": 0.025380710659898477
+    },
+    {
+      "file": "node:internal/timers",
+      "hits": 4,
+      "selfMs": 5.6311269035533,
+      "selfPct": 0.02030456852791878
+    },
+    {
+      "file": "node_modules/react/cjs/react.development.js",
+      "hits": 3,
+      "selfMs": 4.223345177664974,
+      "selfPct": 0.015228426395939087
+    },
+    {
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/tokenize.js",
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "file": "node:internal/perf/usertiming",
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "file": "node:internal/worker/js_transferable",
+      "hits": 2,
+      "selfMs": 2.81556345177665,
+      "selfPct": 0.01015228426395939
+    },
+    {
+      "file": "node_modules/@alcalzone/ansi-tokenize/build/undo.js",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node_modules/ink/build/renderer.js",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node:internal/buffer",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node:fs",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node:internal/errors",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node_modules/ink/build/sanitize-ansi.js",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node:internal/perf/performance_entry",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node:internal/async_hooks",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node_modules/ink/build/ink.js",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    },
+    {
+      "file": "node:internal/process/task_queues",
+      "hits": 1,
+      "selfMs": 1.407781725888325,
+      "selfPct": 0.005076142131979695
+    }
+  ]
+}

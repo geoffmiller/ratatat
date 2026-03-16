@@ -6,6 +6,8 @@ This document turns the ideas in section 8 of `why-is-ink-slow.md` into an execu
 
 The goal is to answer: **if we were improving Ink itself, what should we build first, how would we validate it, and how would we ship it safely?**
 
+Status: this plan has a research-grade PoC implementation in [`ink-fast`](https://github.com/geoffmiller/ink-fast/blob/main/TECHNICAL-README.md), including committed benchmark snapshots.
+
 ---
 
 ## 1) Goals and constraints

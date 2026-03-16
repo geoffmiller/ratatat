@@ -1,12 +1,12 @@
 # Why is Ink slow? (and why Ratatat is faster)
 
-> Part of the [Ratatat docs](index.md). See also: [Ink performance plan](ink-performance-plan.md) · [Render Loop](render-loop.md) · [Rendering Modes](rendering-modes.md) · [Raw Buffer API](raw-buffer.md) · [ink-fast PoC implementation](https://github.com/geoffmiller/ink-fast/blob/main/TECHNICAL-README.md)
+> Part of the [Ratatat docs](index.md). See also: [Ink performance plan](ink-performance-plan.md) · [Render Loop](render-loop.md) · [Rendering Modes](rendering-modes.md) · [Raw Buffer API](raw-buffer.md) · [ink-fast research workspace](../ink-fast/README.md)
 
 Short answer: **Yoga is not the main bottleneck**. Ink and Ratatat both use Yoga in broadly similar ways. The biggest performance difference shows up **after layout** in the render/output pipeline.
 
 This page focuses on high-frequency or full-screen updates (animated dashboards, dense redraws, stress tests). Ink is usually fine for low-frequency CLIs and forms.
 
-Research note: this analysis was executed as a working PoC in [`ink-fast`](https://github.com/geoffmiller/ink-fast), with committed snapshots in [`benchmark/render/results`](https://github.com/geoffmiller/ink-fast/tree/main/benchmark/render/results).
+Research note: this analysis was executed as a working PoC in the local [`ink-fast` research workspace](../ink-fast/README.md), with committed snapshots in [`ink-fast/results`](../ink-fast/results).
 
 ---
 

@@ -1,46 +1,54 @@
 # Ratatat Docs
 
-Ratatat is a React terminal UI renderer with an Ink-compatible API, Yoga layout, and a native Rust diff engine.
+Ratatat is a TypeScript-first terminal UI stack with a Rust diff engine and optional React layer.
+
+This docs set covers the full monorepo (`@ratatat/core`, `@ratatat/react`, `@ratatat/ink`).
 
 ---
 
-## Get started
+## Start here
 
-- [Getting Started](getting-started.md) — choose a mode and run first examples
-- [Quickstart: React mode](quickstart-react.md) — `render(<App />)` with components and hooks
-- [Quickstart: Raw-buffer mode](quickstart-raw-buffer.md) — direct `Uint32Array` painting
+- [Package Map](package-map.md) — choose the right package for your use case
+- [Getting Started](getting-started.md) — first-run setup and mode selection
 
 ---
 
-## Reference
+## `@ratatat/react` docs
 
-- [Components](components.md) — `Box`, `Text`, `Newline`, `Spacer`, `Static`, `Transform`, `Spinner`, `ProgressBar`
+- [Quickstart: React mode](quickstart-react.md) — `render(<App />)` + components + hooks
+- [Components](components.md) — `Box`, `Text`, `Static`, `Transform`, `Spinner`, `ProgressBar`
 - [Hooks](hooks.md) — input, paste, mouse, focus, scrolling, terminal hooks
 - [Rendering Modes](rendering-modes.md) — React vs raw-buffer vs inline
+- [Ink Compatibility](ink-compat.md) — parity matrix and stubs
 
 ---
 
-## Guides
+## `@ratatat/core` docs
+
+- [Quickstart: Raw-buffer mode](quickstart-raw-buffer.md) — direct `Uint32Array` painting
+- [Raw Buffer API](raw-buffer.md) — buffer contract and renderer primitives
+- [TypeScript Buffer Guide](ts-buffer-guide.md) — indexing/packing patterns with ASCII diagrams
+
+---
+
+## Examples and operations
 
 - [Examples](examples.md) — demo map with run commands
 - [Troubleshooting](troubleshooting.md) — common TTY/input/render issues
 
 ---
 
-## Deep dives
+## Performance and deep dives
 
-- [Why Ink is slower on heavy redraws](why-is-ink-slow.md) — pipeline-level comparison with Ratatat
-- [Ink performance plan](ink-performance-plan.md) — phased roadmap to speed up Ink without switching stacks
-- [ink-fast research fork (implementation + benchmarks)](../ink/TECHNICAL-README.md) — PoC execution of the plan with measured results
-- [Raw Buffer API](raw-buffer.md) — buffer contract and cell format
-- [TypeScript Buffer Guide](ts-buffer-guide.md) — practical indexing/packing patterns with ASCII diagrams
-- [Ink Compatibility](ink-compat.md) — parity matrix and stubs
-- [Render Loop](render-loop.md) — polling loop design and scheduler behavior
-- [Renderer Correctness Plan](renderer-correctness-plan.md) — xterm harness, wide-char correctness, synchronized output rollout
-- [Architecture Decisions](decisions.md) — key implementation choices
+- [Why Ink is slower on heavy redraws](why-is-ink-slow.md)
+- [Ink performance plan](ink-performance-plan.md)
+- [ink-fast implementation + benchmark snapshots](../ink/TECHNICAL-README.md)
+- [Render loop deep dive](render-loop.md)
+- [Renderer correctness hardening plan](renderer-correctness-plan.md)
+- [Architecture Decisions](decisions.md)
 
 ---
 
 ## Maintainer notes
 
-See [README.md](README.md) for docs conventions and update checklist.
+See [README.md](README.md) for docs conventions and ownership notes.

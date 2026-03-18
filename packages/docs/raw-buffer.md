@@ -4,6 +4,8 @@
 
 Ratatat's Rust renderer accepts a `Uint32Array` back buffer and emits minimal ANSI updates.
 
+You write TypeScript/JavaScript against `@ratatat/core`; the Rust layer is internal.
+
 ## Core contract
 
 ```text
@@ -48,7 +50,7 @@ const idx = y * cols + x
 ## Minimal setup
 
 ```ts
-import { Renderer, TerminalGuard, terminalSize } from 'ratatat/core'
+import { Renderer, TerminalGuard, terminalSize } from '@ratatat/core'
 
 const guard = new TerminalGuard()
 const { cols, rows } = terminalSize()
@@ -82,7 +84,7 @@ process.on('SIGINT', () => {
 ### `Cell.pack`
 
 ```ts
-import { Cell, StyleMasks } from 'ratatat/core'
+import { Cell, StyleMasks } from '@ratatat/core'
 
 const [charCode, attrCode] = Cell.pack('A', 196, 0, StyleMasks.BOLD)
 buf[idx * 2] = charCode
@@ -158,7 +160,7 @@ loop.start()
 `createInlineLoop` draws a fixed-height region below the current cursor, without alternate screen takeover.
 
 ```ts
-import { createInlineLoop } from 'ratatat/core'
+import { createInlineLoop } from '@ratatat/core'
 
 const loop = createInlineLoop(
   (buf, cols, rows, frame) => {

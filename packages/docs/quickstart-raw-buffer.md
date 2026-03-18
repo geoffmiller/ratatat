@@ -4,10 +4,18 @@ Drive the Rust renderer directly — no React, no Yoga, no JSX.
 
 Use this mode when you want explicit control over every terminal cell.
 
+You still write TypeScript/JavaScript only; Rust is behind the `@ratatat/core` API boundary.
+
+Install:
+
+```bash
+npm install @ratatat/core
+```
+
 ## Minimal example
 
 ```ts
-import { Renderer, TerminalGuard, terminalSize } from 'ratatat/core'
+import { Renderer, TerminalGuard, terminalSize } from '@ratatat/core'
 
 const { cols, rows } = terminalSize()
 const guard = new TerminalGuard()
@@ -135,7 +143,7 @@ process.on('SIGWINCH', () => {
 ## Inline mode: `createInlineLoop()`
 
 ```ts
-import { createInlineLoop } from 'ratatat/core'
+import { createInlineLoop } from '@ratatat/core'
 
 const loop = createInlineLoop(
   (buf, cols, rows, frame) => {

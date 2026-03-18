@@ -9,7 +9,7 @@ Ratatat supports three runtime modes.
 Use when you want component-driven terminal apps with hooks and Yoga layout.
 
 ```tsx
-import { render } from 'ratatat/react'
+import { render } from '@ratatat/react'
 
 render(<App />)
 ```
@@ -31,7 +31,7 @@ Guide: [Quickstart: React mode](quickstart-react.md)
 Use when you want direct control over every cell.
 
 ```ts
-import { Renderer, TerminalGuard, terminalSize } from 'ratatat/core'
+import { Renderer, TerminalGuard, terminalSize } from '@ratatat/core'
 
 const { cols, rows } = terminalSize()
 const guard = new TerminalGuard()
@@ -59,7 +59,7 @@ Use when you want a fixed-height region below the current cursor (no alternate s
 ### `renderInline()`
 
 ```tsx
-import { renderInline } from 'ratatat/react'
+import { renderInline } from '@ratatat/react'
 
 renderInline(<Picker />, { rows: 8, onExit: 'preserve' })
 ```
@@ -67,7 +67,7 @@ renderInline(<Picker />, { rows: 8, onExit: 'preserve' })
 ### `createInlineLoop()`
 
 ```ts
-import { createInlineLoop } from 'ratatat/core'
+import { createInlineLoop } from '@ratatat/core'
 
 const loop = createInlineLoop(
   (buf, cols, rows, frame) => {

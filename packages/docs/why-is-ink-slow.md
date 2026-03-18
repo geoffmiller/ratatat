@@ -75,9 +75,9 @@ React commit
 
 Key repo modules:
 
-- App/render loop: `src/app.ts`
-- Tree -> typed cell buffer: `src/renderer.ts`
-- Native diff engine: `src/lib.rs` (`Renderer::generate_diff`)
+- App/render loop: `packages/core/src/app.ts`
+- Tree -> typed cell buffer: `packages/react/src/renderer.ts`
+- Native diff engine: `packages/core/src/lib.rs` (`Renderer::generate_diff`)
 
 Cell format:
 

@@ -103,6 +103,6 @@ Higher `maxFps` reduces maximum paint latency for smooth streaming or animations
 
 ## Where this lives in the code
 
-- `src/react.ts` — render loop setup, `pendingCommit` flag, `frameMs` calculation
-- `src/app.ts` — `paintNow()` method: layout + buffer paint + Rust render
-- `src/reconciler.ts` — `resetAfterCommit` sets `pendingCommit = true`
+- `packages/react/src/react.ts` — render loop setup, `pendingCommit` flag, `frameMs` calculation
+- `packages/core/src/app.ts` — `paintNow()` method: layout + buffer paint + Rust render
+- `packages/react/src/reconciler.ts` — `resetAfterCommit` sets `pendingCommit = true`

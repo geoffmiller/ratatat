@@ -1,12 +1,36 @@
 # Getting Started
 
-Ratatat supports three runtime modes:
+Ratatat supports three runtime modes.
 
-| Mode            | Primary API                         | Import path                      | Best for                                  |
-| --------------- | ----------------------------------- | -------------------------------- | ----------------------------------------- |
-| React mode      | `render(<App />)`                   | `ratatat/react`                  | Component-driven TUIs with hooks and Yoga |
-| Raw-buffer mode | `Renderer` + `renderer.render`      | `ratatat/core`                   | Direct, per-cell rendering control        |
-| Inline mode     | `renderInline` / `createInlineLoop` | `ratatat/react` / `ratatat/core` | Fixed-height UI below the cursor          |
+| Mode            | Primary API                         | Import path                        | Best for                                         |
+| --------------- | ----------------------------------- | ---------------------------------- | ------------------------------------------------ |
+| React mode      | `render(<App />)`                   | `@ratatat/react`                   | Component-driven TUIs with hooks and Yoga layout |
+| Raw-buffer mode | `Renderer` + `renderer.render`      | `@ratatat/core`                    | Direct per-cell rendering and custom loops       |
+| Inline mode     | `renderInline` / `createInlineLoop` | `@ratatat/react` / `@ratatat/core` | Fixed-height UI below the cursor                 |
+
+---
+
+## Install
+
+### React apps (most users)
+
+```bash
+npm install @ratatat/react react
+```
+
+### Raw-buffer / non-React apps
+
+```bash
+npm install @ratatat/core
+```
+
+> `@ratatat/core` is a TypeScript-facing runtime backed by Rust internals. You do **not** write Rust to use it.
+
+### ink-fast research fork
+
+```bash
+npm install @ratatat/ink react
+```
 
 ---
 
@@ -40,7 +64,15 @@ See [Examples](examples.md) for the full list.
 
 ```diff
 - import { render, Box, Text } from 'ink'
-+ import { render, Box, Text } from 'ratatat/react'
++ import { render, Box, Text } from '@ratatat/react'
 ```
 
-Most app-level API usage maps directly. See [Ink Compatibility](ink-compat.md) for details and caveats.
+Most app-level API usage maps directly. See [Ink Compatibility](ink-compat.md) for caveats and stubs.
+
+---
+
+## Next steps
+
+- [Package Map](package-map.md)
+- [Quickstart: React mode](quickstart-react.md)
+- [Quickstart: Raw-buffer mode](quickstart-raw-buffer.md)

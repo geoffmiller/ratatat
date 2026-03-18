@@ -2,10 +2,16 @@
 
 Build a TUI app with React components, hooks, and Yoga layout.
 
+Install:
+
+```bash
+npm install @ratatat/react react
+```
+
 ## Minimal example
 
 ```tsx
-import { render, Box, Text, useInput } from 'ratatat/react'
+import { render, Box, Text, useInput } from '@ratatat/react'
 import React, { useState } from 'react'
 
 function Counter() {
@@ -99,7 +105,7 @@ See [Hooks: useInput](hooks.md#useinput) for the full key map.
 ## App lifecycle
 
 ```tsx
-import { useApp, useInput, Text } from 'ratatat/react'
+import { useApp, useInput, Text } from '@ratatat/react'
 
 function App() {
   const { exit } = useApp()
@@ -133,7 +139,7 @@ await waitUntilExit()
 ## `renderToString` for tests
 
 ```tsx
-import { renderToString, Box, Text } from 'ratatat/react'
+import { renderToString, Box, Text } from '@ratatat/react'
 import React from 'react'
 
 const output = renderToString(

@@ -2,6 +2,12 @@
 
 Ratatat exposes Ink-compatible core components plus a few Ratatat-only additions.
 
+Import from `@ratatat/react`:
+
+```tsx
+import { Box, Newline, ProgressBar, Spacer, Spinner, Static, Text, Transform } from '@ratatat/react'
+```
+
 ---
 
 ## `Box`

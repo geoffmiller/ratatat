@@ -9,18 +9,20 @@
 
 ## Page ownership
 
-| Page                      | Source of truth                                                                                |
-| ------------------------- | ---------------------------------------------------------------------------------------------- |
-| `components.md`           | `../react/src/react.ts`, `../react/src/styles.ts`, `../react/src/renderer.ts`                  |
-| `hooks.md`                | `../react/src/hooks.ts`, `../react/src/focus.ts`, `../core/src/input.ts`                       |
-| `ink-compat.md`           | `../react/src/react.ts`, `../react/src/hooks.ts`, `../../compat-test/`                         |
-| `raw-buffer.md`           | `../core/src/lib.rs`, `../core/src/terminal.rs`, `../core/src/inline.ts`, `../core/index.d.ts` |
-| `ts-buffer-guide.md`      | `../core/src/lib.rs`, `../core/src/cell.ts`, `../../examples-raw/harness.ts`                   |
-| `why-is-ink-slow.md`      | `../react/src/renderer.ts`, `../core/src/lib.rs`, `../../benchmark/startup/`, `../ink/src/`    |
-| `ink-performance-plan.md` | `why-is-ink-slow.md`, `../ink/benchmark/` outputs, maintainer roadmap decisions                |
-| `render-loop.md`          | `../react/src/react.ts`, `../core/src/app.ts`, `../react/src/reconciler.ts`                    |
-| `decisions.md`            | Maintainer-updated architecture log                                                            |
-| `examples.md`             | `../../examples/`, `../../examples-raw/`                                                       |
+| Page                           | Source of truth                                                                                          |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `package-map.md`               | `packages/*/package.json`, package README files                                                          |
+| `components.md`                | `../react/src/react.ts`, `../react/src/styles.ts`, `../react/src/renderer.ts`                            |
+| `hooks.md`                     | `../react/src/hooks.ts`, `../react/src/focus.ts`, `../core/src/input.ts`                                 |
+| `ink-compat.md`                | `../react/src/react.ts`, `../react/src/hooks.ts`, `../../compat-test/`                                   |
+| `raw-buffer.md`                | `../core/src/lib.rs`, `../core/src/terminal.rs`, `../core/src/inline.ts`, `../core/index.d.ts`           |
+| `ts-buffer-guide.md`           | `../core/src/lib.rs`, `../core/src/cell.ts`, `../../examples-raw/harness.ts`                             |
+| `why-is-ink-slow.md`           | `../react/src/renderer.ts`, `../core/src/lib.rs`, `../../benchmark/startup/`, `../ink/src/`              |
+| `ink-performance-plan.md`      | `why-is-ink-slow.md`, `../ink/benchmark/` outputs, maintainer roadmap decisions                          |
+| `render-loop.md`               | `../react/src/react.ts`, `../core/src/app.ts`, `../react/src/reconciler.ts`                              |
+| `renderer-correctness-plan.md` | `../react/__test__/renderer-xterm-roundtrip.spec.ts`, `../react/src/text-width.ts`, `../core/src/lib.rs` |
+| `decisions.md`                 | Maintainer-updated architecture log                                                                      |
+| `examples.md`                  | `../../examples/`, `../../examples-raw/`                                                                 |
 
 ## Update checklist
 

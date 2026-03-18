@@ -2,6 +2,21 @@
 
 Use these hooks inside components rendered with `render()`. Hooks that rely on the full app event emitter are marked as `render()`-mode only.
 
+Import from `@ratatat/react`:
+
+```tsx
+import {
+  useApp,
+  useFocus,
+  useFocusManager,
+  useInput,
+  useMouse,
+  usePaste,
+  useScrollable,
+  useTextInput,
+} from '@ratatat/react'
+```
+
 ---
 
 ## `useInput`

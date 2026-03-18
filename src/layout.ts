@@ -1,4 +1,5 @@
 import Yoga from 'yoga-layout-prebuilt'
+import { measureTextBlock } from './text-width.js'
 
 type YogaNode = ReturnType<typeof Yoga.Node.create>
 
@@ -28,25 +29,24 @@ export class LayoutNode {
       this.yogaNode.setMeasureFunc((width, widthMode, height, heightMode) => {
         if (value.length === 0) return { width: 0, height: 0 }
 
-        const lines = value.split('\n')
-        const maxLineWidth = Math.max(...lines.map((l) => l.length))
+        const unconstrained = measureTextBlock(value, Number.MAX_SAFE_INTEGER)
 
-        let targetWidth = maxLineWidth
+        let targetWidth = unconstrained.maxLineWidth
         if (widthMode === Yoga.MEASURE_MODE_EXACTLY) {
-          targetWidth = width
+          targetWidth = Math.max(0, Math.floor(width))
         } else if (widthMode === Yoga.MEASURE_MODE_AT_MOST) {
-          targetWidth = Math.min(maxLineWidth, width)
+          targetWidth = Math.min(unconstrained.maxLineWidth, Math.max(0, Math.floor(width)))
         }
 
-        let targetHeight = lines.length
-        if (targetWidth > 0 && maxLineWidth > targetWidth) {
-          targetHeight = lines.reduce((acc, line) => acc + Math.ceil(line.length / targetWidth), 0)
+        let targetHeight = unconstrained.wrappedRows
+        if (targetWidth > 0) {
+          targetHeight = measureTextBlock(value, targetWidth).wrappedRows
         }
 
         if (heightMode === Yoga.MEASURE_MODE_EXACTLY) {
-          targetHeight = height
+          targetHeight = Math.max(0, Math.floor(height))
         } else if (heightMode === Yoga.MEASURE_MODE_AT_MOST) {
-          targetHeight = Math.min(targetHeight, height)
+          targetHeight = Math.min(targetHeight, Math.max(0, Math.floor(height)))
         }
 
         return { width: targetWidth, height: targetHeight }

@@ -71,6 +71,29 @@ test('paintNow() calls calculateLayout and renderToBuffer when running', (t) => 
   app.stop()
 })
 
+test('paintNow() wraps frame writes with DEC 2026 synchronized output', (t) => {
+  const app = new TestApp() as any
+  app.start()
+
+  const calls: string[] = []
+  app.renderer = {
+    writeRaw(data: string) {
+      calls.push(`writeRaw:${data}`)
+    },
+    render(_buffer: Uint32Array) {
+      calls.push('render')
+    },
+  }
+
+  app.paintNow(
+    () => {},
+    () => {},
+  )
+
+  t.deepEqual(calls, ['writeRaw:\x1b[?2026h', 'render', 'writeRaw:\x1b[?2026l'])
+  app.stop()
+})
+
 test('paintNow() is a no-op after stop()', (t) => {
   const app = new TestApp()
   app.start()

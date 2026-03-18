@@ -7,6 +7,7 @@ import { renderTreeToBuffer } from '../dist/renderer.js'
 
 const COLS = 80
 const ROWS = 24
+const CONTINUATION_CELL_CODE = 0x110000
 
 function makeBuffer() {
   return new Uint32Array(COLS * ROWS * 2)
@@ -306,6 +307,8 @@ test('Transform: uppercase transform is applied to child text', (t) => {
   root.children.push(transformNode)
   transformNode.parent = root
 
+  root.calculateLayout(COLS, ROWS)
+
   const buf = makeBuffer()
   renderTreeToBuffer(root, buf, COLS, ROWS)
 
@@ -335,6 +338,8 @@ test('Transform: reverse transform works across multiple text children', (t) => 
   root.yogaNode.insertChild(transformNode.yogaNode, 0)
   root.children.push(transformNode)
   transformNode.parent = root
+
+  root.calculateLayout(COLS, ROWS)
 
   const buf = makeBuffer()
   renderTreeToBuffer(root, buf, COLS, ROWS)
@@ -367,6 +372,8 @@ test('Transform: transform receives index 0', (t) => {
   root.children.push(transformNode)
   transformNode.parent = root
 
+  root.calculateLayout(COLS, ROWS)
+
   const buf = makeBuffer()
   renderTreeToBuffer(root, buf, COLS, ROWS)
 
@@ -375,28 +382,29 @@ test('Transform: transform receives index 0', (t) => {
 
 // ─── Unicode / multi-byte ─────────────────────────────────────────────────────
 
-test('renderer: emoji (surrogate pair) renders as single cell', (t) => {
+test('renderer: emoji (surrogate pair) renders with a continuation marker', (t) => {
   const root = new LayoutNode()
   root.yogaNode.setWidth(COLS)
   root.yogaNode.setHeight(ROWS)
 
   const textNode = new LayoutNode()
-  textNode.text = '🐭' // U+1F42D, requires surrogate pair in JS string
+  textNode.text = '🐭' // U+1F42D, surrogate pair in JS string, width=2 in terminal
 
   root.yogaNode.insertChild(textNode.yogaNode, 0)
   root.children.push(textNode)
   textNode.parent = root
 
+  root.calculateLayout(COLS, ROWS)
+
   const buf = makeBuffer()
   renderTreeToBuffer(root, buf, COLS, ROWS)
 
-  // Cell 0 should be the rat emoji codepoint
+  // Cell 0 = emoji codepoint, cell 1 = non-printing continuation marker.
   t.is(buf[0], '🐭'.codePointAt(0))
-  // Cell 1 should be a space (not the low surrogate)
-  t.is(buf[2], 32)
+  t.is(buf[2], CONTINUATION_CELL_CODE)
 })
 
-test('renderer: mixed ASCII and emoji string renders correctly', (t) => {
+test('renderer: mixed ASCII and emoji string renders with width-aware placement', (t) => {
   const root = new LayoutNode()
   root.yogaNode.setWidth(COLS)
   root.yogaNode.setHeight(ROWS)
@@ -408,10 +416,13 @@ test('renderer: mixed ASCII and emoji string renders correctly', (t) => {
   root.children.push(textNode)
   textNode.parent = root
 
+  root.calculateLayout(COLS, ROWS)
+
   const buf = makeBuffer()
   renderTreeToBuffer(root, buf, COLS, ROWS)
 
   t.is(charAt(buf, 0, 0), 'A')
   t.is(buf[2], '🐭'.codePointAt(0)) // cell 1 = emoji codepoint
-  t.is(charAt(buf, 2, 0), 'B') // cell 2 = 'B' (not a surrogate)
+  t.is(buf[4], CONTINUATION_CELL_CODE) // cell 2 = continuation marker
+  t.is(charAt(buf, 3, 0), 'B') // cell 3 = 'B'
 })

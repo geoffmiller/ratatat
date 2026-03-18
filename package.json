@@ -97,6 +97,7 @@
     "@types/react-reconciler": "^0.33.0",
     "@types/scheduler": "^0.26.0",
     "@types/yoga-layout": "^1.9.7",
+    "@xterm/headless": "^6.0.0",
     "ava": "^7.0.0",
     "chalk": "^5.6.2",
     "esbuild": "^0.27.3",
@@ -119,6 +120,7 @@
     "react": "^19.2.4",
     "react-reconciler": "^0.33.0",
     "scheduler": "^0.27.0",
+    "string-width": "^8.2.0",
     "yoga-layout-prebuilt": "^1.10.0"
   },
   "lint-staged": {

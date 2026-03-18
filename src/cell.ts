@@ -6,20 +6,22 @@
 export const Cell = {
   /**
    * Pack a cell into a [charCode, attrCode] tuple.
-   * charCode = char.charCodeAt(0)
+   * charCode = char.codePointAt(0)
    * attrCode = (styles & 0xFF) << 16 | (bg & 0xFF) << 8 | (fg & 0xFF)
    *
    * Write to buffer as: buffer[idx*2] = charCode; buffer[idx*2+1] = attrCode
    */
   pack(char: string, fg: number = 255, bg: number = 255, styles: number = 0): [number, number] {
-    const charCode = char.charCodeAt(0)
+    const charCode = char.codePointAt(0) ?? 32
     const attrCode = ((styles & 0xff) << 16) | ((bg & 0xff) << 8) | (fg & 0xff)
     return [charCode, attrCode]
   },
 
   /** Read the char character from a raw char slot value (buffer[idx*2]) */
   getChar(charSlot: number): string {
-    return String.fromCharCode(charSlot)
+    if (charSlot === 0) return ' '
+    if (charSlot > 0x10ffff) return ''
+    return String.fromCodePoint(charSlot)
   },
 
   /** Read fg color from an attr slot value (buffer[idx*2+1]) — bits 7:0 */

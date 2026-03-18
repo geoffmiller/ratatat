@@ -14,7 +14,7 @@
  */
 
 import React, { useState } from 'react'
-import { render, Box, Text, useApp, useInput, usePaste } from '../dist/index.js'
+import { render, Box, Text, useApp, useInput, usePaste } from '@ratatat/react'
 
 type EventLine = {
   id: number

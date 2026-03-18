@@ -18,7 +18,7 @@ Suites included:
 ## Run
 
 ```bash
-npm run build:ts
+npm run build
 npm run bench:startup
 ```
 

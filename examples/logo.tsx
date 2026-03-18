@@ -12,7 +12,7 @@
  */
 // @ts-nocheck
 import React, { useEffect, useRef } from 'react'
-import { render, Box, Text, useApp, useInput, useWindowSize } from '../dist/index.js'
+import { render, Box, Text, useApp, useInput, useWindowSize } from '@ratatat/react'
 
 // ─── Args ─────────────────────────────────────────────────────────────────────
 

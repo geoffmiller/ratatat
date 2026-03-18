@@ -15,7 +15,7 @@
  */
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { render, Box, Text, useInput, useApp, useWindowSize, useScrollable } from '../dist/index.js'
+import { render, Box, Text, useInput, useApp, useWindowSize, useScrollable } from '@ratatat/react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

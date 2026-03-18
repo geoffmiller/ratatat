@@ -1,19 +1,5 @@
-[package]
-authors = ["geoffmiller"]
-edition = "2021"
-name    = "ratatat"
-version = "0.1.0"
-
-[lib]
-crate-type = ["cdylib"]
-
-[dependencies]
-crossterm     = "0.29.0"
-napi          = "3.0.0"
-napi-derive   = "3.0.0"
-unicode-width = "0.2.0"
-
-[build-dependencies]
-napi-build = "2"
+[workspace]
+members  = ["packages/core"]
+resolver = "2"
 
 [profile.release]

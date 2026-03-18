@@ -1,26 +1,39 @@
-import React from 'react';
-import { render, Box, Text, Static, Newline, Spacer, useInput, useApp, useWindowSize, useFocus, useFocusManager, useStdout, useStderr, useStdin } from '../dist/index.js';
+import React from 'react'
+import {
+  render,
+  Box,
+  Text,
+  Static,
+  Newline,
+  Spacer,
+  useInput,
+  useApp,
+  useWindowSize,
+  useFocus,
+  useFocusManager,
+  useStdout,
+  useStderr,
+  useStdin,
+} from '@ratatat/react'
 
 function TerminalResizeExample() {
-	const {columns, rows} = useWindowSize();
+  const { columns, rows } = useWindowSize()
 
-	return (
-		<Box flexDirection="column" padding={1}>
-			<Text bold color="cyan">
-				Terminal Size
-			</Text>
-			<Text>Columns: {columns}</Text>
-			<Text>Rows: {rows}</Text>
-			<Box marginTop={1}>
-				<Text dimColor>
-					Resize your terminal to see the values update. Press Ctrl+C to exit.
-				</Text>
-			</Box>
-		</Box>
-	);
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Text bold color="cyan">
+        Terminal Size
+      </Text>
+      <Text>Columns: {columns}</Text>
+      <Text>Rows: {rows}</Text>
+      <Box marginTop={1}>
+        <Text dimColor>Resize your terminal to see the values update. Press Ctrl+C to exit.</Text>
+      </Box>
+    </Box>
+  )
 }
 
 render(<TerminalResizeExample />, {
-	patchConsole: true,
-	exitOnCtrlC: true,
-});
+  patchConsole: true,
+  exitOnCtrlC: true,
+})

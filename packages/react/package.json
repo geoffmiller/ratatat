@@ -1,0 +1,103 @@
+{
+  "name": "@ratatat/react",
+  "version": "0.1.0",
+  "description": "React adapter and Ink-compatible API for Ratatat",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/geoffmiller/ratatat.git",
+    "directory": "packages/react"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist/"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./scene": {
+      "import": "./dist/scene.js",
+      "types": "./dist/scene.d.ts"
+    },
+    "./layout": {
+      "import": "./dist/layout.js",
+      "types": "./dist/layout.d.ts"
+    },
+    "./renderer": {
+      "import": "./dist/renderer.js",
+      "types": "./dist/renderer.d.ts"
+    },
+    "./reconciler": {
+      "import": "./dist/reconciler.js",
+      "types": "./dist/reconciler.d.ts"
+    },
+    "./styles": {
+      "import": "./dist/styles.js",
+      "types": "./dist/styles.d.ts"
+    },
+    "./hooks": {
+      "import": "./dist/hooks.js",
+      "types": "./dist/hooks.d.ts"
+    },
+    "./focus": {
+      "import": "./dist/focus.js",
+      "types": "./dist/focus.d.ts"
+    },
+    "./render-to-string": {
+      "import": "./dist/render-to-string.js",
+      "types": "./dist/render-to-string.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "oxlint .",
+    "test": "ava"
+  },
+  "ava": {
+    "files": [
+      "__test__/**/*.spec.ts"
+    ],
+    "extensions": {
+      "ts": "module"
+    },
+    "timeout": "2m",
+    "workerThreads": false,
+    "environmentVariables": {
+      "OXC_TSCONFIG_PATH": "./__test__/tsconfig.json"
+    },
+    "nodeArguments": [
+      "--import",
+      "@oxc-node/core/register"
+    ]
+  },
+  "dependencies": {
+    "@ratatat/core": "file:../core",
+    "cli-boxes": "^4.0.1",
+    "react": "^19.2.4",
+    "react-reconciler": "^0.33.0",
+    "scheduler": "^0.27.0",
+    "string-width": "^8.2.0",
+    "yoga-layout-prebuilt": "^1.10.0"
+  },
+  "devDependencies": {
+    "@oxc-node/core": "^0.0.35",
+    "@types/cli-boxes": "^1.0.0",
+    "@types/node": "^25.3.3",
+    "@types/react": "^19.2.14",
+    "@types/react-reconciler": "^0.33.0",
+    "@types/scheduler": "^0.26.0",
+    "@types/yoga-layout": "^1.9.7",
+    "@xterm/headless": "^5.5.0",
+    "ava": "^7.0.0",
+    "oxlint": "^1.14.0",
+    "react-test-renderer": "^19.2.4",
+    "typescript": "^5.9.2"
+  }
+}

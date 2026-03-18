@@ -11,7 +11,7 @@
  */
 // @ts-nocheck
 import React, { useState, useEffect } from 'react'
-import { render, Box, Text, useInput, useWindowSize, useApp } from '../dist/index.js'
+import { render, Box, Text, useInput, useWindowSize, useApp } from '@ratatat/react'
 
 const SERVICES = [
   'Server Authentication Module - Handles JWT token validation, OAuth2 flows, and session management across distributed systems',
@@ -79,15 +79,13 @@ function IncrementalRendering() {
   const [progress2, setProgress2] = useState(33)
   const [progress3, setProgress3] = useState(66)
   const [randomValue, setRandomValue] = useState(0)
-  const [logLines, setLogLines] = useState(() =>
-    Array.from({ length: logCount }, (_, i) => generateLogLine(i))
-  )
+  const [logLines, setLogLines] = useState(() => Array.from({ length: logCount }, (_, i) => generateLogLine(i)))
 
   // Clock + counter — 1s interval
   useEffect(() => {
     const t = setInterval(() => {
       setTimestamp(new Date().toLocaleTimeString())
-      setCounter(c => c + 1)
+      setCounter((c) => c + 1)
     }, 1000)
     return () => clearInterval(t)
   }, [])
@@ -100,13 +98,13 @@ function IncrementalRendering() {
 
     const t = setInterval(() => {
       loopFrame++
-      setProgress1(p => (p + 1) % 101)
-      setProgress2(p => (p + 2) % 101)
-      setProgress3(p => (p + 3) % 101)
+      setProgress1((p) => (p + 1) % 101)
+      setProgress2((p) => (p + 2) % 101)
+      setProgress3((p) => (p + 3) % 101)
       setRandomValue(Math.floor(Math.random() * 1000))
 
       // Only 1-2 log lines update per frame — simulates real incremental log output
-      setLogLines(prev => {
+      setLogLines((prev) => {
         const next = [...prev]
         const i = Math.floor(Math.random() * next.length)
         next[i] = generateLogLine(i)
@@ -127,7 +125,10 @@ function IncrementalRendering() {
 
       // Prevent perf_hooks buffer overflow
       if (loopFrame % 10000 === 0) {
-        try { performance.clearMeasures(); performance.clearMarks() } catch {}
+        try {
+          performance.clearMeasures()
+          performance.clearMarks()
+        } catch {}
       }
     }, 16)
 
@@ -136,8 +137,8 @@ function IncrementalRendering() {
 
   useInput((input, key) => {
     if (input === 'q') exit()
-    if (key.upArrow)   setSelectedIndex(i => (i === 0 ? serviceCount - 1 : i - 1))
-    if (key.downArrow) setSelectedIndex(i => (i === serviceCount - 1 ? 0 : i + 1))
+    if (key.upArrow) setSelectedIndex((i) => (i === 0 ? serviceCount - 1 : i - 1))
+    if (key.downArrow) setSelectedIndex((i) => (i === serviceCount - 1 ? 0 : i + 1))
   })
 
   const visibleServices = SERVICES.slice(0, serviceCount)
@@ -148,27 +149,50 @@ function IncrementalRendering() {
       <Box borderStyle="round" borderColor="cyan" paddingX={2} paddingY={1} flexShrink={0}>
         <Box flexDirection="column">
           <Box flexDirection="row">
-            <Text bold color="cyan">Incremental Rendering Demo  </Text>
+            <Text bold color="cyan">
+              Incremental Rendering Demo{' '}
+            </Text>
             <Text dim>↑↓ navigate · Q quit · </Text>
-            <Text>FPS: <Text color={fps >= 55 ? 'green' : fps >= 30 ? 'yellow' : 'red'} bold>{fps}</Text></Text>
+            <Text>
+              FPS:{' '}
+              <Text color={fps >= 55 ? 'green' : fps >= 30 ? 'yellow' : 'red'} bold>
+                {fps}
+              </Text>
+            </Text>
           </Box>
           <Box flexDirection="row" gap={3} marginTop={1}>
-            <Text>Time: <Text color="green">{timestamp}</Text></Text>
-            <Text>Updates: <Text color="yellow">{counter}</Text></Text>
-            <Text>Rand: <Text color="cyan">{randomValue}</Text></Text>
+            <Text>
+              Time: <Text color="green">{timestamp}</Text>
+            </Text>
+            <Text>
+              Updates: <Text color="yellow">{counter}</Text>
+            </Text>
+            <Text>
+              Rand: <Text color="cyan">{randomValue}</Text>
+            </Text>
           </Box>
-          <Text>P1: <Text color="green">{progressBar(progress1)}</Text> {String(progress1).padStart(3)}%</Text>
-          <Text>P2: <Text color="yellow">{progressBar(progress2)}</Text> {String(progress2).padStart(3)}%</Text>
-          <Text>P3: <Text color="red">{progressBar(progress3)}</Text> {String(progress3).padStart(3)}%</Text>
+          <Text>
+            P1: <Text color="green">{progressBar(progress1)}</Text> {String(progress1).padStart(3)}%
+          </Text>
+          <Text>
+            P2: <Text color="yellow">{progressBar(progress2)}</Text> {String(progress2).padStart(3)}%
+          </Text>
+          <Text>
+            P3: <Text color="red">{progressBar(progress3)}</Text> {String(progress3).padStart(3)}%
+          </Text>
         </Box>
       </Box>
 
       {/* Live logs */}
       <Box borderStyle="single" borderColor="yellow" paddingX={2} paddingY={1} marginTop={1} flexShrink={0}>
         <Box flexDirection="column">
-          <Text bold color="yellow">Live Logs <Text dim>(1-2 lines update per frame)</Text></Text>
+          <Text bold color="yellow">
+            Live Logs <Text dim>(1-2 lines update per frame)</Text>
+          </Text>
           {logLines.map((line, i) => (
-            <Text key={i} color="green" dim>{line}</Text>
+            <Text key={i} color="green" dim>
+              {line}
+            </Text>
           ))}
         </Box>
       </Box>
@@ -176,12 +200,18 @@ function IncrementalRendering() {
       {/* Service list */}
       <Box borderStyle="single" borderColor="gray" paddingX={2} paddingY={1} marginTop={1} flexGrow={1}>
         <Box flexDirection="column">
-          <Text bold color="magenta">System Services <Text dim>({serviceCount} of {SERVICES.length})</Text></Text>
+          <Text bold color="magenta">
+            System Services{' '}
+            <Text dim>
+              ({serviceCount} of {SERVICES.length})
+            </Text>
+          </Text>
           {visibleServices.map((svc, i) => {
             const selected = i === selectedIndex
             return (
               <Text key={i} color={selected ? 'cyan' : 'white'} bold={selected}>
-                {selected ? '▶ ' : '  '}{svc}
+                {selected ? '▶ ' : '  '}
+                {svc}
               </Text>
             )
           })}
@@ -191,7 +221,9 @@ function IncrementalRendering() {
       {/* Selected item footer */}
       <Box borderStyle="round" borderColor="magenta" paddingX={2} marginTop={1} flexShrink={0}>
         <Text dim>Selected: </Text>
-        <Text color="magenta" bold>{visibleServices[selectedIndex]?.split(' - ')[0]}</Text>
+        <Text color="magenta" bold>
+          {visibleServices[selectedIndex]?.split(' - ')[0]}
+        </Text>
         <Text dim> — {visibleServices[selectedIndex]?.split(' - ')[1]}</Text>
       </Box>
     </Box>

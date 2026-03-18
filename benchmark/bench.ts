@@ -7,10 +7,10 @@
 import { Bench } from 'tinybench'
 import React from 'react'
 
-import { LayoutNode } from '../dist/layout.js'
-import { RatatatReconciler } from '../dist/reconciler.js'
-import { renderTreeToBuffer } from '../dist/renderer.js'
-import { Renderer } from '../dist/index.js'
+import { Renderer } from '@ratatat/core'
+import { LayoutNode } from '@ratatat/react/layout'
+import { RatatatReconciler } from '@ratatat/react/reconciler'
+import { renderTreeToBuffer } from '@ratatat/react/renderer'
 
 const COLS = 80
 const ROWS = 24

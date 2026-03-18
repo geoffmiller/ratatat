@@ -14,7 +14,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import os from 'os'
 import { exec } from 'child_process'
-import { render, Box, Text, Spacer, useApp, useInput, useWindowSize } from '../dist/index.js'
+import { render, Box, Text, Spacer, useApp, useInput, useWindowSize } from '@ratatat/react'
 
 if (process.platform === 'win32') {
   console.error('examples/htop.tsx is Unix-only (uses `ps aux`).')

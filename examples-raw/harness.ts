@@ -16,7 +16,7 @@
  *   - Ctrl+C / SIGINT (clean exit)
  */
 
-import { Renderer, TerminalGuard } from '../index.js'
+import { Renderer, TerminalGuard } from '@ratatat/core'
 
 export type PaintFn = (buf: Uint32Array, cols: number, rows: number, frame: number) => void
 

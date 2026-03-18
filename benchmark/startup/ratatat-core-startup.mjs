@@ -1,4 +1,4 @@
-import { Renderer, TerminalGuard, terminalSize } from '../../dist/core.js'
+import { Renderer, TerminalGuard, terminalSize } from '@ratatat/core'
 
 const MARKER = 'RATATAT_CORE_STARTUP_READY'
 

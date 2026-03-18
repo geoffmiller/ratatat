@@ -8,7 +8,7 @@
  * Run: node --import @oxc-node/core/register examples/scroll-test.tsx
  */
 import React, { useCallback } from 'react'
-import { render, Box, Text, useInput, useApp, useScrollable } from '../dist/index.js'
+import { render, Box, Text, useInput, useApp, useScrollable } from '@ratatat/react'
 
 const ITEMS = Array.from({ length: 40 }, (_, i) => ({
   id: i,

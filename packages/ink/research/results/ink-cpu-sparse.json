@@ -1,0 +1,420 @@
+{
+	"config": {
+		"cols": 80,
+		"rows": 24,
+		"warmupRenders": 10,
+		"measureRenders": 60,
+		"maxFps": 1000,
+		"workload": "sparse",
+		"rendersObserved": 72,
+		"topN": 20,
+		"includeRawProfile": false
+	},
+	"summary": {
+		"durationMs": 171.334,
+		"totalSamples": 112,
+		"sampleMs": 1.5297678571428572
+	},
+	"topFunctions": [
+		{
+			"function": "(idle)",
+			"file": "(native)",
+			"line": 0,
+			"hits": 51,
+			"selfMs": 78.01816071428571,
+			"selfPct": 0.45535714285714285
+		},
+		{
+			"function": "(garbage collector)",
+			"file": "(native)",
+			"line": 0,
+			"hits": 10,
+			"selfMs": 15.297678571428573,
+			"selfPct": 0.08928571428571429
+		},
+		{
+			"function": "process.env.NODE_ENV.exports.createElement",
+			"file": "node_modules/react/cjs/react.development.js",
+			"line": 1004,
+			"hits": 4,
+			"selfMs": 6.119071428571429,
+			"selfPct": 0.03571428571428571
+		},
+		{
+			"function": "(program)",
+			"file": "(native)",
+			"line": 0,
+			"hits": 4,
+			"selfMs": 6.119071428571429,
+			"selfPct": 0.03571428571428571
+		},
+		{
+			"function": "createTask",
+			"file": "(native)",
+			"line": 0,
+			"hits": 3,
+			"selfMs": 4.589303571428571,
+			"selfPct": 0.026785714285714284
+		},
+		{
+			"function": "diffAnsiCodes",
+			"file": "node_modules/@alcalzone/ansi-tokenize/build/diff.js",
+			"line": 7,
+			"hits": 2,
+			"selfMs": 3.0595357142857145,
+			"selfPct": 0.017857142857142856
+		},
+		{
+			"function": "renderRootSync",
+			"file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+			"line": 15022,
+			"hits": 2,
+			"selfMs": 3.0595357142857145,
+			"selfPct": 0.017857142857142856
+		},
+		{
+			"function": "prepareFreshStack",
+			"file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+			"line": 14568,
+			"hits": 2,
+			"selfMs": 3.0595357142857145,
+			"selfPct": 0.017857142857142856
+		},
+		{
+			"function": "runWithFiberInDEV",
+			"file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+			"line": 2500,
+			"hits": 2,
+			"selfMs": 3.0595357142857145,
+			"selfPct": 0.017857142857142856
+		},
+		{
+			"function": "makeSparseFrame",
+			"file": "ink-fast/prototypes/ink-cpu-hotspots.mjs",
+			"line": 81,
+			"hits": 2,
+			"selfMs": 3.0595357142857145,
+			"selfPct": 0.017857142857142856
+		},
+		{
+			"function": "logComponentRender",
+			"file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+			"line": 1108,
+			"hits": 2,
+			"selfMs": 3.0595357142857145,
+			"selfPct": 0.017857142857142856
+		},
+		{
+			"function": "processTimers",
+			"file": "node:internal/timers",
+			"line": 534,
+			"hits": 2,
+			"selfMs": 3.0595357142857145,
+			"selfPct": 0.017857142857142856
+		},
+		{
+			"function": "scheduleUpdateOnFiber",
+			"file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+			"line": 14021,
+			"hits": 2,
+			"selfMs": 3.0595357142857145,
+			"selfPct": 0.017857142857142856
+		},
+		{
+			"function": "styledCharsToString",
+			"file": "node_modules/@alcalzone/ansi-tokenize/build/styledChars.js",
+			"line": 20,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "ansiCodesToString",
+			"file": "node_modules/@alcalzone/ansi-tokenize/build/ansiCodes.js",
+			"line": 50,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "_write",
+			"file": "ink-fast/prototypes/ink-cpu-hotspots.mjs",
+			"line": 53,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "writeBuffer",
+			"file": "(native)",
+			"line": 0,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "(anonymous)",
+			"file": "node_modules/yoga-layout/dist/src/wrapAssembly.js",
+			"line": 112,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "wasm-function[55]",
+			"file": "wasm://wasm/000460e2",
+			"line": 1,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "(anonymous)",
+			"file": "node:internal/webidl",
+			"line": 289,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "createPerformanceMeasure",
+			"file": "node:internal/perf/usertiming",
+			"line": 159,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "now",
+			"file": "(native)",
+			"line": 0,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "makeFrame",
+			"file": "ink-fast/prototypes/ink-cpu-hotspots.mjs",
+			"line": 106,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "ReactElement",
+			"file": "node_modules/react/cjs/react.development.js",
+			"line": 200,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "createWorkInProgress",
+			"file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+			"line": 16474,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "run",
+			"file": "(native)",
+			"line": 0,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "recursivelyTraversePassiveUnmountEffects",
+			"file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+			"line": 13592,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "structuredClone",
+			"file": "(native)",
+			"line": 0,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "(anonymous)",
+			"file": "ink-fast/prototypes/ink-cpu-hotspots.mjs",
+			"line": 242,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "(anonymous)",
+			"file": "node:internal/validators",
+			"line": 529,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "enqueueUpdate$1",
+			"file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+			"line": 4741,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "removeAt",
+			"file": "node:internal/priority_queue",
+			"line": 89,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "emitBeforeScript",
+			"file": "node:internal/async_hooks",
+			"line": 509,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "handleAppExit",
+			"file": "node_modules/ink/build/ink.js",
+			"line": 219,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "recursivelyTraverseMutationEffects",
+			"file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+			"line": 12082,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "runInAsyncScope",
+			"file": "node:async_hooks",
+			"line": 204,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"function": "dispatch",
+			"file": "(native)",
+			"line": 0,
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		}
+	],
+	"topFiles": [
+		{
+			"file": "(native)",
+			"hits": 73,
+			"selfMs": 111.67305357142858,
+			"selfPct": 0.6517857142857143
+		},
+		{
+			"file": "node_modules/react-reconciler/cjs/react-reconciler.development.js",
+			"hits": 14,
+			"selfMs": 21.41675,
+			"selfPct": 0.125
+		},
+		{
+			"file": "ink-fast/prototypes/ink-cpu-hotspots.mjs",
+			"hits": 5,
+			"selfMs": 7.648839285714287,
+			"selfPct": 0.044642857142857144
+		},
+		{
+			"file": "node_modules/react/cjs/react.development.js",
+			"hits": 5,
+			"selfMs": 7.648839285714287,
+			"selfPct": 0.044642857142857144
+		},
+		{
+			"file": "node_modules/@alcalzone/ansi-tokenize/build/diff.js",
+			"hits": 2,
+			"selfMs": 3.0595357142857145,
+			"selfPct": 0.017857142857142856
+		},
+		{
+			"file": "node:internal/timers",
+			"hits": 2,
+			"selfMs": 3.0595357142857145,
+			"selfPct": 0.017857142857142856
+		},
+		{
+			"file": "node_modules/@alcalzone/ansi-tokenize/build/styledChars.js",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"file": "node_modules/@alcalzone/ansi-tokenize/build/ansiCodes.js",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"file": "node_modules/yoga-layout/dist/src/wrapAssembly.js",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"file": "wasm://wasm/000460e2",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"file": "node:internal/webidl",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"file": "node:internal/perf/usertiming",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"file": "node:internal/validators",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"file": "node:internal/priority_queue",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"file": "node:internal/async_hooks",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"file": "node_modules/ink/build/ink.js",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		},
+		{
+			"file": "node:async_hooks",
+			"hits": 1,
+			"selfMs": 1.5297678571428572,
+			"selfPct": 0.008928571428571428
+		}
+	]
+}

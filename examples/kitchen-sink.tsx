@@ -36,7 +36,7 @@ import {
   useScrollable,
   DevTools,
   Static,
-} from '../dist/index.js'
+} from '@ratatat/react'
 
 // ─── Section list ─────────────────────────────────────────────────────────────
 

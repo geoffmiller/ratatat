@@ -4,7 +4,7 @@
  * Run: node --import @oxc-node/core/register examples/use-focus.tsx
  */
 import React from 'react'
-import { Box, Text, render, useFocus, useInput, useApp } from '../dist/index.js'
+import { Box, Text, render, useFocus, useInput, useApp } from '@ratatat/react'
 
 function Item({ label }: { label: string }) {
   const { isFocused } = useFocus()

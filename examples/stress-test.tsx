@@ -15,7 +15,7 @@
  */
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { render, Box, Text, useWindowSize, useApp, useInput } from '../dist/index.js'
+import { render, Box, Text, useWindowSize, useApp, useInput } from '@ratatat/react'
 
 // ─── FPS counter ─────────────────────────────────────────────────────────────
 

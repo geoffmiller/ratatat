@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { render, Text, useApp } from '../../dist/react-entry.js'
+import { render, Text, useApp } from '@ratatat/react'
 
 const MARKER = 'RATATAT_STARTUP_READY'
 

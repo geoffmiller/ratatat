@@ -4,7 +4,7 @@
  * Run: node --import @oxc-node/core/register examples/use-focus-with-id.tsx
  */
 import React from 'react'
-import { Box, Text, render, useFocus, useFocusManager, useInput, useApp } from '../dist/index.js'
+import { Box, Text, render, useFocus, useFocusManager, useInput, useApp } from '@ratatat/react'
 
 function FocusWithId() {
   const { focus } = useFocusManager()

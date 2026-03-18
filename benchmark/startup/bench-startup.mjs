@@ -13,7 +13,7 @@
  *   - first render path
  *
  * Run:
- *   npm run build:ts
+ *   npm run build
  *   npm run bench:startup
  *
  * Optional:
@@ -33,8 +33,8 @@ const RUNS = Number(process.env.RUNS ?? 30)
 const WARMUP = Number(process.env.WARMUP ?? 3)
 const TIMEOUT_MS = Number(process.env.TIMEOUT_MS ?? 5000)
 
-if (!existsSync(resolve(ROOT, 'dist/react-entry.js'))) {
-  console.error('Missing dist/react-entry.js. Run: npm run build:ts')
+if (!existsSync(resolve(ROOT, 'packages/react/dist/index.js')) || !existsSync(resolve(ROOT, 'packages/core/dist/index.js'))) {
+  console.error('Missing workspace build output. Run: npm run build')
   process.exit(1)
 }
 

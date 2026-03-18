@@ -1,0 +1,87 @@
+{
+  "name": "@ratatat/core",
+  "version": "0.1.0",
+  "description": "Framework-agnostic terminal runtime powered by Ratatat's Rust diff engine",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/geoffmiller/ratatat.git",
+    "directory": "packages/core"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist/",
+    "index.js",
+    "index.cjs",
+    "index.d.ts",
+    "native.cjs",
+    "*.node"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./native": {
+      "import": "./index.js",
+      "types": "./index.d.ts"
+    }
+  },
+  "napi": {
+    "binaryName": "ratatat",
+    "targets": [
+      "x86_64-pc-windows-msvc",
+      "x86_64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-apple-darwin"
+    ]
+  },
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release --js native.cjs && npm run build:ts",
+    "build:debug": "napi build --platform --js native.cjs && npm run build:ts",
+    "build:ts": "tsc -p tsconfig.json",
+    "lint": "oxlint .",
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "ava",
+    "preversion": "napi build --platform --js native.cjs && git add .",
+    "version": "napi version"
+  },
+  "ava": {
+    "files": [
+      "__test__/**/*.spec.ts"
+    ],
+    "extensions": {
+      "ts": "module"
+    },
+    "timeout": "2m",
+    "workerThreads": false,
+    "environmentVariables": {
+      "OXC_TSCONFIG_PATH": "./__test__/tsconfig.json"
+    },
+    "nodeArguments": [
+      "--import",
+      "@oxc-node/core/register"
+    ]
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.4",
+    "events": "^3.3.0"
+  },
+  "devDependencies": {
+    "@emnapi/core": "^1.5.0",
+    "@emnapi/runtime": "^1.5.0",
+    "@napi-rs/cli": "^3.2.0",
+    "@oxc-node/core": "^0.0.35",
+    "@tybys/wasm-util": "^0.10.0",
+    "@types/node": "^25.3.3",
+    "ava": "^7.0.0",
+    "oxlint": "^1.14.0",
+    "typescript": "^5.9.2"
+  }
+}

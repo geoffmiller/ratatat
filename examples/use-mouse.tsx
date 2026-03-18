@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useCallback } from 'react'
-import { render, Box, Text, useApp, useWindowSize, useMouse, useTextInput, useScrollable } from '../dist/index.js'
+import { render, Box, Text, useApp, useWindowSize, useMouse, useTextInput, useScrollable } from '@ratatat/react'
 
 interface LogEntry {
   id: number

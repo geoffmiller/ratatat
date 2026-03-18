@@ -19,7 +19,7 @@
  */
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react'
-import { render, Box, Text, useInput, useApp, useWindowSize, useFocus, useFocusManager } from '../dist/index.js'
+import { render, Box, Text, useInput, useApp, useWindowSize, useFocus, useFocusManager } from '@ratatat/react'
 
 // React internals call performance.measure() on every reconcile.
 // At 300fps this fills Node's default 1M entry buffer in ~3 seconds.

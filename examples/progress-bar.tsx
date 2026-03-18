@@ -10,7 +10,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { render, Box, Text, ProgressBar, useInput, useApp } from '../dist/index.js'
+import { render, Box, Text, ProgressBar, useInput, useApp } from '@ratatat/react'
 
 function App() {
   const { exit } = useApp()

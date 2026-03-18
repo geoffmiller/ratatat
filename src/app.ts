@@ -1,6 +1,9 @@
 import { Renderer, TerminalGuard } from '../index.js'
 import EventEmitter from 'eventemitter3'
 
+const DEC_2026_ON = '\x1b[?2026h'
+const DEC_2026_OFF = '\x1b[?2026l'
+
 export class RatatatApp extends EventEmitter {
   private renderer: Renderer
   private terminal: TerminalGuard | null = null
@@ -124,6 +127,12 @@ export class RatatatApp extends EventEmitter {
     for (const fn of this.beforeFlushListeners) {
       fn(this.backBuffer, this.width, this.height)
     }
-    this.renderer.render(this.backBuffer)
+
+    this.renderer.writeRaw(DEC_2026_ON)
+    try {
+      this.renderer.render(this.backBuffer)
+    } finally {
+      this.renderer.writeRaw(DEC_2026_OFF)
+    }
   }
 }

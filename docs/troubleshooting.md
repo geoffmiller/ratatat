@@ -92,9 +92,9 @@ If output looks wrong, check parent width constraints (`Box width`, `padding`, `
 
 ## Wide Unicode/emoji alignment issues
 
-Some wide glyphs (emoji, full-width CJK) can occupy two columns while string length reports one code point.
+Ratatat uses width-aware rendering for full-width characters (for example CJK and many emoji) and marks continuation cells explicitly in the buffer/diff pipeline.
 
-For strict alignment-sensitive UIs, prefer narrow glyphs.
+If alignment still looks off, it's usually due to terminal-specific grapheme behavior (for example some ZWJ emoji clusters). For strict layout-sensitive UIs, prefer single-codepoint glyphs over complex emoji sequences.
 
 ---
 

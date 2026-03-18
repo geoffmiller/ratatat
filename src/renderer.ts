@@ -1,10 +1,15 @@
 import { LayoutNode } from './layout.js'
 import cliBoxes from 'cli-boxes'
 import { resolveColor } from './styles.js'
+import { getCodePointWidth } from './text-width.js'
 
 // Clip rectangle: cells outside [x0,x1) × [y0,y1) are not painted.
 // Passed down through paintNode so children can never overflow their parent.
 type Clip = { x0: number; y0: number; x1: number; y1: number }
+
+// Internal sentinel for trailing cells of wide glyphs.
+// Must be outside Unicode scalar range so it never collides with real text.
+const CONTINUATION_CELL_CODE = 0x110000
 
 export function renderTreeToBuffer(root: LayoutNode, buffer: Uint32Array, cols: number, rows: number) {
   // Clear buffer first
@@ -125,22 +130,38 @@ function paintText(
   attrCode: number,
   clip: Clip,
 ) {
+  if (w <= 0 || h <= 0) return
+
   let cursorX = 0
   let cursorY = 0
-  // Spread to correctly handle multi-byte Unicode (surrogate pairs, emoji)
+
+  // Iterate by Unicode code point (handles surrogate pairs correctly).
   for (const char of text) {
     if (char === '\n') {
       cursorX = 0
       cursorY++
       continue
     }
-    if (cursorX >= w) {
+
+    const charCode = char.codePointAt(0) ?? 32
+    const charWidth = Math.min(getCodePointWidth(char), w)
+
+    if (cursorX + charWidth > w) {
       cursorX = 0
       cursorY++
     }
+
     if (cursorY >= h) break
-    writeCell(buffer, cols, rows, absX + cursorX, absY + cursorY, char.codePointAt(0) || 32, attrCode, clip)
-    cursorX++
+
+    writeCell(buffer, cols, rows, absX + cursorX, absY + cursorY, charCode, attrCode, clip)
+
+    // Continuation marker for wide chars. Rust diff treats this sentinel as
+    // a non-printing occupied trailing cell.
+    if (charWidth === 2 && cursorX + 1 < w) {
+      writeCell(buffer, cols, rows, absX + cursorX + 1, absY + cursorY, CONTINUATION_CELL_CODE, attrCode, clip)
+    }
+
+    cursorX += charWidth
   }
 }
 

@@ -1,16 +1,17 @@
 // @ts-nocheck — reconciler createContainer arity varies between React versions
-import React from 'react';
-import { LayoutNode } from './layout.js';
-import { RatatatReconciler } from './reconciler.js';
-import { renderTreeToBuffer } from './renderer.js';
-import { RatatatContext } from './hooks.js';
-import { FocusProvider } from './focus.js';
+import React from 'react'
+import { LayoutNode } from './layout.js'
+import { RatatatReconciler } from './reconciler.js'
+import { renderTreeToBuffer } from './renderer.js'
+import { RatatatContext } from './hooks.js'
+import { FocusProvider } from './focus.js'
+import { Cell } from './cell.js'
 
 export interface RenderToStringOptions {
   /** Width of the virtual terminal in columns. @default 80 */
-  columns?: number;
+  columns?: number
   /** Height of the virtual terminal in rows. @default 24 */
-  rows?: number;
+  rows?: number
 }
 
 /**
@@ -26,16 +27,13 @@ export interface RenderToStringOptions {
  * - useEffect callbacks run but state updates they trigger do not affect output.
  * - useLayoutEffect callbacks fire synchronously and DO affect output.
  */
-export function renderToString(
-  element: React.ReactElement,
-  options?: RenderToStringOptions,
-): string {
-  const cols = options?.columns ?? 80;
-  const rows = options?.rows ?? 24;
+export function renderToString(element: React.ReactElement, options?: RenderToStringOptions): string {
+  const cols = options?.columns ?? 80
+  const rows = options?.rows ?? 24
 
-  const rootNode = new LayoutNode();
-  rootNode.yogaNode.setWidth(cols);
-  rootNode.yogaNode.setHeight(rows);
+  const rootNode = new LayoutNode()
+  rootNode.yogaNode.setWidth(cols)
+  rootNode.yogaNode.setHeight(rows)
 
   // No-op app/input stubs — hooks need a context but nothing should actually run
   const noopContext = {
@@ -43,13 +41,13 @@ export function renderToString(
     input: null as any,
     writeStdout: (_t: string) => {},
     writeStderr: (_t: string) => {},
-  };
+  }
 
   const wrapped = React.createElement(
     RatatatContext.Provider,
     { value: noopContext },
-    React.createElement(FocusProvider, null, element)
-  );
+    React.createElement(FocusProvider, null, element),
+  )
 
   // Create container in legacy (synchronous) mode
   const container = RatatatReconciler.createContainer(
@@ -61,38 +59,38 @@ export function renderToString(
     'renderToString',
     () => {},
     null,
-  );
+  )
 
   // Render synchronously
-  RatatatReconciler.updateContainerSync(wrapped as any, container, null, () => {});
-  RatatatReconciler.flushSyncWork();
+  RatatatReconciler.updateContainerSync(wrapped as any, container, null, () => {})
+  RatatatReconciler.flushSyncWork()
 
   // Layout and paint into a buffer
-  rootNode.calculateLayout(cols, rows);
-  const buffer = new Uint32Array(cols * rows * 2);
-  renderTreeToBuffer(rootNode, buffer, cols, rows);
+  rootNode.calculateLayout(cols, rows)
+  const buffer = new Uint32Array(cols * rows * 2)
+  renderTreeToBuffer(rootNode, buffer, cols, rows)
 
   // Read buffer back to string — trim trailing spaces from each row,
   // then strip empty trailing rows
-  const lines: string[] = [];
+  const lines: string[] = []
   for (let row = 0; row < rows; row++) {
-    let line = '';
+    let line = ''
     for (let col = 0; col < cols; col++) {
-      const ch = buffer[(row * cols + col) * 2];
-      line += String.fromCodePoint(ch || 32);
+      const ch = buffer[(row * cols + col) * 2]
+      line += Cell.getChar(ch)
     }
-    lines.push(line.trimEnd());
+    lines.push(line.trimEnd())
   }
 
   // Remove trailing empty lines
   while (lines.length > 0 && lines[lines.length - 1] === '') {
-    lines.pop();
+    lines.pop()
   }
 
   // Teardown: unmount the tree so reconciler cleans up
-  RatatatReconciler.updateContainerSync(null as any, container, null, () => {});
-  RatatatReconciler.flushSyncWork();
-  rootNode.destroy();
+  RatatatReconciler.updateContainerSync(null as any, container, null, () => {})
+  RatatatReconciler.flushSyncWork()
+  rootNode.destroy()
 
-  return lines.join('\n');
+  return lines.join('\n')
 }

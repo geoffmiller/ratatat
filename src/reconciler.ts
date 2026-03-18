@@ -5,6 +5,7 @@ import * as Scheduler from 'scheduler'
 import { createContext } from 'react'
 import { LayoutNode } from './layout.js'
 import { applyStyles, resolveColor, Styles } from './styles.js'
+import { getStringWidth } from './text-width.js'
 import Yoga from 'yoga-layout-prebuilt'
 
 type Type = 'box' | 'text'
@@ -118,9 +119,8 @@ const hostConfig: ReactReconciler.HostConfig<
     const node = new LayoutNode()
     node.text = text
     // Text nodes shouldn't expand like block elements in standard HTML,
-    // but in terminal we just let parent dictate constraints or auto measure.
-    // For MVP, set width to text length.
-    node.yogaNode.setWidth(text.length)
+    // but in terminal we let parent constraints apply and seed a natural width.
+    node.yogaNode.setWidth(getStringWidth(text))
     node.yogaNode.setHeight(1)
     return node
   },
@@ -184,7 +184,7 @@ const hostConfig: ReactReconciler.HostConfig<
 
   commitTextUpdate(textInstance, oldText, newText) {
     textInstance.text = newText
-    textInstance.yogaNode.setWidth(newText.length)
+    textInstance.yogaNode.setWidth(getStringWidth(newText))
   },
 
   getRootHostContext(rootContainer) {

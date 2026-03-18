@@ -36,6 +36,7 @@ Ratatat is a React terminal UI renderer with an Ink-compatible API, Yoga layout,
 - [TypeScript Buffer Guide](ts-buffer-guide.md) — practical indexing/packing patterns with ASCII diagrams
 - [Ink Compatibility](ink-compat.md) — parity matrix and stubs
 - [Render Loop](render-loop.md) — polling loop design and scheduler behavior
+- [Renderer Correctness Plan](renderer-correctness-plan.md) — xterm harness, wide-char correctness, synchronized output rollout
 - [Architecture Decisions](decisions.md) — key implementation choices
 
 ---

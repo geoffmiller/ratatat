@@ -3,9 +3,12 @@
 use std::io::Write;
 use napi_derive::napi;
 use napi::bindgen_prelude::Uint32Array;
+use unicode_width::UnicodeWidthChar;
 
 mod ansi;
 mod terminal;
+
+const CONTINUATION_CELL: u32 = 0x0011_0000;
 
 /// A double-buffered terminal renderer exposed to JavaScript via NAPI.
 ///
@@ -120,13 +123,22 @@ impl Renderer {
                 let x = (i % cols) as u16;
                 let y = (i / cols) as u16;
 
-                // Only move cursor if not contiguous
+                // Continuation marker for the trailing cell of a wide glyph.
+                // It's an occupied logical cell but non-printing.
+                if char_code == CONTINUATION_CELL {
+                    self.front_buffer[offset] = char_code;
+                    self.front_buffer[offset + 1] = attr_code;
+                    current_x = x as i32;
+                    current_y = y as i32;
+                    continue;
+                }
+
+                // Only move cursor if not contiguous.
+                // current_x tracks the last occupied cell index, so wide glyphs
+                // (width=2) keep contiguous progression aligned.
                 if current_x + 1 != x as i32 || current_y != y as i32 {
                     ansi::write_move_cursor(&mut output, x, y + self.row_offset);
                 }
-
-                current_x = x as i32;
-                current_y = y as i32;
 
                 // Extract values (attr: fg 8 bits, bg 8 bits, styles 8 bits)
                 let fg = (attr_code & 0xFF) as u8;
@@ -138,6 +150,7 @@ impl Renderer {
                 } else {
                     char::from_u32(char_code).unwrap_or(' ')
                 };
+                let display_width = UnicodeWidthChar::width(ch).unwrap_or(1).max(1) as i32;
 
                 // Diff Styles
                 if styles != last_style {
@@ -165,6 +178,9 @@ impl Renderer {
                 output.push(ch);
                 self.front_buffer[offset] = char_code;
                 self.front_buffer[offset + 1] = attr_code;
+
+                current_x = x as i32 + display_width - 1;
+                current_y = y as i32;
             }
         }
         output
@@ -292,6 +308,44 @@ mod tests {
 
         let move_count = diff.matches('H').count();
         assert_eq!(move_count, 2, "Two cursor moves expected for non-contiguous cells");
+    }
+
+    #[test]
+    fn test_wide_glyph_advances_cursor_by_display_width() {
+        let mut renderer = primed_renderer(10, 1);
+        let mut back_buffer = vec![0; 20];
+
+        // Wide CJK char at col 0, continuation marker at col 1, ASCII at col 2.
+        back_buffer[0] = '界' as u32;
+        back_buffer[1] = 1;
+        back_buffer[2] = CONTINUATION_CELL;
+        back_buffer[3] = 1;
+        back_buffer[4] = 'B' as u32;
+        back_buffer[5] = 1;
+
+        let diff = renderer.generate_diff(&back_buffer);
+
+        // Continuation should be non-printing — no extra char between wide glyph and B.
+        assert!(diff.contains("界B"), "Continuation cells must not emit a printable spacer");
+
+        // Only one cursor move expected: start at col 0, then contiguous progression.
+        let move_count = diff.matches('H').count();
+        assert_eq!(move_count, 1, "Wide glyph should keep cursor progression contiguous");
+    }
+
+    #[test]
+    fn test_continuation_only_update_is_non_printing() {
+        let mut renderer = primed_renderer(5, 1);
+        let mut back_buffer = vec![0; 10];
+
+        // Update a single continuation cell to verify it doesn't emit a space.
+        back_buffer[2] = CONTINUATION_CELL;
+        back_buffer[3] = 1;
+
+        let diff = renderer.generate_diff(&back_buffer);
+
+        // Prefix reset only — continuation markers are non-printing.
+        assert_eq!(diff, "\x1b[0m", "Continuation-only updates should not emit printable output");
     }
 
     #[test]

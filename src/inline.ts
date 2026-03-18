@@ -13,6 +13,9 @@
 
 import { Renderer, terminalSize } from '../index.js'
 
+const DEC_2026_ON = '\x1b[?2026h'
+const DEC_2026_OFF = '\x1b[?2026l'
+
 export interface InlineOptions {
   /** Number of terminal rows to reserve. Default: 10 */
   rows?: number
@@ -59,7 +62,12 @@ export function createInlineLoop(paint: InlinePaintFn, options: InlineOptions = 
   function tick() {
     buf!.fill(0)
     paint(buf!, cols, renderRows, frame++)
-    renderer!.render(buf!)
+    write(DEC_2026_ON)
+    try {
+      renderer!.render(buf!)
+    } finally {
+      write(DEC_2026_OFF)
+    }
   }
 
   function startRendering(cursorRow: number) {

@@ -19,7 +19,7 @@ Use this page to decide which package to install and where each API lives.
 
 Framework-agnostic runtime backed by the Rust diff engine.
 
-You write **TypeScript/JavaScript** APIs; the Rust layer is internal.
+Primary APIs are exposed to TypeScript/JavaScript while rendering is handled by a native Rust diff engine.
 
 Primary exports:
 

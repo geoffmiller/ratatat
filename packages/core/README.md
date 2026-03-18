@@ -1,13 +1,8 @@
 # @ratatat/core
 
-Framework-agnostic terminal runtime for Ratatat.
+Low-level terminal runtime for Ratatat.
 
-This package contains:
-
-- the native Rust diff engine bindings (`Renderer`, `TerminalGuard`, `terminalSize`)
-- raw buffer primitives (`Cell`)
-- input parsing (`InputParser`)
-- runtime helpers (`RatatatApp`, `createInlineLoop`)
+This package provides native rendering primitives, raw-buffer APIs, input parsing, and inline/fullscreen runtime helpers.
 
 ## Install
 
@@ -15,10 +10,41 @@ This package contains:
 npm install @ratatat/core
 ```
 
-## Usage
+## Quick start
 
 ```ts
-import { Renderer, TerminalGuard, Cell } from '@ratatat/core'
+import { Renderer, TerminalGuard, terminalSize } from '@ratatat/core'
+
+const { cols, rows } = terminalSize()
+const guard = new TerminalGuard()
+const renderer = new Renderer(cols, rows)
+const buf = new Uint32Array(cols * rows * 2)
+
+// Paint one cyan cell at (0,0)
+buf[0] = 'A'.codePointAt(0)!
+buf[1] = 6
+
+renderer.render(buf)
+
+process.on('SIGINT', () => {
+  guard.leave()
+  process.exit(0)
+})
 ```
 
-For higher-level React APIs, use [`@ratatat/react`](../react/README.md).
+## Main exports
+
+- `Renderer`, `terminalSize`, `TerminalGuard`
+- `Cell`, `StyleMasks`
+- `InputParser`
+- `RatatatApp`
+- `createInlineLoop`
+
+## Docs
+
+- [Quickstart: Raw-buffer mode](../docs/quickstart-raw-buffer.md)
+- [Raw Buffer API](../docs/raw-buffer.md)
+- [TypeScript Buffer Guide](../docs/ts-buffer-guide.md)
+- [Rendering Modes](../docs/rendering-modes.md)
+
+For React components/hooks and Ink-compatible APIs, see [`@ratatat/react`](../react/README.md).

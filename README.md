@@ -15,12 +15,11 @@ Ratatat is organized as a monorepo with separate packages for the core runtime, 
 | [`@ratatat/ink`](packages/ink)     | `ink-fast` implementation and performance R&D fork             | [`packages/ink/readme.md`](packages/ink/readme.md)     |
 | [`@ratatat/docs`](packages/docs)   | Unified docs for all packages (private workspace package)      | [`packages/docs/index.md`](packages/docs/index.md)     |
 
-## `@ratatat/core` — TypeScript → Rust TUI runtime (no Rust required)
+## `@ratatat/core` — TypeScript → Rust TUI runtime
 
 `@ratatat/core` is the low-level runtime for raw-buffer and non-React terminal apps.
 
-You write **TypeScript/JavaScript** APIs (`Renderer`, `TerminalGuard`, `InputParser`, etc.).
-The Rust layer is internal — you do **not** write Rust to use this package.
+Primary APIs include `Renderer`, `TerminalGuard`, `InputParser`, and `createInlineLoop`.
 
 ### Core visuals
 

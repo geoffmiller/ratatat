@@ -18,6 +18,10 @@
 > Perf toolkit: [`benchmark/render/README.md`](./benchmark/render/README.md), [`benchmark/render/perf-notes.md`](./benchmark/render/perf-notes.md)
 >
 > Technical deep dive: [`TECHNICAL-README.md`](./TECHNICAL-README.md)
+>
+> [!NOTE]
+> In this monorepo, the package name is `@ratatat/ink`.
+> Use `@ratatat/ink` for install/import commands.
 
 ### Proof-of-concept benchmark (Ink vs ink-fast)
 
@@ -57,17 +61,18 @@ Only Ink's methods are documented in this readme.
 ## Install
 
 ```sh
-npm install ink-fast react
+npm install @ratatat/ink react
 ```
 
 > [!NOTE]
-> This readme documents the upcoming version of Ink. For the latest stable release, see [ink-fast on npm](https://www.npmjs.com/package/ink-fast).
+> Many snippets below are inherited from upstream Ink docs and use `ink`/`ink-fast` in import lines.
+> For this package, replace those imports with `@ratatat/ink`.
 
 ## Usage
 
 ```jsx
 import React, {useState, useEffect} from 'react';
-import {render, Text} from 'ink-fast';
+import {render, Text} from '@ratatat/ink';
 
 const Counter = () => {
 	const [counter, setCounter] = useState(0);

@@ -4,8 +4,6 @@
 
 Ratatat's Rust renderer accepts a `Uint32Array` back buffer and emits minimal ANSI updates.
 
-You write TypeScript/JavaScript against `@ratatat/core`; the Rust layer is internal.
-
 ## Core contract
 
 ```text

@@ -24,7 +24,7 @@ npm install @ratatat/react react
 npm install @ratatat/core
 ```
 
-> `@ratatat/core` is a TypeScript-facing runtime backed by Rust internals. You do **not** write Rust to use it.
+> `@ratatat/core` is a TypeScript-facing runtime with a native Rust diff/render engine.
 
 ### ink-fast research fork
 

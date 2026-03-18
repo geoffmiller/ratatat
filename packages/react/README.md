@@ -1,29 +1,48 @@
 # @ratatat/react
 
-React adapter for Ratatat with an Ink-compatible API.
+React renderer for Ratatat with an Ink-compatible API.
 
-This package contains:
-
-- `render()` and React host components (`Box`, `Text`, `Static`, etc.)
-- hooks (`useInput`, `useFocus`, `useScrollable`, `useWindowSize`, ...)
-- render-to-string support
-- Yoga layout + reconciler integration
+Built on top of [`@ratatat/core`](../core/README.md), this package provides components, hooks, layout, and render lifecycle APIs for terminal UIs.
 
 ## Install
 
 ```bash
-npm install @ratatat/react
+npm install @ratatat/react react
 ```
 
-`@ratatat/react` depends on `@ratatat/core` and uses its native renderer.
-
-## Usage
+## Quick start
 
 ```tsx
 import React from 'react'
-import { render, Text } from '@ratatat/react'
+import { render, Box, Text, useInput } from '@ratatat/react'
 
-render(<Text>Hello from Ratatat</Text>)
+function App() {
+  useInput((input, key) => {
+    if (key.ctrl && input === 'c') process.exit(0)
+  })
+
+  return (
+    <Box padding={1}>
+      <Text color="cyan">Hello from @ratatat/react</Text>
+    </Box>
+  )
+}
+
+render(<App />)
 ```
 
-For low-level runtime APIs, see [`@ratatat/core`](../core/README.md).
+## Main exports
+
+- Rendering: `render`, `renderInline`, `renderToString`
+- Components: `Box`, `Text`, `Static`, `Transform`, `Spinner`, `ProgressBar`, `Newline`, `Spacer`
+- Hooks: `useInput`, `useApp`, `usePaste`, `useMouse`, `useFocus`, `useFocusManager`, `useScrollable`, `useTextInput`, `useWindowSize`, `useStdout`, `useStderr`
+
+## Docs
+
+- [Quickstart: React mode](../docs/quickstart-react.md)
+- [Components reference](../docs/components.md)
+- [Hooks reference](../docs/hooks.md)
+- [Ink compatibility matrix](../docs/ink-compat.md)
+- [Examples catalog](../docs/examples.md)
+
+For low-level non-React rendering, use [`@ratatat/core`](../core/README.md).

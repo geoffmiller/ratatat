@@ -4,8 +4,6 @@ Drive the Rust renderer directly — no React, no Yoga, no JSX.
 
 Use this mode when you want explicit control over every terminal cell.
 
-You still write TypeScript/JavaScript only; Rust is behind the `@ratatat/core` API boundary.
-
 Install:
 
 ```bash

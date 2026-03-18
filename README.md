@@ -4,6 +4,10 @@
 
 > 100% vibe code. Fork/clone only - no PRs
 
+> [!WARNING]
+> Recommended workflow: fork/clone and build/install from source for the latest changes.
+> npm packages (when used) may lag behind `main`.
+
 Ratatat is organized as a monorepo with separate packages for the core runtime, React adapter, ink-fast research implementation, and shared docs.
 
 ## Packages at a glance

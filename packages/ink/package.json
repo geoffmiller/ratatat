@@ -3,6 +3,9 @@
 	"version": "6.8.0",
 	"description": "ink-fast implementation inside the Ratatat monorepo",
 	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/geoffmiller/ratatat.git",

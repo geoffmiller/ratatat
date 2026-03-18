@@ -24,6 +24,10 @@
     "typecheck": "tsc -b",
     "bench:ts": "node --import @oxc-node/core/register benchmark/bench.ts",
     "bench:startup": "node benchmark/startup/bench-startup.mjs",
+    "publish:core": "npm publish -w @ratatat/core --access public",
+    "publish:react": "npm publish -w @ratatat/react --access public",
+    "publish:ink": "npm publish -w @ratatat/ink --access public",
+    "publish:all": "npm run publish:core && npm run publish:react && npm run publish:ink",
     "prepare": "husky"
   },
   "devDependencies": {

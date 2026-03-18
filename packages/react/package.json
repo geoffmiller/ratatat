@@ -6,6 +6,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/geoffmiller/ratatat.git",
@@ -78,7 +81,7 @@
     ]
   },
   "dependencies": {
-    "@ratatat/core": "file:../core",
+    "@ratatat/core": "^0.1.0",
     "cli-boxes": "^4.0.1",
     "react": "^19.2.4",
     "react-reconciler": "^0.33.0",

@@ -5,55 +5,45 @@ import { Transform } from '../dist/react.js'
 
 // ─── Basic rendering ──────────────────────────────────────────────────────────
 
-test('renderToString: renders plain text', t => {
-  const out = renderToString(
-    React.createElement('text', {}, 'Hello World')
-  )
+test('renderToString: renders plain text', (t) => {
+  const out = renderToString(React.createElement('text', {}, 'Hello World'))
   t.is(out, 'Hello World')
 })
 
-test('renderToString: returns empty string for null children', t => {
+test('renderToString: returns empty string for null children', (t) => {
   const out = renderToString(React.createElement('box', {}))
   t.is(out, '')
 })
 
-test('renderToString: respects columns option', t => {
-  const out = renderToString(
-    React.createElement('text', {}, 'Hello World'),
-    { columns: 40 }
-  )
+test('renderToString: respects columns option', (t) => {
+  const out = renderToString(React.createElement('text', {}, 'Hello World'), { columns: 40 })
   t.true(out.length <= 40)
   t.true(out.includes('Hello'))
 })
 
-test('renderToString: multiple lines trimmed correctly', t => {
+test('renderToString: multiple lines trimmed correctly', (t) => {
   const out = renderToString(
-    React.createElement('box', { flexDirection: 'column' },
+    React.createElement(
+      'box',
+      { flexDirection: 'column' },
       React.createElement('text', {}, 'line one'),
       React.createElement('text', {}, 'line two'),
-    )
+    ),
   )
   const lines = out.split('\n')
-  t.true(lines.some(l => l.includes('line one')))
-  t.true(lines.some(l => l.includes('line two')))
+  t.true(lines.some((l) => l.includes('line one')))
+  t.true(lines.some((l) => l.includes('line two')))
 })
 
-test('renderToString: trailing empty lines stripped', t => {
-  const out = renderToString(
-    React.createElement('text', {}, 'hi'),
-    { columns: 80, rows: 24 }
-  )
+test('renderToString: trailing empty lines stripped', (t) => {
+  const out = renderToString(React.createElement('text', {}, 'hi'), { columns: 80, rows: 24 })
   // Should not end with a newline or have many blank lines
   t.false(out.endsWith('\n'))
   t.true(out.includes('hi'))
 })
 
-test('renderToString: Box padding reflected in output', t => {
-  const out = renderToString(
-    React.createElement('box', { padding: 1 },
-      React.createElement('text', {}, 'padded')
-    )
-  )
+test('renderToString: Box padding reflected in output', (t) => {
+  const out = renderToString(React.createElement('box', { padding: 1 }, React.createElement('text', {}, 'padded')))
   const lines = out.split('\n')
   // First line should be blank (top padding)
   t.is(lines[0].trim(), '')
@@ -64,7 +54,7 @@ test('renderToString: Box padding reflected in output', t => {
 
 // ─── Component support ────────────────────────────────────────────────────────
 
-test('renderToString: function components work', t => {
+test('renderToString: function components work', (t) => {
   function Greeting({ name }: { name: string }) {
     return React.createElement('text', {}, `Hello, ${name}!`)
   }
@@ -72,17 +62,19 @@ test('renderToString: function components work', t => {
   t.true(out.includes('Hello, World!'))
 })
 
-test('renderToString: useLayoutEffect state updates are reflected', t => {
+test('renderToString: useLayoutEffect state updates are reflected', (t) => {
   function App() {
     const [label, setLabel] = useState('before')
-    useLayoutEffect(() => { setLabel('after') }, [])
+    useLayoutEffect(() => {
+      setLabel('after')
+    }, [])
     return React.createElement('text', {}, label)
   }
   const out = renderToString(React.createElement(App))
   t.true(out.includes('after'))
 })
 
-test('renderToString: can be called multiple times independently', t => {
+test('renderToString: can be called multiple times independently', (t) => {
   const a = renderToString(React.createElement('text', {}, 'first'))
   const b = renderToString(React.createElement('text', {}, 'second'))
   t.true(a.includes('first'))
@@ -92,11 +84,19 @@ test('renderToString: can be called multiple times independently', t => {
 
 // ─── Transform support ────────────────────────────────────────────────────────
 
-test('renderToString: Transform component works', t => {
+test('renderToString: Transform component works', (t) => {
   const out = renderToString(
-    React.createElement(Transform, { transform: (s: string) => s.toUpperCase() },
-      React.createElement('text', {}, 'hello')
-    )
+    React.createElement(
+      Transform,
+      { transform: (s: string) => s.toUpperCase() },
+      React.createElement('text', {}, 'hello'),
+    ),
   )
   t.true(out.includes('HELLO'))
+})
+
+test('renderToString: wide chars do not throw and preserve adjacency', (t) => {
+  const out = renderToString(React.createElement('text', {}, 'A🐭B界C'), { columns: 20, rows: 4 })
+
+  t.true(out.includes('A🐭B界C'))
 })

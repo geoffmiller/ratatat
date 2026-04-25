@@ -2,7 +2,8 @@
 
 # Ratatat Monorepo
 
-> 100% vibe code. Fork/clone only - no PRs
+> Ratatat started as a simple question to an LLM - "Why is Ink slow and Ratatui fast, and don't say because Rust?". From there it turned into a research experiment in both architecture and also to see how far I could take a 100% vibe-coded app as a seasoned software engineer.
+> After a few weeks of slowly building out features, refactoring, reorganizing, testing, and more, the end result was this monorepo with what I consider the "crown jewel" - the frontend-agnostic `core` package. This uses what most would consider a game engine rendering loop to achieve full-screen updates at over 700fps while being able to ingest any TypeScript code via a double-buffered `Uint32Array`. I hope you enjoy it and have as much fun reading and using the code as I do.
 
 > [!WARNING]
 > Recommended workflow: fork/clone and build/install from source for the latest changes.
